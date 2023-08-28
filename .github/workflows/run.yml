@@ -2,7 +2,7 @@ name: DownloaderAction
 on:
   repository_dispatch:
     types:
-      - downloaderaction-media
+      - download
 
 jobs:
   run:
