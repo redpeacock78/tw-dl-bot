@@ -18,7 +18,7 @@ const bot = createBot({
 });
 
 const dlCommand: CreateSlashApplicationCommand = {
-  name: "dll",
+  name: "dl",
   description: "Download tweet video",
   type: 1,
   options: [
@@ -77,7 +77,7 @@ bot.events.messageCreate = async (b, message): Promise<void> => {
 
 bot.events.interactionCreate = async (b, interaction) => {
   switch (interaction.data?.name) {
-    case "dll": {
+    case "dl": {
       const contents = interaction.data.options
         ?.map((i) => i.value)
         .join("")
