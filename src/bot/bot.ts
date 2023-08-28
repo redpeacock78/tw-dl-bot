@@ -18,7 +18,7 @@ const bot = createBot({
 });
 
 const dlCommand: CreateSlashApplicationCommand = {
-  name: "dl",
+  name: "dll",
   description: "Download tweet video",
   type: 1,
   options: [
@@ -77,21 +77,25 @@ bot.events.messageCreate = async (b, message): Promise<void> => {
 
 bot.events.interactionCreate = async (b, interaction) => {
   switch (interaction.data?.name) {
-    case "dl": {
+    case "dll": {
+      b.helpers.sendInteractionResponse(interaction.id, interaction.token, {
+        type: InteractionResponseTypes.DeferredChannelMessageWithSource,
+        data: {
+          content: `⏳Starting...`,
+        },
+      });
       const contents = interaction.data.options
         ?.map((i) => i.value)
         .join("")
         .split(" ") as string[];
-      console.log(contents);
       for (const content of contents) {
-        console.log(content);
         await ky
           .post(Secrets.DISPATCH_URL, {
             json: {
               event_type: "download",
               client_payload: {
                 link: `${content}`,
-                channel: `${interaction.channelId}`,
+                channel: `${interaction.token}`,
                 message: `${interaction.id}`,
               },
             },
@@ -105,7 +109,7 @@ bot.events.interactionCreate = async (b, interaction) => {
               interaction.id,
               interaction.token,
               {
-                type: InteractionResponseTypes.ChannelMessageWithSource,
+                type: InteractionResponseTypes.Pong,
                 data: {
                   content: `⏳Starting...\n${content}`,
                 },
