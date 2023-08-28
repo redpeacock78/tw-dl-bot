@@ -1,5 +1,7 @@
 import { Hono } from "hono";
 import { Secrets } from "@libs/secrets.ts";
+import bot from "@bot/bot.ts";
+import { InteractionResponseTypes } from "discordeno";
 
 const callback = new Hono();
 
@@ -20,16 +22,19 @@ callback.post("/callback", async (c): Promise<void | Response> => {
     })
   );
   if (body.status === "success") {
-    return await fetch(
-      `https://discord.com/api/channels/${body.channel}/messages`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bot ${Secrets.DISCORD_TOKEN}`,
+    return bot.helpers
+      .sendInteractionResponse(body.message as string, body.channel as string, {
+        type: InteractionResponseTypes.ChannelMessageWithSource,
+        data: {
+          content: `✅Done!`,
+          file: {
+            blob: new Blob([await file.arrayBuffer()], {
+              type: body.type as string,
+            }),
+            name: body.name as string,
+          },
         },
-        body: formData,
-      }
-    )
+      })
       .then(() => c.text(""))
       .catch(() => c.status(500));
   } else {
