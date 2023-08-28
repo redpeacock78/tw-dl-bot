@@ -24,7 +24,7 @@ callback.post("/callback", async (c): Promise<void | Response> => {
   if (body.status === "success") {
     return bot.helpers
       .sendInteractionResponse(body.message as string, body.channel as string, {
-        type: InteractionResponseTypes.ChannelMessageWithSource,
+        type: InteractionResponseTypes.UpdateMessage,
         data: {
           content: `✅Done!`,
           file: {
