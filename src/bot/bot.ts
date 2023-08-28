@@ -78,12 +78,6 @@ bot.events.messageCreate = async (b, message): Promise<void> => {
 bot.events.interactionCreate = async (b, interaction) => {
   switch (interaction.data?.name) {
     case "dll": {
-      b.helpers.sendInteractionResponse(interaction.id, interaction.token, {
-        type: InteractionResponseTypes.DeferredChannelMessageWithSource,
-        data: {
-          content: `⏳Starting...`,
-        },
-      });
       const contents = interaction.data.options
         ?.map((i) => i.value)
         .join("")
@@ -109,7 +103,7 @@ bot.events.interactionCreate = async (b, interaction) => {
               interaction.id,
               interaction.token,
               {
-                type: InteractionResponseTypes.Pong,
+                type: InteractionResponseTypes.ChannelMessageWithSource,
                 data: {
                   content: `⏳Starting...\n${content}`,
                 },
