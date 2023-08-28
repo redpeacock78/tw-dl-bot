@@ -1,0 +1,12 @@
+{
+  "$schema": "https://deno.land/x/denon@2.5.0/schema.json",
+  "scripts": {
+    "dev": {
+      "cmd": "deno run -A --unstable --importmap import_map.json src/main.ts",
+      "desc": "run my main.ts file"
+    },
+    "lint": {
+      "cmd": "deno lint && deno run --allow-env --allow-read --allow-sys tools/textlint.ts *"
+    }
+  }
+}

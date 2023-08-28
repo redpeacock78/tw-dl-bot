@@ -1,0 +1,13 @@
+{
+  "plugins": {
+    "jsx": {
+      "extensions": [".ts"]
+    }
+  },
+  "rules": {
+    "preset-ja-spacing": true,
+    "preset-ja-technical-writing": {
+      "no-exclamation-question-mark": false
+    }
+  }
+}

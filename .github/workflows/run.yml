@@ -1,0 +1,159 @@
+name: DownloaderAction
+on:
+  repository_dispatch:
+    types:
+      - downloaderaction-media
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    name: Run
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "14"
+      - name: Create directory
+        shell: bash
+        run: mkdir -p download
+      - name: Masking Secrets
+        shell: bash
+        run: |
+          echo -n '::add-mask::' >> secrets.txt && \
+          jq -r .client_payload.link < "${GITHUB_EVENT_PATH}" >> secrets.txt && \
+          echo -n '::add-mask::' >> secrets.txt && \
+          jq -r .client_payload.channel < "${GITHUB_EVENT_PATH}" >> secrets.txt && \
+          echo -n '::add-mask::' >> secrets.txt && \
+          jq -r .client_payload.message < "${GITHUB_EVENT_PATH}" >> secrets.txt && \
+          cat secrets.txt && \
+          rm -rf secrets.txt
+      - name: Confirmation of link survival
+        id: link_status
+        shell: bash
+        run: |
+          if [[ ${{ toJSON(github.event.client_payload.link) }} =~ ^http.*$ ]]; then
+            status="$(curl -siL ${{ toJSON(github.event.client_payload.link) }} -o /dev/null -w '%{http_code}\n';:)"
+            if [[ "${status}" != "200" && "${status}" != "302" ]]; then
+              status="notfound" && \
+              echo "status=${status}" >> "$GITHUB_OUTPUT" && \
+              exit 2
+            fi
+          fi
+      - name: Setup ffmpeg
+        uses: FedericoCarboni/setup-ffmpeg@v2
+        if: ${{ success() }}
+      - name: Install yt-dlp
+        if: ${{ success() }}
+        shell: bash
+        run: |
+          sudo curl -sL https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
+          sudo chmod a+rx /usr/local/bin/yt-dlp
+      - name: Start Download
+        if: ${{ success() }}
+        timeout-minutes: 300
+        shell: bash
+        run: |
+          cookie_path=$(pwd) && \
+          echo "${{ secrets.TWITTER_COOKIES }}" >> cookie.txt && \
+          cd download && \
+          yt-dlp --quiet \
+            --cookies ${cookie_path}/cookie.txt \
+            ${{ toJSON(github.event.client_payload.link) }} 2>/dev/null || \
+          yt-dlp --quiet \
+            --cookies ${cookie_path}/cookie.txt \
+            -o "%(title).200s.%(ext)s" \
+            ${{ toJSON(github.event.client_payload.link) }} 2>/dev/null || \
+          yt-dlp --quiet \
+            --cookies ${cookie_path}/cookie.txt \
+            -o "%(id)s.%(ext)s" \
+            ${{ toJSON(github.event.client_payload.link) }}
+      - name: Check and Convert Files
+        if: ${{ success() }}
+        shell: bash
+        run: |
+          dir=$(pwd) && \
+          cd download && \
+          IFS=$'\n' && \
+          for file_name in $(ls); do
+            if (( "$(wc -c < "${file_name}")" <= 26214400 )); then
+              :
+            else
+              mkdir -p "${dir}/conv" && \
+              ffmpeg -i "${file_name}" -vcodec libx265 -tag:v hvc1 -fs 25MB "${dir}/conv/${file_name}"
+            fi
+          done
+      - name: Upload files
+        if: ${{ success() }}
+        id: upload
+        shell: bash
+        run: |
+          dir=$(pwd) && \
+          cd download && \
+          IFS=$'\n' && \
+          for file_name in $(ls); do
+            if (( "$(wc -c < "${file_name}")" <= 26214400 )); then
+              curl -s -X POST \
+                -H "Content-type: multipart/form-data" \
+                -F "status=success" \
+                -F "channel=${{ toJSON(github.event.client_payload.channel) }}" \
+                -F "message=${{ toJSON(github.event.client_payload.message) }}" \
+                -F "name=${file_name}" \
+                -F "type=$(file --mime-type "${file_name}"|awk -F : '{sub(/^ /,"",$2);print $2}')" \
+                -F "file=@${file_name}" \
+                ${{ secrets.ENDPOINT_URL }}
+            else
+              curl -s -X POST \
+                -H "Content-type: multipart/form-data" \
+                -F "status=success" \
+                -F "channel=${{ toJSON(github.event.client_payload.channel) }}" \
+                -F "message=${{ toJSON(github.event.client_payload.message) }}" \
+                -F "name=${file_name}" \
+                -F "type=$(file --mime-type "${dir}/conv/${file_name}"|awk -F : '{sub(/^ /,"",$2);print $2}')" \
+                -F "file=@${dir}/conv/${file_name}" \
+                ${{ secrets.ENDPOINT_URL }}
+            fi
+          done
+      - name: Download file not found
+        if: >-
+          ${{
+            failure() &&
+            steps.link_status.outputs.status != ''
+          }}
+        shell: bash
+        run: |
+          curl -s -X POST \
+            ${{ secrets.ENDPOINT_URL }} \
+            -H "Accept: application/json" \
+            -H "Content-type: application/json" \
+            -d @- <<EOF
+          {
+            "status": "failure",
+            "channel": ${{ toJSON(github.event.client_payload.channel) }},
+            "message": ${{ toJSON(github.event.client_payload.message) }},
+            "link": ${{ toJSON(github.event.client_payload.link) }},
+            "content": "Sorry! This link has expired."
+          }
+          EOF
+      - name: Download timed out
+        if: >-
+          ${{
+            failure() &&
+            steps.link_status.outputs.status == ''
+          }}
+        shell: bash
+        run: |
+          curl -s -X POST \
+            ${{ secrets.ENDPOINT_URL }} \
+            -H "Accept: application/json" \
+            -H "Content-type: application/json" \
+            -d @- <<EOF
+          {
+            "status": "failure",
+            "channel": ${{ toJSON(github.event.client_payload.channel) }},
+            "message": ${{ toJSON(github.event.client_payload.message) }},
+            "link": ${{ toJSON(github.event.client_payload.link) }},
+            "content": "Sorry! Processing time exceeded 5 hours and timed out."
+          }
+          EOF

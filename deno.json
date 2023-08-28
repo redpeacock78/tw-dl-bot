@@ -1,0 +1,8 @@
+{
+  "lock": false,
+  "tasks": {
+    "dev": "denon dev",
+    "lint": "deno lint && deno run --allow-env --allow-read --allow-sys tools/textlint.ts *",
+    "lint:watch": "denon lint"
+  }
+}
