@@ -1,11 +1,7 @@
 import ky from "ky";
 import { Secrets } from "@libs/secrets.ts";
-import {
-  createBot,
-  Intents,
-  CreateSlashApplicationCommand,
-  InteractionResponseTypes,
-} from "discordeno";
+import { Commands } from "@bot/commands.ts";
+import { createBot, Intents, InteractionResponseTypes } from "discordeno";
 
 const bot = createBot({
   token: Secrets.DISCORD_TOKEN,
@@ -17,68 +13,12 @@ const bot = createBot({
   },
 });
 
-const dlCommand: CreateSlashApplicationCommand = {
-  name: "dl",
-  description: "Download tweet video",
-  type: 1,
-  options: [
-    {
-      name: "url",
-      type: 3,
-      required: true,
-      description: "Tweet URL",
-    },
-  ],
-};
-
-await bot.helpers.createGlobalApplicationCommand(dlCommand);
-
-bot.events.messageCreate = async (b, message): Promise<void> => {
-  if (message.isFromBot) return;
-  if (message.content.match(/^!dl /)) {
-    const contents: string[] = message.content.replace(/^!dl /, "").split(" ");
-    for (const content of contents) {
-      await ky
-        .post(Secrets.DISPATCH_URL, {
-          json: {
-            event_type: "download",
-            client_payload: {
-              link: `${content}`,
-              channel: `${message.channelId}`,
-              message: `${message.id}`,
-            },
-          },
-          headers: {
-            Authorization: `token ${Secrets.GITHUB_TOKEN}`,
-            Accept: "application/vnd.github.everest-preview+json",
-          },
-        })
-        .then(() =>
-          b.helpers.sendMessage(message.channelId, {
-            content: `⏳Starting...\n${content}`,
-            messageReference: {
-              messageId: message.id,
-              failIfNotExists: true,
-            },
-          })
-        )
-        .catch(() =>
-          b.helpers.sendMessage(message.channelId, {
-            content: `⚠️Error\n${content}`,
-            messageReference: {
-              messageId: message.id,
-              failIfNotExists: true,
-            },
-          })
-        );
-    }
-  }
-};
+await bot.helpers.createGlobalApplicationCommand(Commands.dlCommand);
 
 bot.events.interactionCreate = async (b, interaction) => {
   switch (interaction.data?.name) {
-    case "dl": {
-      const contents = interaction.data.options
+    case Commands.dlCommand.name: {
+      const contents: string[] = interaction.data.options
         ?.map((i) => i.value)
         .join("")
         .split(" ") as string[];
@@ -89,8 +29,9 @@ bot.events.interactionCreate = async (b, interaction) => {
               event_type: "download",
               client_payload: {
                 link: `${content}`,
-                channel: `${interaction.token}`,
+                channel: `${interaction.channelId}`,
                 message: `${interaction.id}`,
+                token: `${interaction.token}`,
               },
             },
             headers: {
