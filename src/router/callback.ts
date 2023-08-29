@@ -14,7 +14,7 @@ callback.post("/callback", async (c): Promise<void | Response> => {
         content: "**✅Done!**",
         embeds: [
           {
-            description: `> ${body.link}`,
+            fields: [{ name: "🔗Tweet URL", value: `> ${body.link}` }],
             color: 0x4db56a,
             timestamp: new Date().getTime(),
           },
