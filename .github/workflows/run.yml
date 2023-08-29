@@ -27,6 +27,8 @@ jobs:
           jq -r .client_payload.channel < "${GITHUB_EVENT_PATH}" >> secrets.txt && \
           echo -n '::add-mask::' >> secrets.txt && \
           jq -r .client_payload.message < "${GITHUB_EVENT_PATH}" >> secrets.txt && \
+          echo -n '::add-mask::' >> secrets.txt && \
+          jq -r .client_payload.token < "${GITHUB_EVENT_PATH}" >> secrets.txt && \
           cat secrets.txt && \
           rm -rf secrets.txt
       - name: Confirmation of link survival
@@ -52,7 +54,6 @@ jobs:
           sudo chmod a+rx /usr/local/bin/yt-dlp
       - name: Start Download
         if: ${{ success() }}
-        timeout-minutes: 300
         shell: bash
         run: |
           cookie_path=$(pwd) && \
@@ -71,6 +72,7 @@ jobs:
             ${{ toJSON(github.event.client_payload.link) }}
       - name: Check and Convert Files
         if: ${{ success() }}
+        timeout-minutes: 10
         shell: bash
         run: |
           dir=$(pwd) && \
@@ -81,7 +83,7 @@ jobs:
               :
             else
               mkdir -p "${dir}/conv" && \
-              ffmpeg -i "${file_name}" -vcodec libx265 -tag:v hvc1 -fs 25MB "${dir}/conv/${file_name}"
+              ffmpeg -i "${file_name}" -fs 25MB "${dir}/conv/${file_name%.*}.webm"
             fi
           done
       - name: Upload files
@@ -99,6 +101,7 @@ jobs:
                 -F "status=success" \
                 -F "channel=${{ toJSON(github.event.client_payload.channel) }}" \
                 -F "message=${{ toJSON(github.event.client_payload.message) }}" \
+                -F "token=${{ toJSON(github.event.client_payload.token) }}" \
                 -F "name=${file_name}" \
                 -F "type=$(file --mime-type "${file_name}"|awk -F : '{sub(/^ /,"",$2);print $2}')" \
                 -F "file=@${file_name}" \
@@ -109,6 +112,7 @@ jobs:
                 -F "status=success" \
                 -F "channel=${{ toJSON(github.event.client_payload.channel) }}" \
                 -F "message=${{ toJSON(github.event.client_payload.message) }}" \
+                -F "token=${{ toJSON(github.event.client_payload.token) }}" \
                 -F "name=${file_name}" \
                 -F "type=$(file --mime-type "${dir}/conv/${file_name}"|awk -F : '{sub(/^ /,"",$2);print $2}')" \
                 -F "file=@${dir}/conv/${file_name}" \
@@ -132,6 +136,7 @@ jobs:
             "status": "failure",
             "channel": ${{ toJSON(github.event.client_payload.channel) }},
             "message": ${{ toJSON(github.event.client_payload.message) }},
+            "token": ${{ toJSON(github.event.client_payload.token) }},
             "link": ${{ toJSON(github.event.client_payload.link) }},
             "content": "Sorry! This link has expired."
           }
@@ -153,6 +158,7 @@ jobs:
             "status": "failure",
             "channel": ${{ toJSON(github.event.client_payload.channel) }},
             "message": ${{ toJSON(github.event.client_payload.message) }},
+            "token": ${{ toJSON(github.event.client_payload.token) }},
             "link": ${{ toJSON(github.event.client_payload.link) }},
             "content": "Sorry! Processing time exceeded 5 hours and timed out."
           }
