@@ -22,48 +22,52 @@ bot.events.interactionCreate = async (b, interaction) => {
         ?.map((i) => i.value)
         .join("")
         .split(" ") as string[];
-      for (const content of contents) {
-        await ky
-          .post(Secrets.DISPATCH_URL, {
-            json: {
-              event_type: "download",
-              client_payload: {
-                link: `${content}`,
-                channel: `${interaction.channelId}`,
-                message: `${interaction.id}`,
-                token: `${interaction.token}`,
+      await Promise.all(
+        contents.map(
+          async (content: string) =>
+            await ky.post(Secrets.DISPATCH_URL, {
+              json: {
+                event_type: "download",
+                client_payload: {
+                  link: `${content}`,
+                  channel: `${interaction.channelId}`,
+                  message: `${interaction.id}`,
+                  token: `${interaction.token}`,
+                },
               },
-            },
-            headers: {
-              Authorization: `token ${Secrets.GITHUB_TOKEN}`,
-              Accept: "application/vnd.github.everest-preview+json",
-            },
-          })
-          .then(() =>
+              headers: {
+                Authorization: `token ${Secrets.GITHUB_TOKEN}`,
+                Accept: "application/vnd.github.everest-preview+json",
+              },
+            })
+        )
+      )
+        .then(
+          (): Promise<void> =>
             b.helpers.sendInteractionResponse(
               interaction.id,
               interaction.token,
               {
                 type: InteractionResponseTypes.ChannelMessageWithSource,
                 data: {
-                  content: `⏳Starting...\n${content}`,
+                  content: `⏳Starting...\n${contents.join("\n")}`,
                 },
               }
             )
-          )
-          .catch(() =>
+        )
+        .catch(
+          (): Promise<void> =>
             b.helpers.sendInteractionResponse(
               interaction.id,
               interaction.token,
               {
                 type: InteractionResponseTypes.ChannelMessageWithSource,
                 data: {
-                  content: `⚠️Error\n${content}`,
+                  content: `⚠️Error\n${contents.join("\n")}`,
                 },
               }
             )
-          );
-      }
+        );
       break;
     }
     default: {
