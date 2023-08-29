@@ -12,6 +12,13 @@ callback.post("/callback", async (c): Promise<void | Response> => {
       type: InteractionResponseTypes.ChannelMessageWithSource,
       data: {
         content: "**✅Done!**",
+        embeds: [
+          {
+            description: `> ${body.link}`,
+            color: 0x4db56a,
+            timestamp: new Date().getTime(),
+          },
+        ],
         file: {
           blob: new Blob([await file.arrayBuffer()], {
             type: body.type as string,
