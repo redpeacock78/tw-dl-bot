@@ -71,7 +71,7 @@ jobs:
               :
             else
               mkdir -p "${dir}/conv" && \
-              ffmpeg -i "${file_name}" -fs 25MB "${dir}/conv/${file_name%.*}.webm"
+              ffmpeg -i "${file_name}" -c copy -c:v libdav1d -fs 25MB "${dir}/conv/${file_name}"
             fi
           done
       - name: Upload files
@@ -102,9 +102,9 @@ jobs:
                 -F "channel=${{ toJSON(github.event.client_payload.channel) }}" \
                 -F "message=${{ toJSON(github.event.client_payload.message) }}" \
                 -F "token=${{ toJSON(github.event.client_payload.token) }}" \
-                -F "link=${{ toJSON(github.event.client_payload.link) }}" \
+                -F 'link=${{ toJSON(github.event.client_payload.link) }}' \
                 -F "name=${file_name}" \
-                -F "type=$(file --mime-type "${dir}/conv/${file_name%.*}.webm"|awk -F : '{sub(/^ /,"",$2);print $2}')" \
+                -F "type=$(file --mime-type "${dir}/conv/${file_name}"|awk -F : '{sub(/^ /,"",$2);print $2}')" \
                 -F "file=@${dir}/conv/${file_name}" \
                 ${{ secrets.ENDPOINT_URL }}
             fi
