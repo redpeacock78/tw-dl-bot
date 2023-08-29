@@ -11,7 +11,7 @@ callback.post("/callback", async (c): Promise<void | Response> => {
     return await sendFollowupMessage(bot, body.token as string, {
       type: InteractionResponseTypes.ChannelMessageWithSource,
       data: {
-        content: `✅Done!`,
+        content: "**✅Done!**",
         file: {
           blob: new Blob([await file.arrayBuffer()], {
             type: body.type as string,
