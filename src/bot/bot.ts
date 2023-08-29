@@ -50,7 +50,7 @@ bot.events.interactionCreate = async (b, interaction) => {
               {
                 type: InteractionResponseTypes.ChannelMessageWithSource,
                 data: {
-                  content: `⏳Starting...\n${contents.join("\n")}`,
+                  content: `**⏳Starting...**\n${contents.join("\n")}`,
                 },
               }
             )
@@ -63,7 +63,7 @@ bot.events.interactionCreate = async (b, interaction) => {
               {
                 type: InteractionResponseTypes.ChannelMessageWithSource,
                 data: {
-                  content: `⚠️Error\n${contents.join("\n")}`,
+                  content: `**⚠️Error**\n${contents.join("\n")}`,
                 },
               }
             )
