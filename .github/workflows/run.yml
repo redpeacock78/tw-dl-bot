@@ -49,13 +49,6 @@ jobs:
           cd download && \
           yt-dlp --quiet \
             --cookies ${cookie_path}/cookie.txt \
-            ${{ toJSON(github.event.client_payload.link) }} 2>/dev/null || \
-          yt-dlp --quiet \
-            --cookies ${cookie_path}/cookie.txt \
-            -o "%(title).200s.%(ext)s" \
-            ${{ toJSON(github.event.client_payload.link) }} 2>/dev/null || \
-          yt-dlp --quiet \
-            --cookies ${cookie_path}/cookie.txt \
             -o "%(id)s.%(ext)s" \
             ${{ toJSON(github.event.client_payload.link) }}
       - name: Check and Convert Files
