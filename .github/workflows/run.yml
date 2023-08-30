@@ -92,9 +92,9 @@ jobs:
               curl -s -X POST \
                 -H "Content-type: multipart/form-data" \
                 -F "status=success" \
-                -F "channel=${{ toJSON(github.event.client_payload.channel) }}" \
-                -F "message=${{ toJSON(github.event.client_payload.message) }}" \
-                -F "token=${{ toJSON(github.event.client_payload.token) }}" \
+                -F 'channel=${{ toJSON(github.event.client_payload.channel) }}' \
+                -F 'message=${{ toJSON(github.event.client_payload.message) }}' \
+                -F 'token=${{ toJSON(github.event.client_payload.token) }}' \
                 -F 'link=${{ toJSON(github.event.client_payload.link) }}' \
                 -F "name=${file_name}" \
                 -F "type=$(file --mime-type "${dir}/conv/${file_name}"|awk -F : '{sub(/^ /,"",$2);print $2}')" \
