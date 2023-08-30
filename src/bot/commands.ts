@@ -1,6 +1,10 @@
 import { CreateSlashApplicationCommand } from "discordeno";
 
-export const Commands = {
+type CommandsType = {
+  dlCommand: CreateSlashApplicationCommand;
+};
+
+export const Commands: CommandsType = {
   dlCommand: {
     name: "dl",
     description: "Download tweet video",
@@ -13,5 +17,5 @@ export const Commands = {
         description: "Tweet URL",
       },
     ],
-  } as CreateSlashApplicationCommand,
+  },
 };
