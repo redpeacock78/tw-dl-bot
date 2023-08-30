@@ -11,10 +11,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: "14"
       - name: Create directory
         shell: bash
         run: mkdir -p download
@@ -38,7 +34,7 @@ jobs:
         if: ${{ success() }}
         shell: bash
         run: |
-          sudo curl -sL https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
+          sudo curl -sL https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp && \
           sudo chmod a+rx /usr/local/bin/yt-dlp
       - name: Start Download
         if: ${{ success() }}
