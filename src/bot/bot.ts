@@ -22,6 +22,13 @@ bot.events.interactionCreate = async (b, interaction) => {
         ?.map((i) => i.value)
         .join("")
         .split(" ") as string[];
+      await b.helpers.sendInteractionResponse(
+        interaction.id,
+        interaction.token,
+        {
+          type: InteractionResponseTypes.DeferredChannelMessageWithSource,
+        }
+      );
       await Promise.all(
         contents.map(
           async (content: string) =>
@@ -43,21 +50,17 @@ bot.events.interactionCreate = async (b, interaction) => {
         )
       )
         .then(
-          (): Promise<void> =>
-            b.helpers.sendInteractionResponse(
-              interaction.id,
-              interaction.token,
-              {
-                type: InteractionResponseTypes.ChannelMessageWithSource,
-                data: {
-                  content: `**⏳Starting...**\n${contents.join("\n")}`,
-                },
-              }
-            )
+          async () =>
+            await b.helpers.sendFollowupMessage(interaction.token, {
+              type: InteractionResponseTypes.ChannelMessageWithSource,
+              data: {
+                content: `**⏳Starting...**\n${contents.join("\n")}`,
+              },
+            })
         )
         .catch(
-          (): Promise<void> =>
-            b.helpers.sendInteractionResponse(
+          async (): Promise<void> =>
+            await b.helpers.sendInteractionResponse(
               interaction.id,
               interaction.token,
               {
