@@ -60,7 +60,7 @@ jobs:
               :
             else
               mkdir -p "${dir}/conv" && \
-              ffmpeg -i "${file_name}" -c:a copy -r 30 -vcodec libx264 -fs 25MB "${dir}/conv/${file_name}"
+              ffmpeg -i "${file_name}" -c:v libvpx -crf 10 -b:v 1M -c:a libvorbis -fs 25MB "${dir}/conv/${file_name%.*}.webm"
             fi
           done
       - name: Upload files
