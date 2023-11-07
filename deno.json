@@ -2,7 +2,7 @@
   "lock": false,
   "tasks": {
     "dev": "denon dev",
-    "cache": "deno cache src/main.ts",
+    "cache": "deno cache --import-map import_map.json src/main.ts",
     "lint": "deno lint && deno run --allow-env --allow-read --allow-sys tools/textlint.ts *",
     "lint:watch": "denon lint",
     "start": "deno run -A --v8-flags=--expose-gc --no-check --import-map import_map.json src/main.ts",
