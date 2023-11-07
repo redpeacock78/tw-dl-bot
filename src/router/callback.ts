@@ -1,12 +1,19 @@
 import { Hono } from "hono";
 import bot from "@bot/bot.ts";
+import { BodyData } from "hono-utils-body";
 import { InteractionResponseTypes } from "discordeno";
 
 const callback = new Hono();
 
-callback.post("/callback", async (c): Promise<void | Response> => {
-  const body = await c.req.parseBody();
+callback.post("/callback", async (c): Promise<void> => {
+  let body: BodyData | null = await c.req.parseBody();
   if (body.status === "success") {
+    let blobData: Blob | null = new Blob(
+      [await (body.file as File).arrayBuffer()],
+      {
+        type: `${body.type}`,
+      }
+    );
     return await bot.helpers
       .sendFollowupMessage(`${body.token}`, {
         type: InteractionResponseTypes.ChannelMessageWithSource,
@@ -20,15 +27,20 @@ callback.post("/callback", async (c): Promise<void | Response> => {
             },
           ],
           file: {
-            blob: new Blob([await (body.file as File).arrayBuffer()], {
-              type: `${body.type}`,
-            }),
+            blob: blobData,
             name: `${body.name}`,
           },
         },
       })
-      .then(() => c.text(""))
-      .catch(() => c.status(500));
+      .then(() => {
+        body = null;
+        blobData = null;
+        return c.status(204);
+      })
+      .catch(() => {
+        body = null;
+        c.status(500);
+      });
   } else {
     return await bot.helpers
       .sendFollowupMessage(`${body.token}`, {
@@ -44,8 +56,14 @@ callback.post("/callback", async (c): Promise<void | Response> => {
           ],
         },
       })
-      .then(() => c.text(""))
-      .catch(() => c.status(500));
+      .then(() => {
+        body = null;
+        return c.status(204);
+      })
+      .catch(() => {
+        body = null;
+        c.status(500);
+      });
   }
 });
 
