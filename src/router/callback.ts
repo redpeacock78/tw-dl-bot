@@ -35,11 +35,13 @@ callback.post("/callback", async (c): Promise<void> => {
       .then(() => {
         body = null;
         blobData = null;
+        gc();
         return c.status(204);
       })
       .catch(() => {
         body = null;
         blobData = null;
+        gc();
         c.status(500);
       });
   } else {
@@ -59,10 +61,12 @@ callback.post("/callback", async (c): Promise<void> => {
       })
       .then(() => {
         body = null;
+        gc();
         return c.status(204);
       })
       .catch(() => {
         body = null;
+        gc();
         c.status(500);
       });
   }
