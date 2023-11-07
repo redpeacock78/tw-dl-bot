@@ -39,6 +39,7 @@ callback.post("/callback", async (c): Promise<void> => {
       })
       .catch(() => {
         body = null;
+        blobData = null;
         c.status(500);
       });
   } else {
