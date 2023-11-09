@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import bot from "@bot/bot.ts";
+import fileToBlob from "@utils/fileToBlob.ts";
 import { BodyData } from "hono-utils-body";
 import { InteractionResponseTypes } from "discordeno";
 
@@ -8,12 +9,7 @@ const callback = new Hono();
 callback.post("/callback", async (c): Promise<void> => {
   let body: BodyData | null = await c.req.parseBody();
   if (body.status === "success") {
-    let blobData: Blob | null = new Blob(
-      [await (body.file as File).arrayBuffer()],
-      {
-        type: `${body.type}`,
-      }
-    );
+    let blobData: Blob | null = await fileToBlob(body.file as File);
     return await bot.helpers
       .sendFollowupMessage(`${body.token}`, {
         type: InteractionResponseTypes.ChannelMessageWithSource,
