@@ -17,7 +17,10 @@ callback.post("/callback", async (c): Promise<void> => {
           content: "**✅Done!**",
           embeds: [
             {
-              fields: [{ name: "🔗Tweet URL", value: `> ${body.link}` }],
+              fields: [
+                { name: "🎞 Video Name", value: `> \`\`\`${body.name}\`\`\`` },
+                { name: "🔗Tweet URL", value: `> ${body.link}` },
+              ],
               color: 0x4db56a,
               timestamp: new Date().getTime(),
             },
