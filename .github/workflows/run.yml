@@ -57,7 +57,7 @@ jobs:
           cd download && \
           yt-dlp --quiet \
             -R infinite \
-            -f "bv[filesize<=25M][ext=mp4]+ba[ext=m4a]" \
+            -f "bv[filesize<=25M]" \
             --merge-output-format mp4 \
             --cookies ${cookie_path}/cookie.txt \
             -o "%(id)s_%(autonumber)s.%(ext)s" \
