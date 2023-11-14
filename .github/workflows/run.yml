@@ -56,8 +56,7 @@ jobs:
           echo "${{ secrets.TWITTER_COOKIES }}" >> cookie.txt && \
           cd download && \
           yt-dlp --quiet \
-            -R infinite \
-            -S "codec:h264" \
+            -R infinite \a
             -f "bv[filesize<=25M][ext=mp4]+ba[ext=m4a]" \
             --merge-output-format mp4 \
             --cookies ${cookie_path}/cookie.txt \
