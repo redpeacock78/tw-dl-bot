@@ -39,7 +39,7 @@ callback.post("/callback", async (c): Promise<void> => {
       .catch(() => {
         body = null;
         blobData = null;
-        return c.status(500);
+        c.status(500);
       });
   } else {
     return await bot.helpers
@@ -62,7 +62,7 @@ callback.post("/callback", async (c): Promise<void> => {
       })
       .catch(() => {
         body = null;
-        return c.status(500);
+        c.status(500);
       });
   }
 });
