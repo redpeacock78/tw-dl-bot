@@ -36,7 +36,6 @@ jobs:
         run: |
           sudo curl -sL https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp && \
           sudo chmod a+rx /usr/local/bin/yt-dlp
-          type ffmpeg
       - name: Confirmation of link survival
         id: link_status
         shell: bash
@@ -56,7 +55,7 @@ jobs:
           cookie_path=$(pwd) && \
           echo "${{ secrets.TWITTER_COOKIES }}" >> cookie.txt && \
           cd download && \
-          until yt-dlp --quiet --cookies ${cookie_path}/cookie.txt --downloader ffmpeg -o "%(id)s_%(autonumber)s.%(ext)s" ${{ toJSON(github.event.client_payload.link) }}; do
+          until yt-dlp --quiet --cookies ${cookie_path}/cookie.txt --downloader $(type ffmpeg|awk '{print $3}') -o "%(id)s_%(autonumber)s.%(ext)s" ${{ toJSON(github.event.client_payload.link) }}; do
             sleep 1
           done
       - name: Check and Convert Files
