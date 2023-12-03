@@ -27,18 +27,17 @@ jobs:
           jq -r .client_payload.token < "${GITHUB_EVENT_PATH}" >> secrets.txt && \
           cat secrets.txt && \
           rm -rf secrets.txt
-      - name: Setup ffmpeg
-        uses: FedericoCarboni/setup-ffmpeg@v2
-        if: ${{ success() }}
       - name: Setup Python3
+        if: ${{ success() }}
         uses: actions/setup-python@v4
         with:
           python-version: "3.x"
-      - name: Install yt-dlp
+      - name: Setup Dependencies
         if: ${{ success() }}
         shell: bash
         run: |
-          python3 -m pip install -U yt-dlp
+          type ffmpeg > dev/null 2>&1 || sudo apt-get install -y ffmpeg
+          type yt-dlp > dev/null 2>&1 || python3 -m pip install -U yt-dlp
       - name: Confirmation of link survival
         id: link_status
         shell: bash
