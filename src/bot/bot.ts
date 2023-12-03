@@ -1,7 +1,12 @@
-import ky from "ky";
+import ky, { KyResponse } from "ky";
 import { Secrets } from "@libs/secrets.ts";
 import { Commands } from "@bot/commands.ts";
-import { createBot, Intents, InteractionResponseTypes } from "discordeno";
+import {
+  createBot,
+  Intents,
+  InteractionResponseTypes,
+  Message,
+} from "discordeno";
 
 const bot = createBot({
   token: Secrets.DISCORD_TOKEN,
@@ -31,46 +36,45 @@ bot.events.interactionCreate = async (b, interaction) => {
       );
       await Promise.all(
         contents.map(
-          async (content: string) =>
-            await ky.post(Secrets.DISPATCH_URL, {
-              json: {
-                event_type: "download",
-                client_payload: {
-                  link: `${content}`,
-                  channel: `${interaction.channelId}`,
-                  message: `${interaction.id}`,
-                  token: `${interaction.token}`,
-                },
-              },
-              headers: {
-                Authorization: `token ${Secrets.GITHUB_TOKEN}`,
-                Accept: "application/vnd.github.everest-preview+json",
-              },
-            })
-        )
-      )
-        .then(
-          async () =>
-            await b.helpers.sendFollowupMessage(interaction.token, {
-              type: InteractionResponseTypes.ChannelMessageWithSource,
-              data: {
-                content: `**⏳Starting...**\n${contents.join("\n")}`,
-              },
-            })
-        )
-        .catch(
-          async (): Promise<void> =>
-            await b.helpers.sendInteractionResponse(
-              interaction.id,
-              interaction.token,
-              {
+          async (content: string): Promise<Message | KyResponse> =>
+            await b.helpers
+              .sendFollowupMessage(interaction.token, {
                 type: InteractionResponseTypes.ChannelMessageWithSource,
                 data: {
-                  content: `**⚠️Error**\n${contents.join("\n")}`,
+                  content: `**⏳Starting...**\n${contents.join("\n")}`,
                 },
-              }
-            )
-        );
+              })
+              .then(async (i: Message): Promise<Message | KyResponse> => {
+                const message: Message = i;
+                return await ky
+                  .post(Secrets.DISPATCH_URL, {
+                    json: {
+                      event_type: "download",
+                      client_payload: {
+                        link: `${content}`,
+                        channel: `${message.channelId}`,
+                        message: `${message.id}`,
+                        token: `${interaction.token}`,
+                      },
+                    },
+                    headers: {
+                      Authorization: `token ${Secrets.GITHUB_TOKEN}`,
+                      Accept: "application/vnd.github.everest-preview+json",
+                    },
+                  })
+                  .catch(
+                    async (): Promise<Message> =>
+                      await b.helpers.editMessage(
+                        message.channelId,
+                        message.id,
+                        {
+                          content: `**⚠️Error**\n${contents.join("\n")}`,
+                        }
+                      )
+                  );
+              })
+        )
+      );
       break;
     }
     default: {
