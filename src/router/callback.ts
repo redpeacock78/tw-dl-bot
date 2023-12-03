@@ -9,7 +9,6 @@ callback.post("/callback", async (c): Promise<void> => {
   let body: BodyData | null = await c.req.parseBody();
   if (body.status === "success") {
     let blobData: Blob | null = await fileToBlob(body.file as File);
-    console.log(body);
     return await bot.helpers
       .editFollowupMessage(`${body.token}`, `${body.message}`, {
         content: "**✅Done!**",
@@ -29,14 +28,11 @@ callback.post("/callback", async (c): Promise<void> => {
         },
       })
       .then((): void => {
-        console.log("OK");
         body = null;
         blobData = null;
         return c.status(204);
       })
-      .catch((e): void => {
-        console.log("NG");
-        console.log(e);
+      .catch((): void => {
         body = null;
         blobData = null;
         return c.status(500);
