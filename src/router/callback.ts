@@ -11,7 +11,7 @@ callback.post("/callback", async (c): Promise<void> => {
     let blobData: Blob | null = await fileToBlob(body.file as File);
     console.log(body);
     return await bot.helpers
-      .editMessage(`${body.channelId}`, `${body.message}`, {
+      .editMessage(BigInt(`${body.channelId}`), BigInt(`${body.message}`), {
         content: "**✅Done!**",
         embeds: [
           {
@@ -42,7 +42,7 @@ callback.post("/callback", async (c): Promise<void> => {
       });
   } else {
     return await bot.helpers
-      .editMessage(`${body.channelId}`, `${body.message}`, {
+      .editMessage(BigInt(`${body.channelId}`), BigInt(`${body.message}`), {
         content: "**❌Failure!**",
         embeds: [
           {
