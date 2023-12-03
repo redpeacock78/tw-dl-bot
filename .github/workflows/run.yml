@@ -34,10 +34,10 @@ jobs:
           python-version: "3.x"
       - name: Setup Dependencies
         if: ${{ success() }}
-        shell: bash
-        run: |
-          type ffmpeg > dev/null 2>&1 || sudo apt-get install -y ffmpeg
-          type yt-dlp > dev/null 2>&1 || python3 -m pip install -U yt-dlp
+        uses: tecolicom/actions-use-any-tools@v1
+        with:
+          apt: ffmpeg
+          python: yt-dlp
       - name: Confirmation of link survival
         id: link_status
         shell: bash
