@@ -86,22 +86,22 @@ jobs:
           IFS=$'\n' && \
           if (( "$(ls|wc -l)" > 1 )); then
             options=""
-            options+="-F 'status=success' \\"
-            options+="-F 'commandType=dl' \\"
-            options+="-F 'actionType=multi' \\"
-            options+="-F 'channel=${{ toJSON(github.event.client_payload.channel) }}' \\"
-            options+="-F 'message=${{ toJSON(github.event.client_payload.message) }}' \\"
-            options+="-F 'token=${{ toJSON(github.event.client_payload.token) }}' \\"
-            options+="-F 'link=${{ toJSON(github.event.client_payload.link) }}' \\"
+            options+="-F 'status=success' "
+            options+="-F 'commandType=dl' "
+            options+="-F 'actionType=multi' "
+            options+="-F 'channel=${{ toJSON(github.event.client_payload.channel) }}' "
+            options+="-F 'message=${{ toJSON(github.event.client_payload.message) }}' "
+            options+="-F 'token=${{ toJSON(github.event.client_payload.token) }}' "
+            options+="-F 'link=${{ toJSON(github.event.client_payload.link) }}' "
             index=0
             for file_name in $(ls); do
               index=$((index++))
               if (( "$(wc -c < "${file_name}")" <= 26214400 )); then
-                options+="-F "name${index}=${file_name}" \\"
-                options+="-F "file${index}=@${file_name}" \\"
+                options+="-F "name${index}=${file_name}" "
+                options+="-F "file${index}=@${file_name}" "
               else
-                options+="-F "name${index}=${file_name%.*}.webm" \\"
-                options+="-F "file${index}=@${dir}/conv/${file_name%.*}.webm" \\"
+                options+="-F "name${index}=${file_name%.*}.webm" "
+                options+="-F "file${index}=@${dir}/conv/${file_name%.*}.webm" "
               fi
             done
             curl -s -X POST -H "Content-type: multipart/form-data" ${options} ${{ secrets.ENDPOINT_URL }}
