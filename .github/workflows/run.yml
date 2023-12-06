@@ -68,7 +68,8 @@ jobs:
               --cookies ${cookie_path}/cookie.txt \
               --downloader $(type ffmpeg | awk '{print $3}') \
               -o "%(id)s_%(autonumber)s.%(ext)s" \
-              ${{ toJSON(github.event.client_payload.link) }} && flag=true
+              ${{ toJSON(github.event.client_payload.link) }} && \
+            flag=true
             "${flag}" && let $((success++)) || let $((retry++))
             sleep 1
           done
