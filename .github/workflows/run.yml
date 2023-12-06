@@ -36,8 +36,8 @@ jobs:
         if: ${{ success() }}
         shell: bash
         run: |
-          type ffmpeg > dev/null 2>&1 || sudo apt-get install -y ffmpeg
-          type yt-dlp > dev/null 2>&1 || python3 -m pip install -U yt-dlp
+          type ffmpeg > /dev/null 2>&1 || sudo apt-get install -y ffmpeg
+          type yt-dlp > /dev/null 2>&1 || python3 -m pip install -U yt-dlp
       - name: Confirmation of link survival
         id: link_status
         shell: bash
@@ -69,7 +69,7 @@ jobs:
           dir=$(pwd) && \
           cd download && \
           IFS=$'\n' && \
-          for file_name in $(ls); do
+          for file_name in $(ls -tr); do
             if (( "$(wc -c < "${file_name}")" <= 26214400 )); then
               :
             else
