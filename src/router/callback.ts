@@ -80,11 +80,9 @@ const callbackSuccessActions: callbackSuccessActionsObject = {
       ): Promise<void> => {
         let filesArray: (string | File)[] | null = Object.keys(body)
           .filter((i: string): RegExpMatchArray | null => i.match(/^file/))
-          .sort()
           .map((i: string): string | File => (body as BodyData)[i]);
         let namesArray: (string | File)[] | null = Object.keys(body)
           .filter((i: string): RegExpMatchArray | null => i.match(/^name/))
-          .sort()
           .map((i: string): string | File => (body as BodyData)[i]);
         let fileContentArray: FileContent[] | null = await Promise.all(
           namesArray.map(async (i, n) => {
@@ -122,8 +120,7 @@ const callbackSuccessActions: callbackSuccessActionsObject = {
             fileContentArray = null;
             return c.status(204);
           })
-          .catch((e): void => {
-            console.log(e);
+          .catch((): void => {
             filesArray = null;
             namesArray = null;
             fileContentArray = null;
@@ -167,7 +164,6 @@ callback.post(
   ): Promise<void> => {
     let body: bodyDataObject | null =
       (await c.req.parseBody()) as bodyDataObject;
-    console.log(body);
     return body.status === "success"
       ? await callbackSuccessActions[body.status][body.commandType]
           [body.actionType](c, body)
