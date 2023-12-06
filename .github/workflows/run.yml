@@ -102,11 +102,12 @@ jobs:
               else
                 options+="-F "name${index}=${file_name%.*}.webm" \"
                 options+="-F "file${index}=@${dir}/conv/${file_name%.*}.webm" \"
-              fi && \
-              curl -s -X POST -H "Content-type: multipart/form-data" ${options} ${{ secrets.ENDPOINT_URL }}
+              fi
             done
+            curl -s -X POST -H "Content-type: multipart/form-data" ${options} ${{ secrets.ENDPOINT_URL }}
           else
-            if (( "$(wc -c < $(ls))" <= 26214400 )); then
+            file_name="$(ls)" && \
+            if (( "$(wc -c < ${file_name})" <= 26214400 )); then
               curl -s -X POST \
                 -H "Content-type: multipart/form-data" \
                 -F "status=success" \
@@ -116,11 +117,10 @@ jobs:
                 -F 'message=${{ toJSON(github.event.client_payload.message) }}' \
                 -F 'token=${{ toJSON(github.event.client_payload.token) }}' \
                 -F 'link=${{ toJSON(github.event.client_payload.link) }}' \
-                -F "name=$(ls)" \
-                -F "file${index}=@$(ls)" \
+                -F "name=${file_name}" \
+                -F "file=@${file_name}" \
                 ${{ secrets.ENDPOINT_URL }}
             else
-              file_name="$(ls)" && \
               curl -s -X POST \
                 -H "Content-type: multipart/form-data" \
                 -F "status=success" \
