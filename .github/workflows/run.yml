@@ -95,7 +95,7 @@ jobs:
             options+="-F 'link=${{ toJSON(github.event.client_payload.link) }}' \\"
             index=0
             for file_name in $(ls); do
-              index++
+              index=$((index++))
               if (( "$(wc -c < "${file_name}")" <= 26214400 )); then
                 options+="-F "name${index}=${file_name}" \\"
                 options+="-F "file${index}=@${file_name}" \\"
