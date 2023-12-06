@@ -117,7 +117,7 @@ jobs:
                 -F 'message=${{ toJSON(github.event.client_payload.message) }}' \
                 -F 'token=${{ toJSON(github.event.client_payload.token) }}' \
                 -F 'link=${{ toJSON(github.event.client_payload.link) }}' \
-                -F "name=${file_name}" \
+                -F "name=$(ls)" \
                 -F "file${index}=@$(ls)" \
                 ${{ secrets.ENDPOINT_URL }}
             else
