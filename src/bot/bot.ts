@@ -51,6 +51,7 @@ bot.events.interactionCreate = async (b, interaction) => {
                     json: {
                       event_type: "download",
                       client_payload: {
+                        commandType: "dl",
                         link: `${content}`,
                         channel: `${message.channelId}`,
                         message: `${message.id}`,
