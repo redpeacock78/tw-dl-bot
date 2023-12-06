@@ -83,6 +83,19 @@ const callbackSuccessActions: callbackSuccessActionsObject = {
           .map((i: string): string | File => (body as BodyData)[i]);
         let namesArray: (string | File)[] | null = Object.keys(body)
           .filter((i: string): RegExpMatchArray | null => i.match(/^name/))
+          .sort((a: string, b: string): number => {
+            if (
+              Number(a.replace(/^.*_/, "").replace(/\..*$/, "")) <
+              Number(b.replace(/^.*_/, "").replace(/\..*$/, ""))
+            )
+              return -1;
+            if (
+              Number(a.replace(/^.*_/, "").replace(/\..*$/, "")) >
+              Number(b.replace(/^.*_/, "").replace(/\..*$/, ""))
+            )
+              return 1;
+            return 0;
+          })
           .map((i: string): string | File => (body as BodyData)[i]);
         let fileContentArray: FileContent[] | null = await Promise.all(
           namesArray.map(async (i, n) => {
@@ -94,7 +107,7 @@ const callbackSuccessActions: callbackSuccessActionsObject = {
             };
           })
         );
-        console.log(filesArray, namesArray);
+        console.log(body, filesArray, namesArray);
         return await bot.helpers
           .editFollowupMessage(`${body.token}`, `${body.message}`, {
             content: "**✅Done!**",
