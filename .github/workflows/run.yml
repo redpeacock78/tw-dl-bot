@@ -57,7 +57,7 @@ jobs:
           cookie_path=$(pwd) && \
           echo "${{ secrets.TWITTER_COOKIES }}" >> cookie.txt && \
           cd download && \
-          until (yt-dlp --q -R infinite --fragment-retries infinite --cookies ${cookie_path}/cookie.txt --downloader curl -o "%(id)s_%(autonumber)s.%(ext)s" ${{ toJSON(github.event.client_payload.link) }} || exit 1); do
+          until (yt-dlp --q -R infinite --fragment-retries infinite --cookies ${cookie_path}/cookie.txt --downloader curl --downloader "https,m3u8:native" -o "%(id)s_%(autonumber)s.%(ext)s" ${{ toJSON(github.event.client_payload.link) }} || exit 1); do
             rm -rf * && \ 
             sleep 1
           done
