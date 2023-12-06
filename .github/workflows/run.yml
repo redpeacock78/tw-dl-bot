@@ -61,7 +61,7 @@ jobs:
           echo "${{ secrets.TWITTER_COOKIES }}" >> cookie.txt && \
           cd download && \
           until (( "${success}" == 3 )) || (( "${retry}" == 10 )); do
-            yt-dlp -q \
+            yt-dlp \
               -R infinite \
               --fragment-retries infinite \
               --force-overwrites \
