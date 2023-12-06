@@ -94,6 +94,7 @@ const callbackSuccessActions: callbackSuccessActionsObject = {
             };
           })
         );
+        console.log(filesArray, namesArray);
         return await bot.helpers
           .editFollowupMessage(`${body.token}`, `${body.message}`, {
             content: "**✅Done!**",
