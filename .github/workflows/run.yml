@@ -87,6 +87,7 @@ jobs:
           if (( "$(ls|wc -l)" > 1 )); then
             options=""
             options+="-H "Content-type: multipart/form-data" \"
+            options+="-F "status=success" \"
             options+="-F "commandType=dl" \"
             options+="-F "actionType=multi" \"
             options+="-F 'channel=${{ toJSON(github.event.client_payload.channel) }}' \"
@@ -109,6 +110,7 @@ jobs:
             if (( "$(wc -c < $(ls))" <= 26214400 )); then
               curl -s -X POST \
                 -H "Content-type: multipart/form-data" \
+                -F "status=success" \
                 -F "commandType=dl" \
                 -F "actionType=single" \
                 -F 'channel=${{ toJSON(github.event.client_payload.channel) }}' \
@@ -121,6 +123,7 @@ jobs:
             else
               curl -s -X POST \
                 -H "Content-type: multipart/form-data" \
+                -F "status=success" \
                 -F "commandType=dl" \
                 -F "actionType=single" \
                 -F 'channel=${{ toJSON(github.event.client_payload.channel) }}' \
