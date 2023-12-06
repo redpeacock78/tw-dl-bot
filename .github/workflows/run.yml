@@ -127,7 +127,7 @@ jobs:
                 -F 'message=${{ toJSON(github.event.client_payload.message) }}' \
                 -F 'token=${{ toJSON(github.event.client_payload.token) }}' \
                 -F 'link=${{ toJSON(github.event.client_payload.link) }}' \
-                -F "name${index}=${file_name%.*}.webm" \
+                -F "name=${file_name%.*}.webm" \
                 -F "file=@${dir}/conv/${file_name%.*}.webm" \
                 ${{ secrets.ENDPOINT_URL }}
             fi
