@@ -118,9 +118,10 @@ jobs:
                 -F 'token=${{ toJSON(github.event.client_payload.token) }}' \
                 -F 'link=${{ toJSON(github.event.client_payload.link) }}' \
                 -F "name=${file_name}" \
-                -F "file${index}=@${file_name}" \
+                -F "file${index}=@$(ls)" \
                 ${{ secrets.ENDPOINT_URL }}
             else
+              file_name="$(ls)" && \
               curl -s -X POST \
                 -H "Content-type: multipart/form-data" \
                 -F "status=success" \
