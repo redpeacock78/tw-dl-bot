@@ -94,7 +94,7 @@ jobs:
             options+=( -F 'token=${{ toJSON(github.event.client_payload.token) }}' )
             options+=( -F 'link=${{ toJSON(github.event.client_payload.link) }}' )
             index=0
-            for file_name in $(ls -t); do
+            for file_name in $(ls -tr); do
               num=$((index++))
               if (( "$(wc -c < "${file_name}")" <= 26214400 )); then
                 options+=( -F "name${num}=${file_name}" )
