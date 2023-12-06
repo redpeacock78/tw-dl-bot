@@ -95,12 +95,13 @@ jobs:
             options+=( -F 'link=${{ toJSON(github.event.client_payload.link) }}' )
             index=0
             for file_name in $(ls); do
+              num=$((index++))
               if (( "$(wc -c < "${file_name}")" <= 26214400 )); then
-                options+=( -F "name$((index++))=${file_name}" )
-                options+=( -F "file$((index++))=@${file_name}" )
+                options+=( -F "name${num}=${file_name}" )
+                options+=( -F "file${num}=@${file_name}" )
               else
-                options+=( -F "name$((index++))=${file_name%.*}.webm" )
-                options+=( -F "file$((index++))=@${dir}/conv/${file_name%.*}.webm" )
+                options+=( -F "name${num}=${file_name%.*}.webm" )
+                options+=( -F "file${num}=@${dir}/conv/${file_name%.*}.webm" )
               fi
             done
             curl -s -X POST -H "Content-type: multipart/form-data" "${options[@]}" ${{ secrets.ENDPOINT_URL }}
