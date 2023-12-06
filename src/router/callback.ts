@@ -83,20 +83,7 @@ const callbackSuccessActions: callbackSuccessActionsObject = {
           .map((i: string): string | File => (body as BodyData)[i]);
         let namesArray: (string | File)[] | null = Object.keys(body)
           .filter((i: string): RegExpMatchArray | null => i.match(/^name/))
-          .map((i: string): string | File => (body as BodyData)[i])
-          .sort((a: string | File, b: string | File): number => {
-            if (
-              Number((a as string).replace(/^.*_/, "").replace(/\..*$/, "")) <
-              Number((b as string).replace(/^.*_/, "").replace(/\..*$/, ""))
-            )
-              return -1;
-            if (
-              Number((a as string).replace(/^.*_/, "").replace(/\..*$/, "")) >
-              Number((b as string).replace(/^.*_/, "").replace(/\..*$/, ""))
-            )
-              return 1;
-            return 0;
-          });
+          .map((i: string): string | File => (body as BodyData)[i]);
         let fileContentArray: FileContent[] | null = await Promise.all(
           namesArray.map(async (i, n) => {
             return {
