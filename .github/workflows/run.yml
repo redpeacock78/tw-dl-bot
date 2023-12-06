@@ -58,6 +58,7 @@ jobs:
           echo "${{ secrets.TWITTER_COOKIES }}" >> cookie.txt && \
           cd download && \
           until yt-dlp --q --cookies ${cookie_path}/cookie.txt --downloader $(type ffmpeg|awk '{print $3}') -o "%(id)s_%(autonumber)s.%(ext)s" ${{ toJSON(github.event.client_payload.link) }}; do
+            rm -rf * && \ 
             sleep 1
           done
       - name: Check and Convert Files
