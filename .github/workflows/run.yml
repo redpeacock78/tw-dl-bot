@@ -70,7 +70,11 @@ jobs:
               -o "%(id)s_%(autonumber)s.%(ext)s" \
               ${{ toJSON(github.event.client_payload.link) }} && \
             flag=true
-            "${flag}" && let $((success++)) || let $((retry++))
+            if "${flag}"; then
+              ((success++)) || true
+            else
+              ((retry++)) || true
+            fi
             sleep 1
           done
       - name: Check and Convert Files
