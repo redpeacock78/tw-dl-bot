@@ -52,6 +52,7 @@ jobs:
           fi
       - name: Start Download
         if: ${{ success() }}
+        timeout-minutes: 10
         shell: bash
         run: |
           retry=0
@@ -60,15 +61,15 @@ jobs:
           echo "${{ secrets.TWITTER_COOKIES }}" >> cookie.txt && \
           cd download && \
           IFS=$'\n' && \
-          until "${flag}" || (( "${retry}" == 10 )); do
-            echo "Flag status: ${flag}"
+          until "${flag}" || (( "${retry}" == 1000 )); do
             echo "Retry count: ${retry}"
+            echo "Flag status: ${flag}"
             yt-dlp -q \
               --force-overwrites \
               --cookies ${cookie_path}/cookie.txt \
               --downloader "$(type ffmpeg | awk '{print $3}')" \
               -o "%(id)s_%(autonumber)s.%(ext)s" \
-              ${{ toJSON(github.event.client_payload.link) }} && \
+              ${{ toJSON(github.event.client_payload.link) }} > /dev/null 2>&1 && \
             flag=true
             for file_name in $(ls -tr); do
               if ffprobe "${file_name}" > /dev/null 2>&1; then
@@ -110,22 +111,22 @@ jobs:
           IFS=$'\n' && \
           if (( "$(ls|wc -l)" > 1 )); then
             options=()
-            options+=( -F 'status=success' )
-            options+=( -F 'commandType=dl' )
-            options+=( -F 'actionType=multi' )
-            options+=( -F 'channel=${{ toJSON(github.event.client_payload.channel) }}' )
-            options+=( -F 'message=${{ toJSON(github.event.client_payload.message) }}' )
-            options+=( -F 'token=${{ toJSON(github.event.client_payload.token) }}' )
-            options+=( -F 'link=${{ toJSON(github.event.client_payload.link) }}' )
+            options+=(-F 'status=success')
+            options+=(-F 'commandType=dl')
+            options+=(-F 'actionType=multi')
+            options+=(-F 'channel=${{ toJSON(github.event.client_payload.channel) }}')
+            options+=(-F 'message=${{ toJSON(github.event.client_payload.message) }}')
+            options+=(-F 'token=${{ toJSON(github.event.client_payload.token) }}')
+            options+=(-F 'link=${{ toJSON(github.event.client_payload.link) }}')
             index=0
             for file_name in $(ls -tr); do
               num=$((index++))
               if (( "$(wc -c < "${file_name}")" <= 26214400 )); then
-                options+=( -F "name${num}=${file_name}" )
-                options+=( -F "file${num}=@${file_name}" )
+                options+=(-F "name${num}=${file_name}")
+                options+=(-F "file${num}=@${file_name}")
               else
-                options+=( -F "name${num}=${file_name%.*}.webm" )
-                options+=( -F "file${num}=@${dir}/conv/${file_name%.*}.webm" )
+                options+=(-F "name${num}=${file_name%.*}.webm")
+                options+=(-F "file${num}=@${dir}/conv/${file_name%.*}.webm")
               fi
             done
             curl -s -X POST -H "Content-type: multipart/form-data" "${options[@]}" ${{ secrets.ENDPOINT_URL }}
