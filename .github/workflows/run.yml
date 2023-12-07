@@ -59,6 +59,7 @@ jobs:
           cookie_path=$(pwd) && \
           echo "${{ secrets.TWITTER_COOKIES }}" >> cookie.txt && \
           cd download && \
+          IFS=$'\n' && \
           until "${flag}" || (( "${retry}" == 10 )); do
             echo "Flag status; ${flag}"
             echo "Retry count: ${retry}"
