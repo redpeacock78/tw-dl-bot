@@ -63,13 +63,13 @@ jobs:
           until (( "${success}" == 3 )) || (( "${retry}" == 10 )); do
             echo "Success count: ${success}"
             echo "Retry count: ${retry}"
-            (yt-dlp -q \
+            yt-dlp -q \
               --force-overwrites \
               --cookies ${cookie_path}/cookie.txt \
               --downloader "$(type ffmpeg | awk '{print $3}')" \
               -o "%(id)s_%(autonumber)s.%(ext)s" \
               ${{ toJSON(github.event.client_payload.link) }} && \
-            flag=true) || flag=false
+            flag=true || flag=false
             if "${flag}"; then
               ((success++)) || true
             else
