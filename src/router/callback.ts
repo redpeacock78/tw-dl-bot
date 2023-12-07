@@ -94,7 +94,6 @@ const callbackSuccessActions: callbackSuccessActionsObject = {
             };
           })
         );
-        console.log(body, filesArray, namesArray);
         return await bot.helpers
           .editFollowupMessage(`${body.token}`, `${body.message}`, {
             content: "**✅Done!**",
@@ -103,9 +102,7 @@ const callbackSuccessActions: callbackSuccessActionsObject = {
                 fields: [
                   {
                     name: "🎞 Video Name",
-                    value: namesArray
-                      .map((i) => `> \`\`\`${i}\`\`\``)
-                      .join("\n"),
+                    value: namesArray.map((i) => `> \`${i}\``).join("\n"),
                   },
                   { name: "🔗Tweet URL", value: `> ${body.link}` },
                 ],
