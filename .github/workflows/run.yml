@@ -61,7 +61,7 @@ jobs:
           cd download && \
           IFS=$'\n' && \
           until "${flag}" || (( "${retry}" == 10 )); do
-            echo "Flag status; ${flag}"
+            echo "Flag status: ${flag}"
             echo "Retry count: ${retry}"
             yt-dlp -q \
               --force-overwrites \
@@ -71,7 +71,7 @@ jobs:
               ${{ toJSON(github.event.client_payload.link) }} && \
             flag=true
             for file_name in $(ls -tr); do
-              if ffprobe "${file_name}" 2>&1 > /dev/null; then
+              if ffprobe "${file_name}" > /dev/null 2>&1; then
                 :
               else
                 flag=false
