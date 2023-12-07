@@ -72,7 +72,7 @@ jobs:
               ${{ toJSON(github.event.client_payload.link) }} > /dev/null 2>&1 && \
             flag=true
             for file_name in $(ls -tr); do
-              if ffprobe "${file_name}" > /dev/null 2>&1; then
+              if ffprobe -v error -f lavfi movie="${file_name}" > /dev/null 2>&1; then
                 :
               else
                 flag=false
