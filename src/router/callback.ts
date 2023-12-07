@@ -122,13 +122,15 @@ const callbackSuccessActions: callbackSuccessActionsObject = {
             ],
             file: fileContentArray,
           })
-          .then((): void => {
+          .then((i): void => {
+            console.log(i);
             filesArray = null;
             namesArray = null;
             fileContentArray = null;
             return c.status(204);
           })
-          .catch((): void => {
+          .catch((e): void => {
+            console.log(e);
             filesArray = null;
             namesArray = null;
             fileContentArray = null;
