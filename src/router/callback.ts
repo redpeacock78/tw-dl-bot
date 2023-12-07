@@ -53,7 +53,7 @@ const callbackSuccessActions: callbackSuccessActionsObject = {
             embeds: [
               {
                 fields: [
-                  { name: "🎞 Video Name", value: `> \`\`\`${body.name}\`\`\`` },
+                  { name: "🎞 Video Name", value: `> \`${body.name}\`` },
                   { name: "🔗Tweet URL", value: `> ${body.link}` },
                 ],
                 color: 0x4db56a,
@@ -85,14 +85,22 @@ const callbackSuccessActions: callbackSuccessActionsObject = {
           .filter((i: string): RegExpMatchArray | null => i.match(/^name/))
           .map((i: string): string | File => (body as BodyData)[i]);
         let fileContentArray: FileContent[] | null = await Promise.all(
-          namesArray.map(async (i, n) => {
-            return {
-              blob: await fileToBlob(
-                (filesArray as (string | File)[])[n] as File
-              ),
-              name: i as string,
-            };
-          })
+          namesArray.map(
+            async (
+              i: string | File,
+              n: number
+            ): Promise<{
+              blob: Blob;
+              name: string;
+            }> => {
+              return {
+                blob: await fileToBlob(
+                  (filesArray as (string | File)[])[n] as File
+                ),
+                name: i as string,
+              };
+            }
+          )
         );
         return await bot.helpers
           .editFollowupMessage(`${body.token}`, `${body.message}`, {
@@ -102,7 +110,9 @@ const callbackSuccessActions: callbackSuccessActionsObject = {
                 fields: [
                   {
                     name: "🎞 Video Name",
-                    value: namesArray.map((i) => `> \`${i}\``).join("\n"),
+                    value: namesArray
+                      .map((i: string | File): string => `> \`${i}\``)
+                      .join("\n"),
                   },
                   { name: "🔗Tweet URL", value: `> ${body.link}` },
                 ],
