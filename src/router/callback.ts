@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import bot from "@bot/bot.ts";
 import fileToBlob from "@utils/fileToBlob.ts";
-import { FileContent } from "discordeno";
+import { FileContent, InteractionResponseTypes } from "discordeno";
 import { CallbackTypes } from "@router/types/callbackTypes.ts";
 
 const callback = new Hono();
@@ -77,40 +77,80 @@ const callbackSuccessActions: CallbackTypes.Actions.callbackSuccess = {
             }
           )
         );
-        return await bot.helpers
-          .editFollowupMessage(`${body.token}`, `${body.message}`, {
-            content: "**✅Done!**",
-            embeds: [
-              {
-                fields: [
+        if (body.convert === "true") {
+          return await bot.helpers
+            .sendFollowupMessage(`${body.token}`, {
+              type: InteractionResponseTypes.ChannelMessageWithSource,
+              data: {
+                content: "**✅Done!**",
+                embeds: [
                   {
-                    name: "🎞 Video Name",
-                    value: namesArray
-                      .map((i: string | File): string => `> \`${i}\``)
-                      .join("\n"),
+                    fields: [
+                      {
+                        name: "🎞 Video Name",
+                        value: namesArray
+                          .map((i: string | File): string => `> \`${i}\``)
+                          .join("\n"),
+                      },
+                      { name: "🔗Tweet URL", value: `> ${body.link}` },
+                    ],
+                    color: 0x4db56a,
+                    timestamp: new Date().getTime(),
                   },
-                  { name: "🔗Tweet URL", value: `> ${body.link}` },
                 ],
-                color: 0x4db56a,
-                timestamp: new Date().getTime(),
+                file: fileContentArray,
               },
-            ],
-            file: fileContentArray,
-          })
-          .then((i): void => {
-            console.log(i);
-            filesArray = null;
-            namesArray = null;
-            fileContentArray = null;
-            return c.status(204);
-          })
-          .catch((e): void => {
-            console.log(e);
-            filesArray = null;
-            namesArray = null;
-            fileContentArray = null;
-            return c.status(500);
-          });
+            })
+            .then((i): void => {
+              console.log(i);
+              filesArray = null;
+              namesArray = null;
+              fileContentArray = null;
+              return c.status(204);
+            })
+            .catch((e): void => {
+              console.log(e);
+              filesArray = null;
+              namesArray = null;
+              fileContentArray = null;
+              return c.status(500);
+            });
+        } else {
+          return await bot.helpers
+            .editFollowupMessage(`${body.token}`, `${body.message}`, {
+              content: "**✅Done!**",
+              embeds: [
+                {
+                  fields: [
+                    {
+                      name: "🎞 Video Name",
+                      value: namesArray
+                        .map((i: string | File): string => `> \`${i}\``)
+                        .join("\n"),
+                    },
+                    { name: "🔗Tweet URL", value: `> ${body.link}` },
+                  ],
+                  color: 0x4db56a,
+                  timestamp: new Date().getTime(),
+                },
+              ],
+              file: fileContentArray,
+            })
+            .then((i): void => {
+              console.log(i);
+              filesArray = null;
+              namesArray = null;
+              fileContentArray = null;
+              return c.status(204);
+            })
+            .catch((e): void => {
+              console.log(e);
+              filesArray = null;
+              namesArray = null;
+              fileContentArray = null;
+              return c.status(500);
+            });
+        }
       },
     },
   },
@@ -137,21 +177,18 @@ const callbackFailureAction: CallbackTypes.Actions.callbackFailure = {
   },
 };
 
-callback.post(
-  "/callback",
-  async (c: CallbackTypes.ContextType): Promise<void> => {
-    let body: CallbackTypes.bodyDataObject | null =
-      (await c.req.parseBody()) as CallbackTypes.bodyDataObject;
-    if (body.status === "success") {
-      return await callbackSuccessActions[body.status][body.commandType]
-        [body.actionType](c, body)
-        .finally((): null => (body = null));
-    } else {
-      return await callbackFailureAction
-        .failure(c, body)
-        .finally((): null => (body = null));
-    }
+callback.post("/callback", async (c: CallbackTypes.ContextType) => {
+  let body: CallbackTypes.bodyDataObject | null =
+    (await c.req.parseBody()) as CallbackTypes.bodyDataObject;
+  if (body.status === "success") {
+    return await callbackSuccessActions[body.status][body.commandType]
+      [body.actionType](c, body)
+      .finally((): null => (body = null));
+  } else {
+    return await callbackFailureAction
+      .failure(c, body)
+      .finally((): null => (body = null));
   }
-);
+});
 
 export default callback;
