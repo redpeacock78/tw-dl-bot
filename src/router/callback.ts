@@ -46,9 +46,7 @@ const callbackSuccessActions: CallbackTypes.Actions.callbackSuccess = {
         body: CallbackTypes.bodyDataObject
       ): Promise<void> => {
         let filesArray: (string | File)[] | null = Object.keys(body)
-          .filter((i: string) =>
-            i.match(/^file[1-4]$/)
-          )
+          .filter((i: string) => i.match(/^file[1-4]$/))
           .map((i: string): string | File => {
             const key: keyof CallbackTypes.bodyDataObject =
               i as keyof CallbackTypes.bodyDataObject;
@@ -151,9 +149,9 @@ callback.post(
         [body.actionType](c, body)
         .finally((): null => (body = null));
     } else {
-      return await callbackFailureAction[body.status](c, body).finally(
-        (): null => (body = null)
-      );
+      return await callbackFailureAction
+        .failure(c, body)
+        .finally((): null => (body = null));
     }
   }
 );
