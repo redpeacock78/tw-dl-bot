@@ -1,59 +1,26 @@
-import { Hono, Context, Env } from "hono";
+import { Hono } from "hono";
 import bot from "@bot/bot.ts";
 import fileToBlob from "@utils/fileToBlob.ts";
-import { BodyData } from "hono-utils-body";
 import { FileContent } from "discordeno";
+import { CallbackTypes } from "@router/types/callbackTypes.ts";
 
 const callback = new Hono();
 
-type bodyDataObject = {
-  status: string;
-  commandType: "dl";
-  actionType: "single" | "multi";
-  channel: string;
-  message: string;
-  token: string;
-  link: string;
-  name: string;
-  name1?: string;
-  name2?: string;
-  name3?: string;
-  name4?: string;
-  file: File;
-  file1?: File;
-  file2?: File;
-  file3?: File;
-  file4?: File;
-  type: string;
-  content?: string;
-};
-
-type callbackSuccessActionsObject = {
-  [key: string]: {
-    [key: string]: {
-      [key: string]: (
-        c: Context<Env, "/callback", Record<string | number | symbol, never>>,
-        body: BodyData
-      ) => Promise<void>;
-    };
-  };
-};
-
-const callbackSuccessActions: callbackSuccessActionsObject = {
+const callbackSuccessActions: CallbackTypes.Actions.callbackSuccess = {
   success: {
     dl: {
       single: async (
-        c: Context<Env, "/callback", Record<string | number | symbol, never>>,
-        body: BodyData
+        c: CallbackTypes.ContextType,
+        body: CallbackTypes.bodyDataObject
       ): Promise<void> => {
-        let blobData: Blob | null = await fileToBlob(body.file as File);
+        let blobData: Blob | null = await fileToBlob(body.file1 as File);
         return await bot.helpers
           .editFollowupMessage(`${body.token}`, `${body.message}`, {
             content: "**✅Done!**",
             embeds: [
               {
                 fields: [
-                  { name: "🎞 Video Name", value: `> \`${body.name}\`` },
+                  { name: "🎞 Video Name", value: `> \`${body.name1}\`` },
                   { name: "🔗Tweet URL", value: `> ${body.link}` },
                 ],
                 color: 0x4db56a,
@@ -62,7 +29,7 @@ const callbackSuccessActions: callbackSuccessActionsObject = {
             ],
             file: {
               blob: blobData,
-              name: `${body.name}`,
+              name: `${body.name1}`,
             },
           })
           .then((): void => {
@@ -75,15 +42,27 @@ const callbackSuccessActions: callbackSuccessActionsObject = {
           });
       },
       multi: async (
-        c: Context<Env, "/callback", Record<string | number | symbol, never>>,
-        body: BodyData
+        c: CallbackTypes.ContextType,
+        body: CallbackTypes.bodyDataObject
       ): Promise<void> => {
         let filesArray: (string | File)[] | null = Object.keys(body)
-          .filter((i: string): RegExpMatchArray | null => i.match(/^file/))
-          .map((i: string): string | File => (body as BodyData)[i]);
+          .filter((i: string) =>
+            i.match(/^file[1-4]$/)
+          )
+          .map((i: string): string | File => {
+            const key: keyof CallbackTypes.bodyDataObject =
+              i as keyof CallbackTypes.bodyDataObject;
+            return body[key] as string | File;
+          });
         let namesArray: (string | File)[] | null = Object.keys(body)
-          .filter((i: string): RegExpMatchArray | null => i.match(/^name/))
-          .map((i: string): string | File => (body as BodyData)[i]);
+          .filter((i: string): RegExpMatchArray | null =>
+            i.match(/^name[1-4]$/)
+          )
+          .map((i: string): string | File => {
+            const key: keyof CallbackTypes.bodyDataObject =
+              i as keyof CallbackTypes.bodyDataObject;
+            return body[key] as string | File;
+          });
         let fileContentArray: FileContent[] | null = await Promise.all(
           namesArray.map(
             async (
@@ -141,15 +120,10 @@ const callbackSuccessActions: callbackSuccessActionsObject = {
   },
 };
 
-const callbackFailureAction: {
-  [key: string]: (
-    c: Context<Env, "/callback", Record<string | number | symbol, never>>,
-    body: BodyData
-  ) => Promise<void>;
-} = {
+const callbackFailureAction: CallbackTypes.Actions.callbackFailure = {
   failure: async (
-    c: Context<Env, "/callback", Record<string | number | symbol, never>>,
-    body: BodyData
+    c: CallbackTypes.ContextType,
+    body: CallbackTypes.bodyDataObject
   ): Promise<void> => {
     return await bot.helpers
       .editFollowupMessage(`${body.token}`, `${body.message}`, {
@@ -169,18 +143,18 @@ const callbackFailureAction: {
 
 callback.post(
   "/callback",
-  async (
-    c: Context<Env, "/callback", Record<string | number | symbol, never>>
-  ): Promise<void> => {
-    let body: bodyDataObject | null =
-      (await c.req.parseBody()) as bodyDataObject;
-    return body.status === "success"
-      ? await callbackSuccessActions[body.status][body.commandType]
-          [body.actionType](c, body)
-          .finally((): null => (body = null))
-      : await callbackFailureAction[body.status](c, body).finally(
-          (): null => (body = null)
-        );
+  async (c: CallbackTypes.ContextType): Promise<void> => {
+    let body: CallbackTypes.bodyDataObject | null =
+      (await c.req.parseBody()) as CallbackTypes.bodyDataObject;
+    if (body.status === "success") {
+      return await callbackSuccessActions[body.status][body.commandType]
+        [body.actionType](c, body)
+        .finally((): null => (body = null));
+    } else {
+      return await callbackFailureAction[body.status](c, body).finally(
+        (): null => (body = null)
+      );
+    }
   }
 );
 
