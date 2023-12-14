@@ -46,16 +46,14 @@ const callbackSuccessActions: CallbackTypes.Actions.callbackSuccess = {
         body: CallbackTypes.bodyDataObject
       ): Promise<void> => {
         let filesArray: (string | File)[] | null = Object.keys(body)
-          .filter((i: string) => i.match(/^file[1-4]$/))
+          .filter((i: string): RegExpMatchArray | null => i.match(/file/))
           .map((i: string): string | File => {
             const key: keyof CallbackTypes.bodyDataObject =
               i as keyof CallbackTypes.bodyDataObject;
             return body[key] as string | File;
           });
         let namesArray: (string | File)[] | null = Object.keys(body)
-          .filter((i: string): RegExpMatchArray | null =>
-            i.match(/^name[1-4]$/)
-          )
+          .filter((i: string): RegExpMatchArray | null => i.match(/name/))
           .map((i: string): string | File => {
             const key: keyof CallbackTypes.bodyDataObject =
               i as keyof CallbackTypes.bodyDataObject;
