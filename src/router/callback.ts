@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import bot from "@bot/bot.ts";
 import fileToBlob from "@utils/fileToBlob.ts";
-import { FileContent, InteractionResponseTypes } from "discordeno";
+import { FileContent } from "discordeno";
 import { CallbackTypes } from "@router/types/callbackTypes.ts";
 
 const callback = new Hono();
@@ -79,26 +79,28 @@ const callbackSuccessActions: CallbackTypes.Actions.callbackSuccess = {
         );
         if (body.convert === "true") {
           return await bot.helpers
-            .sendFollowupMessage(`${body.token}`, {
-              type: InteractionResponseTypes.ChannelMessageWithSource,
-              data: {
-                content: "**✅Done!**",
-                embeds: [
-                  {
-                    fields: [
-                      {
-                        name: "🎞 Video Name",
-                        value: namesArray
-                          .map((i: string | File): string => `> \`${i}\``)
-                          .join("\n"),
-                      },
-                      { name: "🔗Tweet URL", value: `> ${body.link}` },
-                    ],
-                    color: 0x4db56a,
-                    timestamp: new Date().getTime(),
-                  },
-                ],
-                file: fileContentArray,
+            .sendMessage(`${body.channel}`, {
+              content: "**✅Done!**",
+              embeds: [
+                {
+                  fields: [
+                    {
+                      name: "🎞 Video Name",
+                      value: namesArray
+                        .map((i: string | File): string => `> \`${i}\``)
+                        .join("\n"),
+                    },
+                    { name: "🔗Tweet URL", value: `> ${body.link}` },
+                  ],
+                  color: 0x4db56a,
+                  timestamp: new Date().getTime(),
+                },
+              ],
+              file: fileContentArray,
+              messageReference: {
+                messageId: `${body.message}`,
+                channelId: `${body.channel}`,
+                failIfNotExists: true,
               },
             })
             .then((i): void => {
