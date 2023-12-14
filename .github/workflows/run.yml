@@ -132,8 +132,13 @@ jobs:
                 options+=(-F "name${num}=${file_name}")
                 options+=(-F "file${num}=@${file_name}")
               else
-                options+=(-F "name${num}=${file_name%.*}.webm")
-                options+=(-F "file${num}=@${dir}/conv/${file_name%.*}.webm")
+                if (( "$(wc -c < "${file_name}")" <= $(( 26214400 / "${files_num}" )) )); then
+                  options+=(-F "name${num}=${file_name}")
+                  options+=(-F "file${num}=@${file_name}")
+                else
+                  options+=(-F "name${num}=${file_name%.*}.webm")
+                  options+=(-F "file${num}=@${dir}/conv/${file_name%.*}.webm")
+                fi
               fi
             done
             curl -s -X POST -H "Content-type: multipart/form-data" "${options[@]}" ${{ secrets.ENDPOINT_URL }}
