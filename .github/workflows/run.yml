@@ -92,13 +92,14 @@ jobs:
         run: |
           dir=$(pwd) && \
           cd download && \
+          files_num=$(ls -tr | wc -l) && \
           IFS=$'\n' && \
           for file_name in $(ls -tr); do
-            if (( "$(wc -c < "${file_name}")" <= 26214400 )); then
+            if (( "$(wc -c < "${file_name}")" <= $(( 26214400 / "${files_num}" )) )); then
               :
             else
               mkdir -p "${dir}/conv" && \
-              ffmpeg -i "${file_name}" -c:v libvpx -crf 10 -b:v 1M -c:a libvorbis -fs 25MB "${dir}/conv/${file_name%.*}.webm"
+              ffmpeg -i "${file_name}" -c:v libvpx -crf 10 -b:v 1M -c:a libvorbis -fs $(( 25 / "${files_num}" ))MB "${dir}/conv/${file_name%.*}.webm"
             fi
           done
       - name: Upload files
@@ -142,8 +143,8 @@ jobs:
                 -F 'message=${{ toJSON(github.event.client_payload.message) }}' \
                 -F 'token=${{ toJSON(github.event.client_payload.token) }}' \
                 -F 'link=${{ toJSON(github.event.client_payload.link) }}' \
-                -F "name=${file_name}" \
-                -F "file=@${file_name}" \
+                -F "name1=${file_name}" \
+                -F "file1=@${file_name}" \
                 ${{ secrets.ENDPOINT_URL }}
             else
               curl -s -X POST \
@@ -155,8 +156,8 @@ jobs:
                 -F 'message=${{ toJSON(github.event.client_payload.message) }}' \
                 -F 'token=${{ toJSON(github.event.client_payload.token) }}' \
                 -F 'link=${{ toJSON(github.event.client_payload.link) }}' \
-                -F "name=${file_name%.*}.webm" \
-                -F "file=@${dir}/conv/${file_name%.*}.webm" \
+                -F "name1=${file_name%.*}.webm" \
+                -F "file1=@${dir}/conv/${file_name%.*}.webm" \
                 ${{ secrets.ENDPOINT_URL }}
             fi
           fi
