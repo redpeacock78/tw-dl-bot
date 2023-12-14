@@ -124,7 +124,7 @@ jobs:
             index=0
             for file_name in $(ls -tr); do
               num=$((index++))
-              if (( "$(wc -c < "${file_name}")" <= 26214400 )); then
+              if (( 26214400 < $(echo $(ls -trl|awk 'NR>1{print $5}'|tr \\n +)0|bc) )); then
                 options+=(-F "name${num}=${file_name}")
                 options+=(-F "file${num}=@${file_name}")
               else
