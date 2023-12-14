@@ -93,15 +93,17 @@ jobs:
           dir=$(pwd) && \
           cd download && \
           files_num=$(ls -tr | wc -l) && \
-          IFS=$'\n' && \
-          for file_name in $(ls -tr); do
-            if (( "$(wc -c < "${file_name}")" <= $(( 26214400 / "${files_num}" )) )); then
-              :
-            else
-              mkdir -p "${dir}/conv" && \
-              ffmpeg -i "${file_name}" -c:v libvpx -crf 10 -b:v 1M -c:a libvorbis -fs $(( 25 / "${files_num}" ))MB "${dir}/conv/${file_name%.*}.webm"
-            fi
-          done
+          if (( 26214400 < $(echo $(ls -trl|awk 'NR>1{print $5}'|tr \\n +)0|bc) )); then
+            IFS=$'\n' && \
+            for file_name in $(ls -tr); do
+              if (( "$(wc -c < "${file_name}")" <= $(( 26214400 / "${files_num}" )) )); then
+                :
+              else
+                mkdir -p "${dir}/conv" && \
+                ffmpeg -i "${file_name}" -c:v libvpx -crf 10 -b:v 1M -c:a libvorbis -fs $(( 25 / "${files_num}" ))MB "${dir}/conv/${file_name%.*}.webm"
+              fi
+            done
+          fi
       - name: Upload files
         if: ${{ success() }}
         id: upload
