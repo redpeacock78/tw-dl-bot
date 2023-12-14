@@ -39,7 +39,7 @@ bot.events.interactionCreate = async (
           type: InteractionResponseTypes.DeferredChannelMessageWithSource,
         }
       );
-      if (contents.every((i: string): boolean => isUrl(i))) {
+      if (!contents.every((i: string): boolean => isUrl(i))) {
         await b.helpers.sendFollowupMessage(interaction.token, {
           type: InteractionResponseTypes.ChannelMessageWithSource,
           data: {
