@@ -45,6 +45,7 @@ const callbackSuccessActions: CallbackTypes.Actions.callbackSuccess = {
         c: CallbackTypes.ContextType,
         body: CallbackTypes.bodyDataObject
       ): Promise<void> => {
+        const runTime: number = new Date().getTime() - Number(body.startTime);
         let filesArray: (string | File)[] | null = Object.keys(body)
           .filter((i: string): RegExpMatchArray | null => i.match(/file/))
           .map((i: string): string | File => {
@@ -77,9 +78,9 @@ const callbackSuccessActions: CallbackTypes.Actions.callbackSuccess = {
             }
           )
         );
-        if (body.convert === "true") {
+        if (900000 < runTime) {
           return await bot.helpers
-            .sendMessage(`${body.channel}`, {
+            .editMessage(`${body.channel}`, `${body.message}`, {
               content: "**✅Done!**",
               embeds: [
                 {
@@ -97,11 +98,6 @@ const callbackSuccessActions: CallbackTypes.Actions.callbackSuccess = {
                 },
               ],
               file: fileContentArray,
-              messageReference: {
-                messageId: `${body.message}`,
-                channelId: `${body.channel}`,
-                failIfNotExists: true,
-              },
             })
             .then((i): void => {
               console.log(i);
