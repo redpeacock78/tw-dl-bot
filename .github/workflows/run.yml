@@ -159,7 +159,13 @@ jobs:
                 fi
               fi
             done
-            echo "Total size: $(echo $(echo "${list[@]}"|tr ' ' \\n|grep -v '^$'|xargs -I@ bash -c 'ls -l @'|awk '{print $5}'|grep -v '^$'|tr \\n '+')0|bc)"
+            total_size=$(echo $(echo "${list[@]}"|tr ' ' \\n|grep -v '^$'|xargs -I@ bash -c 'ls -l @'|awk '{print $5}'|grep -v '^$'|tr \\n '+')0|bc)
+            echo "Total size: ${total_size}"
+            if (( "${total_size}" <= 26214400 )); then
+              options+=(-F "oversize=false")
+            else
+              options+=(-F "oversize=true")
+            fi
             curl -s -X POST -H "Content-type: multipart/form-data" "${options[@]}" ${{ secrets.ENDPOINT_URL }}
           else
             file_name="$(ls)" && \
@@ -170,6 +176,7 @@ jobs:
                 -F "commandType=dl" \
                 -F "actionType=single" \
                 -F "convert=false" \
+                -F "oversize=false" \
                 -F 'startTime=${{ toJSON(github.event.client_payload.startTime) }}' \
                 -F 'channel=${{ toJSON(github.event.client_payload.channel) }}' \
                 -F 'message=${{ toJSON(github.event.client_payload.message) }}' \
@@ -185,6 +192,7 @@ jobs:
                 -F "commandType=dl" \
                 -F "actionType=single" \
                 -F "convert=true" \
+                -F "oversize=false" \
                 -F 'startTime=${{ toJSON(github.event.client_payload.startTime) }}' \
                 -F 'channel=${{ toJSON(github.event.client_payload.channel) }}' \
                 -F 'message=${{ toJSON(github.event.client_payload.message) }}' \
