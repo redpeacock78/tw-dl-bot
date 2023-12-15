@@ -12,6 +12,7 @@ export namespace CallbackTypes {
     token: string;
     link: string;
     convert: "true" | "false";
+    oversize: "true" | "false";
     name1: string;
     name2?: string;
     name3?: string;
