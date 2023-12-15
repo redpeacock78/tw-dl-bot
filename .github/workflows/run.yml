@@ -112,7 +112,7 @@ jobs:
                 :
               else
                 mkdir -p "${dir}/conv" && \
-                ffmpeg -fs $(( 25 / "${files_num}" ))MB -i "${file_name}" "${dir}/conv/${file_name%.*}.webm"
+                ffmpeg -i "${file_name}" -fs $(( 25 / "${files_num}" ))MB "${dir}/conv/${file_name%.*}.webm"
               fi
             done
           fi
