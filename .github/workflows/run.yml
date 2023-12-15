@@ -155,6 +155,7 @@ jobs:
                 fi
               fi
             done
+            exho "${options[@]}"
             curl -s -X POST -H "Content-type: multipart/form-data" "${options[@]}" ${{ secrets.ENDPOINT_URL }}
           else
             file_name="$(ls)" && \
