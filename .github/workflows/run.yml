@@ -159,7 +159,7 @@ jobs:
                 fi
               fi
             done
-            echo "Total size: $(echo "${list[@]}"|tr ' ' \\n|grep -v '^$'|xargs -I@ bash -c 'ls -l @'|awk '{print $5}'|grep -v '^$'|tr \\n '+')0|bc"
+            echo "Total size: $(echo $(echo "${list[@]}"|tr ' ' \\n|grep -v '^$'|xargs -I@ bash -c 'ls -l @'|awk '{print $5}'|grep -v '^$'|tr \\n '+')0|bc)"
             curl -s -X POST -H "Content-type: multipart/form-data" "${options[@]}" ${{ secrets.ENDPOINT_URL }}
           else
             file_name="$(ls)" && \
