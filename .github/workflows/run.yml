@@ -134,6 +134,11 @@ jobs:
             options+=(-F 'token=${{ toJSON(github.event.client_payload.token) }}')
             options+=(-F 'link=${{ toJSON(github.event.client_payload.link) }}')
             options+=(-F 'startTime=${{ toJSON(github.event.client_payload.startTime) }}')
+            if (( "$(echo $(ls -l|awk 'NR>1{print $5}'|tr \\n +)0|bc)" <= 26214400 )); then
+              options+=(-F "convert=false")
+            else
+              options+=(-F "convert=true")
+            fi
             index=0
             for file_name in $(ls -tr); do
               num=$((index++))
@@ -159,6 +164,7 @@ jobs:
                 -F "status=success" \
                 -F "commandType=dl" \
                 -F "actionType=single" \
+                -F "convert=false" \
                 -F 'startTime=${{ toJSON(github.event.client_payload.startTime) }}' \
                 -F 'channel=${{ toJSON(github.event.client_payload.channel) }}' \
                 -F 'message=${{ toJSON(github.event.client_payload.message) }}' \
@@ -173,6 +179,7 @@ jobs:
                 -F "status=success" \
                 -F "commandType=dl" \
                 -F "actionType=single" \
+                -F "convert=true" \
                 -F 'startTime=${{ toJSON(github.event.client_payload.startTime) }}' \
                 -F 'channel=${{ toJSON(github.event.client_payload.channel) }}' \
                 -F 'message=${{ toJSON(github.event.client_payload.message) }}' \
