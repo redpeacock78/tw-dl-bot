@@ -78,7 +78,7 @@ const callbackSuccessActions: CallbackTypes.Actions.callbackSuccess = {
             }
           )
         );
-        if (900000 < runTime || body.convert === "true") {
+        if (900000 < runTime || body.oversize === "true") {
           return await bot.helpers
             .sendMessage(`${body.channel}`, {
               content: "**✅Done!**",
