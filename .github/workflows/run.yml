@@ -43,10 +43,23 @@ jobs:
         shell: bash
         run: |
           if [[ ${{ toJSON(github.event.client_payload.link) }} =~ ^http.*$ ]]; then
-            status="$(curl -siL -m 18000 --retry 100 --retry-all-errors ${{ toJSON(github.event.client_payload.link) }} -o /dev/null -w '%{http_code}\n';:)"
+            retry=0
+            flag=false
+            status=""
+            until "${flag}" || (( "${retry}" == 1000 )); do
+              echo "Retry count: ${retry}"
+              echo "Flag status: ${flag}"
+              status="$(curl -siL -m 18000 --retry 100 --retry-all-errors ${{ toJSON(github.event.client_payload.link) }} -o /dev/null -w '%{http_code}\n';:)"
+              if [[ "${status}" == "200" || "${status}" == "302" || "${status}" == "307" ]]; then
+                flag=true
+              else
+                ((retry++)) || true
+                sleep 1
+              fi
+            done
             if [[ "${status}" != "200" && "${status}" != "302" && "${status}" != "307" ]]; then
               status="notfound" && \
-              echo "status=${status}" >> "$GITHUB_OUTPUT" && \
+              echo "status=${status}" >> "${GITHUB_OUTPUT}" && \
               exit 2
             fi
           fi
@@ -120,15 +133,11 @@ jobs:
             options+=(-F 'message=${{ toJSON(github.event.client_payload.message) }}')
             options+=(-F 'token=${{ toJSON(github.event.client_payload.token) }}')
             options+=(-F 'link=${{ toJSON(github.event.client_payload.link) }}')
-            if (( $(echo $(ls -trl|awk 'NR>1{print $5}'|tr \\n +)0|bc) <= 26214400 )); then
-              options+=(-F 'convert=false')
-            else
-              options+=(-F 'convert=true')
-            fi
+            options+=(-F 'startTime=${{ toJSON(github.event.client_payload.startTime) }}')
             index=0
             for file_name in $(ls -tr); do
               num=$((index++))
-              if (( $(echo $(ls -trl|awk 'NR>1{print $5}'|tr \\n +)0|bc) <= 26214400 )); then
+              if (( "$(echo $(ls -trl|awk 'NR>1{print $5}'|tr \\n +)0|bc)" <= 26214400 )); then
                 options+=(-F "name${num}=${file_name}")
                 options+=(-F "file${num}=@${file_name}")
               else
@@ -150,7 +159,7 @@ jobs:
                 -F "status=success" \
                 -F "commandType=dl" \
                 -F "actionType=single" \
-                -F 'convert=false' \
+                -F 'startTime=${{ toJSON(github.event.client_payload.startTime) }}' \
                 -F 'channel=${{ toJSON(github.event.client_payload.channel) }}' \
                 -F 'message=${{ toJSON(github.event.client_payload.message) }}' \
                 -F 'token=${{ toJSON(github.event.client_payload.token) }}' \
@@ -164,7 +173,7 @@ jobs:
                 -F "status=success" \
                 -F "commandType=dl" \
                 -F "actionType=single" \
-                -F 'convert=true'
+                -F 'startTime=${{ toJSON(github.event.client_payload.startTime) }}' \
                 -F 'channel=${{ toJSON(github.event.client_payload.channel) }}' \
                 -F 'message=${{ toJSON(github.event.client_payload.message) }}' \
                 -F 'token=${{ toJSON(github.event.client_payload.token) }}' \
