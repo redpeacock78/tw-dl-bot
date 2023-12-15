@@ -2,6 +2,7 @@ import { CreateSlashApplicationCommand } from "discordeno";
 
 type CommandsType = {
   dlCommand: CreateSlashApplicationCommand;
+  threadDlCommand: CreateSlashApplicationCommand;
 };
 
 export const Commands: CommandsType = {
@@ -16,6 +17,20 @@ export const Commands: CommandsType = {
         required: true,
         description: "Tweet URL",
       },
+    ],
+  },
+  threadDlCommand: {
+    name: "threaddl",
+    description: "DL multiple Tweets into a thread",
+    type: 1,
+    options: [
+      {
+        name: "name",
+        type: 3,
+        required: true,
+        description: "Thread Name",
+      },
+      { name: "url", type: 3, required: true, description: "Tweet URL" },
     ],
   },
 };
