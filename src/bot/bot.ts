@@ -69,6 +69,7 @@ bot.events.interactionCreate = async (
                           channel: `${message.channelId}`,
                           message: `${message.id}`,
                           token: `${interaction.token}`,
+                          startTime: new Date().getTime().toString(),
                         },
                       },
                       headers: {
