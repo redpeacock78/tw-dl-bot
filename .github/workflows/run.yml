@@ -112,7 +112,7 @@ jobs:
                 :
               else
                 mkdir -p "${dir}/conv" && \
-                ffmpeg -i "${file_name}" -fs $(( 25 / "${files_num}" ))MB "${dir}/conv/${file_name%.*}.webm"
+                ffmpeg -i "${file_name}" -c:v libvpx -crf 10 -b:v 1M -c:a libvorbis -fs $(( 25 / "${files_num}" ))MB "${dir}/conv/${file_name%.*}.webm"
               fi
             done
           fi
@@ -159,9 +159,7 @@ jobs:
                 fi
               fi
             done
-            echo "${options[@]}"
-            echo "${list[@]}"
-            echo $(echo "${list[@]}"|tr ' ' \\n|grep -v '^$'|xargs -I@ bash -c 'ls -l @'|awk '{print $5}'|grep -v '^$'|tr \\n '+')0|bc
+            echo "Total size: $(echo "${list[@]}"|tr ' ' \\n|grep -v '^$'|xargs -I@ bash -c 'ls -l @'|awk '{print $5}'|grep -v '^$'|tr \\n '+')0|bc"
             curl -s -X POST -H "Content-type: multipart/form-data" "${options[@]}" ${{ secrets.ENDPOINT_URL }}
           else
             file_name="$(ls)" && \
