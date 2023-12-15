@@ -78,7 +78,7 @@ const callbackSuccessActions: CallbackTypes.Actions.callbackSuccess = {
             }
           )
         );
-        if (900000 < runTime) {
+        if (900000 < runTime || body.convert === "true") {
           return await bot.helpers
             .editMessage(`${body.channel}`, `${body.message}`, {
               content: "**✅Done!**",
