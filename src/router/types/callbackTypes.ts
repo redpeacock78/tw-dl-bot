@@ -6,11 +6,11 @@ export namespace CallbackTypes {
     status: "success" | "failure";
     commandType: "dl";
     actionType: "single" | "multi";
+    startTime: string;
     channel: string;
     message: string;
     token: string;
     link: string;
-    convert: "true" | "false";
     name1: string;
     name2?: string;
     name3?: string;
