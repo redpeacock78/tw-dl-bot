@@ -70,6 +70,7 @@ jobs:
         run: |
           retry=0
           flag=false
+          not_video=""
           cookie_path=$(pwd) && \
           echo "${{ secrets.TWITTER_COOKIES }}" >> cookie.txt && \
           cd download && \
@@ -82,22 +83,29 @@ jobs:
               --cookies ${cookie_path}/cookie.txt \
               --downloader "$(type ffmpeg | awk '{print $3}')" \
               -o "%(id)s_%(autonumber)s.%(ext)s" \
-              ${{ toJSON(github.event.client_payload.link) }} > /dev/null 2>&1 && \
+              ${{ toJSON(github.event.client_payload.link) }} > /dev/null 2>&1
             flag=true
-            for file_name in $(ls -tr); do
-              if ffprobe -v error -f lavfi movie="${file_name}" > /dev/null 2>&1; then
-                :
-              else
-                flag=false
-              fi
-            done
+            if [[ "$(ls)" != "" ]]; then
+              for file_name in $(ls -tr); do
+                if ffprobe -v error -f lavfi movie="${file_name}" > /dev/null 2>&1; then
+                  :
+                else
+                  flag=false
+                fi
+              done
+            else
+              not_video=true
+            fi
             if "${flag}"; then
               :
             else
               ((retry++)) || true
+              sleep 1
             fi
-            sleep 1
           done
+          if "${not_video}"; then
+            exit 2
+          fi
       - name: Check and Convert Files
         if: ${{ success() }}
         shell: bash
