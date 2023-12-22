@@ -88,7 +88,7 @@ jobs:
             if [[ "$(ls)" != "" ]]; then
               for file_name in $(ls -tr); do
                 if ffprobe -v error -f lavfi movie="${file_name}" > /dev/null 2>&1; then
-                  :
+                  true
                 else
                   flag=false
                 fi
@@ -97,7 +97,7 @@ jobs:
               not_video=true
             fi
             if "${flag}"; then
-              :
+              true
             else
               ((retry++)) || true
               sleep 1
