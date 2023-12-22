@@ -96,6 +96,7 @@ jobs:
             else
               not_video=true
             fi
+            echo "${yt_status}" "${not_video}"
             if "${flag}"; then
               :
             else
