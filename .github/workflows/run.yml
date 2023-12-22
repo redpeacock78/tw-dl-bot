@@ -83,9 +83,9 @@ jobs:
               --cookies "${cookie_path}/cookie.txt" \
               --downloader "$(type ffmpeg | awk '{print $3}')" \
               -o "%(id)s_%(autonumber)s.%(ext)s" \
-              ${{ toJSON(github.event.client_payload.link) }} > /dev/null 2>&1 || :
+              ${{ toJSON(github.event.client_payload.link) }} > /dev/null 2>&1 && yt_status="0" || yt_status="1"
             flag=true
-            if [[ "$(ls)" != "" ]]; then
+            if [[ "${yt_status}" == "1" && "$(ls)" != "" ]]; then
               for file_name in $(ls -tr); do
                 if ffprobe -v error -f lavfi movie="${file_name}" > /dev/null 2>&1; then
                   :
@@ -151,7 +151,7 @@ jobs:
             list=()
             for file_name in $(ls -tr); do
               num=$((index++))
-              if (( "$(echo $(ls -l|awk 'NR>1{print $5}'|tr \\n +)0|bc)" <= 26214400 )); then
+              if (( "$(echo $(ls -l | awk 'NR>1{print $5}' | tr \\n +)0 | bc)" <= 26214400 )); then
                 options+=(-F "name${num}=${file_name}")
                 options+=(-F "file${num}=@${file_name}")
                 list+=("${file_name}")
@@ -167,7 +167,7 @@ jobs:
                 fi
               fi
             done
-            total_size=$(echo $(echo "${list[@]}"|tr ' ' \\n|grep -v '^$'|xargs -I@ bash -c 'ls -l @'|awk '{print $5}'|grep -v '^$'|tr \\n '+')0|bc)
+            total_size=$(echo $(echo "${list[@]}" | tr ' ' \\n | grep -v '^$' | xargs -I@ bash -c 'ls -l @' | awk '{print $5}' | grep -v '^$' | tr \\n '+')0 | bc)
             echo "Total size: ${total_size}"
             if (( "${total_size}" <= 26214400 )); then
               options+=(-F "oversize=false")
