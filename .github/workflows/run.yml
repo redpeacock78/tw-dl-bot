@@ -83,7 +83,7 @@ jobs:
               --cookies "${cookie_path}/cookie.txt" \
               --downloader "$(type ffmpeg | awk '{print $3}')" \
               -o "%(id)s_%(autonumber)s.%(ext)s" \
-              ${{ toJSON(github.event.client_payload.link) }} > /dev/null 2>&1 || :
+              ${{ toJSON(github.event.client_payload.link) }} > /dev/null 2>&1 || true
             flag=true
             if [[ "$(ls)" != "" ]]; then
               for file_name in $(ls -tr); do
