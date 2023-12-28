@@ -180,26 +180,18 @@ const callbackFailureAction: CallbackTypes.Actions.callbackFailure = {
 };
 
 callback.post("/callback", async (c: CallbackTypes.ContextType) => {
-  let parseBody: BodyData | null = await c.req.parseBody();
-  let parseJson: BodyData | null = await c.req.json();
   let body: CallbackTypes.bodyDataObject | null = (
-    isEmptyObj(parseBody) ? parseJson : parseBody
+    isEmptyObj(await c.req.parseBody())
+      ? await c.req.json()
+      : await c.req.parseBody()
   ) as CallbackTypes.bodyDataObject;
   if (body.status === "success")
     return await callbackSuccessActions[body.status][body.commandType]
       [body.actionType](c, body)
-      .finally((): void => {
-        parseBody = null;
-        parseJson = null;
-        body = null;
-      });
+      .finally((): null => (body = null));
   if (body.status === "failure")
     return await callbackFailureAction[body.status](c, body).finally(
-      (): void => {
-        parseBody = null;
-        parseJson = null;
-        body = null;
-      }
+      (): null => (body = null)
     );
 });
 
