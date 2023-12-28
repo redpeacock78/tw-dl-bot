@@ -120,7 +120,7 @@ jobs:
                 :
               else
                 mkdir -p "${dir}/conv" && \
-                ffmpeg -i "${file_name}" -c:v libvpx -crf 10 -b:v 1M -c:a libvorbis -fs $(( 25 / "${files_num}" ))MB "${dir}/conv/${file_name%.*}.webm"
+                ffmpeg -i "${file_name}" -pix_fmt yuv420p -c:v libvpx -crf 10 -b:v 1M -c:a libvorbis -fs $(( 25 / "${files_num}" ))MB "${dir}/conv/${file_name%.*}.webm"
               fi
             done
           fi
