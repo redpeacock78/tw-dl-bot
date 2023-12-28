@@ -1,10 +1,8 @@
 import { Hono } from "hono";
 import bot from "@bot/bot.ts";
 import fileToBlob from "@utils/fileToBlob.ts";
-import { isEmptyObj } from "@libs";
 import { FileContent } from "discordeno";
 import { CallbackTypes } from "@router/types/callbackTypes.ts";
-import { BodyData } from "hono-utils-body";
 
 const callback = new Hono();
 
@@ -180,18 +178,23 @@ const callbackFailureAction: CallbackTypes.Actions.callbackFailure = {
 };
 
 callback.post("/callback", async (c: CallbackTypes.ContextType) => {
-  let body: CallbackTypes.bodyDataObject | null = (
-    isEmptyObj(await c.req.parseBody())
-      ? await c.req.json()
-      : await c.req.parseBody()
-  ) as CallbackTypes.bodyDataObject;
+  let body: CallbackTypes.bodyDataObject | null = null;
+  try {
+    body = (await c.req.raw.clone().json()) as CallbackTypes.bodyDataObject;
+  } catch (_e) {
+    body = (await c.req.parseBody()) as CallbackTypes.bodyDataObject;
+  }
   if (body.status === "success")
     return await callbackSuccessActions[body.status][body.commandType]
       [body.actionType](c, body)
-      .finally((): null => (body = null));
+      .finally((): void => {
+        body = null;
+      });
   if (body.status === "failure")
     return await callbackFailureAction[body.status](c, body).finally(
-      (): null => (body = null)
+      (): void => {
+        body = null;
+      }
     );
 });
 
