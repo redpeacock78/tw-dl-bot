@@ -38,7 +38,8 @@ const callbackSuccessActions: CallbackTypes.Actions.callbackSuccess = {
             blobData = null;
             return c.body(null, 204);
           })
-          .catch((): Response => {
+          .catch((e): Response => {
+            console.log(e);
             blobData = null;
             return c.body(null, 500);
           });
