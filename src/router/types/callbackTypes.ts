@@ -36,7 +36,7 @@ export namespace CallbackTypes {
           [key: string]: (
             c: ContextType,
             body: CallbackTypes.bodyDataObject
-          ) => Promise<void>;
+          ) => Promise<Response>;
         };
       };
     };
@@ -44,7 +44,7 @@ export namespace CallbackTypes {
       [key: string]: (
         c: ContextType,
         body: CallbackTypes.bodyDataObject
-      ) => Promise<void>;
+      ) => Promise<Response>;
     };
   }
 }
