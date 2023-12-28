@@ -1,8 +1,10 @@
 import { Hono } from "hono";
 import bot from "@bot/bot.ts";
 import fileToBlob from "@utils/fileToBlob.ts";
+import { isEmptyObj } from "@libs";
 import { FileContent } from "discordeno";
 import { CallbackTypes } from "@router/types/callbackTypes.ts";
+import { BodyData } from "hono-utils-body";
 
 const callback = new Hono();
 
@@ -12,7 +14,7 @@ const callbackSuccessActions: CallbackTypes.Actions.callbackSuccess = {
       single: async (
         c: CallbackTypes.ContextType,
         body: CallbackTypes.bodyDataObject
-      ): Promise<void> => {
+      ): Promise<Response> => {
         let blobData: Blob | null = await fileToBlob(body.file1 as File);
         return await bot.helpers
           .editFollowupMessage(`${body.token}`, `${body.message}`, {
@@ -32,19 +34,19 @@ const callbackSuccessActions: CallbackTypes.Actions.callbackSuccess = {
               name: `${body.name1}`,
             },
           })
-          .then((): void => {
+          .then((): Response => {
             blobData = null;
-            return c.status(204);
+            return c.body(null, 204);
           })
-          .catch((): void => {
+          .catch((): Response => {
             blobData = null;
-            return c.status(500);
+            return c.body(null, 500);
           });
       },
       multi: async (
         c: CallbackTypes.ContextType,
         body: CallbackTypes.bodyDataObject
-      ): Promise<void> => {
+      ): Promise<Response> => {
         const runTime: number = new Date().getTime() - Number(body.startTime);
         let filesArray: (string | File)[] | null = Object.keys(body)
           .filter((i: string): RegExpMatchArray | null => i.match(/file/))
@@ -104,19 +106,17 @@ const callbackSuccessActions: CallbackTypes.Actions.callbackSuccess = {
                 failIfNotExists: true,
               },
             })
-            .then((i): void => {
-              console.log(i);
+            .then((): Response => {
               filesArray = null;
               namesArray = null;
               fileContentArray = null;
-              return c.status(204);
+              return c.body(null, 204);
             })
-            .catch((e): void => {
-              console.log(e);
+            .catch((): Response => {
               filesArray = null;
               namesArray = null;
               fileContentArray = null;
-              return c.status(500);
+              return c.body(null, 500);
             });
         } else {
           return await bot.helpers
@@ -139,19 +139,17 @@ const callbackSuccessActions: CallbackTypes.Actions.callbackSuccess = {
               ],
               file: fileContentArray,
             })
-            .then((i): void => {
-              console.log(i);
+            .then((): Response => {
               filesArray = null;
               namesArray = null;
               fileContentArray = null;
-              return c.status(204);
+              return c.body(null, 204);
             })
-            .catch((e): void => {
-              console.log(e);
+            .catch((): Response => {
               filesArray = null;
               namesArray = null;
               fileContentArray = null;
-              return c.status(500);
+              return c.body(null, 500);
             });
         }
       },
@@ -163,7 +161,7 @@ const callbackFailureAction: CallbackTypes.Actions.callbackFailure = {
   failure: async (
     c: CallbackTypes.ContextType,
     body: CallbackTypes.bodyDataObject
-  ): Promise<void> => {
+  ): Promise<Response> => {
     return await bot.helpers
       .editFollowupMessage(`${body.token}`, `${body.message}`, {
         content: "**❌Failure!**",
@@ -175,23 +173,33 @@ const callbackFailureAction: CallbackTypes.Actions.callbackFailure = {
           },
         ],
       })
-      .then((): void => c.status(204))
-      .catch((): void => c.status(500));
+      .then((): Response => c.body(null, 204))
+      .catch((): Response => c.body(null, 500));
   },
 };
 
 callback.post("/callback", async (c: CallbackTypes.ContextType) => {
-  let body: CallbackTypes.bodyDataObject | null =
-    (await c.req.parseBody()) as CallbackTypes.bodyDataObject;
-  if (body.status === "success") {
+  let parseBody: BodyData | null = await c.req.parseBody();
+  let parseJson: BodyData | null = await c.req.json();
+  let body: CallbackTypes.bodyDataObject | null = (
+    isEmptyObj(parseBody) ? parseJson : parseBody
+  ) as CallbackTypes.bodyDataObject;
+  if (body.status === "success")
     return await callbackSuccessActions[body.status][body.commandType]
       [body.actionType](c, body)
-      .finally((): null => (body = null));
-  } else {
-    return await callbackFailureAction
-      .failure(c, body)
-      .finally((): null => (body = null));
-  }
+      .finally((): void => {
+        parseBody = null;
+        parseJson = null;
+        body = null;
+      });
+  if (body.status === "failure")
+    return await callbackFailureAction[body.status](c, body).finally(
+      (): void => {
+        parseBody = null;
+        parseJson = null;
+        body = null;
+      }
+    );
 });
 
 export default callback;
