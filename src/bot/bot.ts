@@ -90,7 +90,14 @@ bot.events.interactionCreate = async (
                           message.channelId,
                           message.id,
                           {
-                            content: `**⚠️Error**\n${contents.join("\n")}`,
+                            content: `**⚠️Error**`,
+                            embeds: [
+                              {
+                                description: `> ${contents.join("\n")}`,
+                                color: 0x4db56a,
+                                timestamp: new Date().getTime(),
+                              },
+                            ],
                           }
                         )
                     );
