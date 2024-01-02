@@ -177,6 +177,27 @@ const callbackFailureAction: CallbackTypes.Actions.callbackFailure = {
   },
 };
 
+const callbackProgressAction: CallbackTypes.Actions.callbackProgress = {
+  progress: async (
+    c: CallbackTypes.ContextType,
+    body: CallbackTypes.bodyDataObject
+  ): Promise<Response> => {
+    return await bot.helpers
+      .editFollowupMessage(`${body.token}`, `${body.message}`, {
+        content: `**${body.content}**`,
+        embeds: [
+          {
+            description: `> ${body.link}`,
+            color: 0x4db56a,
+            timestamp: new Date().getTime(),
+          },
+        ],
+      })
+      .then((): Response => c.body(null, 204))
+      .catch((): Response => c.body(null, 500));
+  },
+};
+
 callback.post("/callback", async (c: CallbackTypes.ContextType) => {
   let body: CallbackTypes.bodyDataObject | null = null;
   try {
@@ -185,13 +206,19 @@ callback.post("/callback", async (c: CallbackTypes.ContextType) => {
     body = (await c.req.parseBody()) as CallbackTypes.bodyDataObject;
   }
   if (body.status === "success")
-    return await callbackSuccessActions[body.status][body.commandType]
-      [body.actionType](c, body)
+    return await callbackSuccessActions[body.status][body.commandType!]
+      [body.actionType!](c, body)
       .finally((): void => {
         body = null;
       });
   if (body.status === "failure")
     return await callbackFailureAction[body.status](c, body).finally(
+      (): void => {
+        body = null;
+      }
+    );
+  if (body.status === "progress")
+    return await callbackProgressAction[body.status](c, body).finally(
       (): void => {
         body = null;
       }
