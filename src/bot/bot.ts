@@ -54,7 +54,7 @@ bot.events.interactionCreate = async (
                 .sendFollowupMessage(interaction.token, {
                   type: InteractionResponseTypes.ChannelMessageWithSource,
                   data: {
-                    content: `**⏳Starting...**`,
+                    content: `**🕑Queuing...**`,
                     embeds: [
                       {
                         description: `> ${contents.join("\n")}`,
