@@ -148,11 +148,21 @@ jobs:
           cd download && \
           files_num=$(ls -tr | wc -l) && \
           if (( 26214400 < $(echo $(ls -trl|awk 'NR>1{print $5}'|tr \\n +)0|bc) )); then
+            file_list=()
             IFS=$'\n' && \
             for file_name in $(ls -tr); do
               if (( "$(wc -c < "${file_name}")" <= $(( 26214400 / "${files_num}" )) )); then
                 :
               else
+                file_list+=("${files_num}")
+              fi
+            done
+            count=0
+            for file_name in "${file_list[@]}"; do
+              if (( "$(wc -c < "${file_name}")" <= $(( 26214400 / "${files_num}" )) )); then
+                :
+              else
+                num=$((count++))
                 {
                   curl -s -X POST \
                     ${{ secrets.ENDPOINT_URL }} \
@@ -165,7 +175,7 @@ jobs:
                     "message": ${{ toJSON(github.event.client_payload.message) }},
                     "token": ${{ toJSON(github.event.client_payload.token) }},
                     "link": ${{ toJSON(github.event.client_payload.link) }},
-                    "content": "🔁Converting..."
+                    "content": "🔁Converting...(${num} / ${#file_list[@]})"
                   }
           EOF
                 } || :
