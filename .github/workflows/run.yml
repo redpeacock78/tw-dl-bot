@@ -11,6 +11,19 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+      - name: Masking Secrets
+        shell: bash
+        run: |
+          echo -n '::add-mask::' >> secrets.txt && \
+          jq -r .client_payload.link < "${GITHUB_EVENT_PATH}" >> secrets.txt && \
+          echo -n '::add-mask::' >> secrets.txt && \
+          jq -r .client_payload.channel < "${GITHUB_EVENT_PATH}" >> secrets.txt && \
+          echo -n '::add-mask::' >> secrets.txt && \
+          jq -r .client_payload.message < "${GITHUB_EVENT_PATH}" >> secrets.txt && \
+          echo -n '::add-mask::' >> secrets.txt && \
+          jq -r .client_payload.token < "${GITHUB_EVENT_PATH}" >> secrets.txt && \
+          cat secrets.txt && \
+          rm -rf secrets.txt
       - name: Create directory
         shell: bash
         run: |
@@ -34,19 +47,6 @@ jobs:
           EOF
           } || :
           mkdir -p download
-      - name: Masking Secrets
-        shell: bash
-        run: |
-          echo -n '::add-mask::' >> secrets.txt && \
-          jq -r .client_payload.link < "${GITHUB_EVENT_PATH}" >> secrets.txt && \
-          echo -n '::add-mask::' >> secrets.txt && \
-          jq -r .client_payload.channel < "${GITHUB_EVENT_PATH}" >> secrets.txt && \
-          echo -n '::add-mask::' >> secrets.txt && \
-          jq -r .client_payload.message < "${GITHUB_EVENT_PATH}" >> secrets.txt && \
-          echo -n '::add-mask::' >> secrets.txt && \
-          jq -r .client_payload.token < "${GITHUB_EVENT_PATH}" >> secrets.txt && \
-          cat secrets.txt && \
-          rm -rf secrets.txt
       - name: Setup Python3
         if: ${{ success() }}
         uses: actions/setup-python@v4
