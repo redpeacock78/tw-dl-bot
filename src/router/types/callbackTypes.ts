@@ -3,17 +3,17 @@ import { Context, Env } from "hono";
 
 export namespace CallbackTypes {
   export type bodyDataObject = {
-    status: "success" | "failure";
-    commandType: "dl";
-    actionType: "single" | "multi";
-    startTime: string;
+    status: "success" | "failure" | "progress";
+    commandType?: "dl";
+    actionType?: "single" | "multi";
+    startTime?: string;
     channel: string;
     message: string;
     token: string;
     link: string;
-    convert: "true" | "false";
-    oversize: "true" | "false";
-    name1: string;
+    convert?: "true" | "false";
+    oversize?: "true" | "false";
+    name1?: string;
     name2?: string;
     name3?: string;
     name4?: string;
@@ -41,6 +41,13 @@ export namespace CallbackTypes {
       };
     };
     export type callbackFailure = {
+      [key: string]: (
+        c: ContextType,
+        body: CallbackTypes.bodyDataObject
+      ) => Promise<Response>;
+    };
+
+    export type callbackProgress = {
       [key: string]: (
         c: ContextType,
         body: CallbackTypes.bodyDataObject
