@@ -157,7 +157,7 @@ jobs:
                 file_list+=("${files_num}")
               fi
             done
-            count=0
+            count=1
             for file_name in $(ls -tr); do
               if (( "$(wc -c < "${file_name}")" <= $(( 26214400 / "${files_num}" )) )); then
                 :
