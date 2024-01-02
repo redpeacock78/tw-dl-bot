@@ -179,6 +179,22 @@ jobs:
         id: upload
         shell: bash
         run: |
+          {
+          curl -s -X POST \
+            ${{ secrets.ENDPOINT_URL }} \
+            -H "Accept: application/json" \
+            -H "Content-type: application/json" \
+            -d @- <<EOF
+          {
+            "status": "progress",
+            "channel": ${{ toJSON(github.event.client_payload.channel) }},
+            "message": ${{ toJSON(github.event.client_payload.message) }},
+            "token": ${{ toJSON(github.event.client_payload.token) }},
+            "link": ${{ toJSON(github.event.client_payload.link) }},
+            "content": "⏫Uploading..."
+          }
+          EOF
+          } || :
           dir=$(pwd) && \
           cd download && \
           IFS=$'\n' && \
