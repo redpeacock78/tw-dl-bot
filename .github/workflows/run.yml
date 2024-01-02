@@ -15,19 +15,22 @@ jobs:
         shell: bash
         run: |
           {
-          curl -s -X POST \
-            ${{ secrets.ENDPOINT_URL }} \
-            -H "Accept: application/json" \
-            -H "Content-type: application/json" \
-            -d @- <<EOF
-          {
-            "status": "progress",
-            "channel": ${{ toJSON(github.event.client_payload.channel) }},
-            "message": ${{ toJSON(github.event.client_payload.message) }},
-            "token": ${{ toJSON(github.event.client_payload.token) }},
-            "link": ${{ toJSON(github.event.client_payload.link) }},
-            "content": "⏳Starting..."
-          }
+            curl -s -X POST \
+              ${{ secrets.ENDPOINT_URL }} \
+              -H "Accept: application/json" \
+              -H "Content-type: application/json" \
+              -m 18000 \
+              --retry 100 \
+              --retry-all-errors \
+              -d @- <<EOF
+            {
+              "status": "progress",
+              "channel": ${{ toJSON(github.event.client_payload.channel) }},
+              "message": ${{ toJSON(github.event.client_payload.message) }},
+              "token": ${{ toJSON(github.event.client_payload.token) }},
+              "link": ${{ toJSON(github.event.client_payload.link) }},
+              "content": "⏳Starting..."
+            }
           EOF
           } || :
           mkdir -p download
@@ -54,19 +57,22 @@ jobs:
         shell: bash
         run: |
           {
-          curl -s -X POST \
-            ${{ secrets.ENDPOINT_URL }} \
-            -H "Accept: application/json" \
-            -H "Content-type: application/json" \
-            -d @- <<EOF
-          {
-            "status": "progress",
-            "channel": ${{ toJSON(github.event.client_payload.channel) }},
-            "message": ${{ toJSON(github.event.client_payload.message) }},
-            "token": ${{ toJSON(github.event.client_payload.token) }},
-            "link": ${{ toJSON(github.event.client_payload.link) }},
-            "content": "🛠Setup..."
-          }
+            curl -s -X POST \
+              ${{ secrets.ENDPOINT_URL }} \
+              -H "Accept: application/json" \
+              -H "Content-type: application/json" \
+              -m 18000 \
+              --retry 100 \
+              --retry-all-errors \
+              -d @- <<EOF
+            {
+              "status": "progress",
+              "channel": ${{ toJSON(github.event.client_payload.channel) }},
+              "message": ${{ toJSON(github.event.client_payload.message) }},
+              "token": ${{ toJSON(github.event.client_payload.token) }},
+              "link": ${{ toJSON(github.event.client_payload.link) }},
+              "content": "🛠Setup..."
+            }
           EOF
           } || :
           type ffmpeg > /dev/null 2>&1 || sudo apt-get update && sudo apt-get install -y ffmpeg
@@ -76,6 +82,25 @@ jobs:
         shell: bash
         run: |
           if [[ ${{ toJSON(github.event.client_payload.link) }} =~ ^http.*$ ]]; then
+            {
+              curl -s -X POST \
+                ${{ secrets.ENDPOINT_URL }} \
+                -H "Accept: application/json" \
+                -H "Content-type: application/json" \
+                -m 18000 \
+                --retry 100 \
+                --retry-all-errors \
+                -d @- <<EOF
+              {
+                "status": "progress",
+                "channel": ${{ toJSON(github.event.client_payload.channel) }},
+                "message": ${{ toJSON(github.event.client_payload.message) }},
+                "token": ${{ toJSON(github.event.client_payload.token) }},
+                "link": ${{ toJSON(github.event.client_payload.link) }},
+                "content": "🔍Checking link status..."
+              }
+          EOF
+            } || :
             retry=0
             flag=false
             status=""
@@ -102,19 +127,22 @@ jobs:
         shell: bash
         run: |
           {
-          curl -s -X POST \
-            ${{ secrets.ENDPOINT_URL }} \
-            -H "Accept: application/json" \
-            -H "Content-type: application/json" \
-            -d @- <<EOF
-          {
-            "status": "progress",
-            "channel": ${{ toJSON(github.event.client_payload.channel) }},
-            "message": ${{ toJSON(github.event.client_payload.message) }},
-            "token": ${{ toJSON(github.event.client_payload.token) }},
-            "link": ${{ toJSON(github.event.client_payload.link) }},
-            "content": "⏬Downloading..."
-          }
+            curl -s -X POST \
+              ${{ secrets.ENDPOINT_URL }} \
+              -H "Accept: application/json" \
+              -H "Content-type: application/json" \
+              -m 18000 \
+              --retry 100 \
+              --retry-all-errors \
+              -d @- <<EOF
+            {
+              "status": "progress",
+              "channel": ${{ toJSON(github.event.client_payload.channel) }},
+              "message": ${{ toJSON(github.event.client_payload.message) }},
+              "token": ${{ toJSON(github.event.client_payload.token) }},
+              "link": ${{ toJSON(github.event.client_payload.link) }},
+              "content": "⏬Downloading..."
+            }
           EOF
           } || :
           retry=0
@@ -185,6 +213,9 @@ jobs:
                     ${{ secrets.ENDPOINT_URL }} \
                     -H "Accept: application/json" \
                     -H "Content-type: application/json" \
+                    -m 18000 \
+                    --retry 100 \
+                    --retry-all-errors \
                     -d @- <<EOF
                   {
                     "status": "progress",
@@ -207,19 +238,22 @@ jobs:
         shell: bash
         run: |
           {
-          curl -s -X POST \
-            ${{ secrets.ENDPOINT_URL }} \
-            -H "Accept: application/json" \
-            -H "Content-type: application/json" \
-            -d @- <<EOF
-          {
-            "status": "progress",
-            "channel": ${{ toJSON(github.event.client_payload.channel) }},
-            "message": ${{ toJSON(github.event.client_payload.message) }},
-            "token": ${{ toJSON(github.event.client_payload.token) }},
-            "link": ${{ toJSON(github.event.client_payload.link) }},
-            "content": "⏫Uploading..."
-          }
+            curl -s -X POST \
+              ${{ secrets.ENDPOINT_URL }} \
+              -H "Accept: application/json" \
+              -H "Content-type: application/json" \
+              -m 18000 \
+              --retry 100 \
+              --retry-all-errors \
+              -d @- <<EOF
+            {
+              "status": "progress",
+              "channel": ${{ toJSON(github.event.client_payload.channel) }},
+              "message": ${{ toJSON(github.event.client_payload.message) }},
+              "token": ${{ toJSON(github.event.client_payload.token) }},
+              "link": ${{ toJSON(github.event.client_payload.link) }},
+              "content": "⏫Uploading..."
+            }
           EOF
           } || :
           dir=$(pwd) && \
