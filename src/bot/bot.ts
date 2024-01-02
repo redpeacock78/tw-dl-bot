@@ -54,7 +54,14 @@ bot.events.interactionCreate = async (
                 .sendFollowupMessage(interaction.token, {
                   type: InteractionResponseTypes.ChannelMessageWithSource,
                   data: {
-                    content: `**⏳Starting...**\n${contents.join("\n")}`,
+                    content: `**⏳Starting...**`,
+                    embeds: [
+                      {
+                        description: `> ${contents.join("\n")}`,
+                        color: 0x4db56a,
+                        timestamp: new Date().getTime(),
+                      },
+                    ],
                   },
                 })
                 .then(async (i: Message): Promise<Message | KyResponse> => {
