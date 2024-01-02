@@ -68,11 +68,12 @@ jobs:
         timeout-minutes: 10
         shell: bash
         run: |
+          {
           curl -s -X POST \
             ${{ secrets.ENDPOINT_URL }} \
-          -H "Accept: application/json" \
-          -H "Content-type: application/json" \
-          -d @- <<EOF
+            -H "Accept: application/json" \
+            -H "Content-type: application/json" \
+            -d @- <<EOF
           {
             "status": "progress",
             "channel": ${{ toJSON(github.event.client_payload.channel) }},
@@ -81,7 +82,8 @@ jobs:
             "link": ${{ toJSON(github.event.client_payload.link) }},
             "content": "⏬Downloading..."
           }
-          EOF || :
+          EOF
+          } || :
           retry=0
           flag=false
           not_video=false
@@ -126,6 +128,7 @@ jobs:
         if: ${{ success() }}
         shell: bash
         run: |
+          {
           curl -s -X POST \
             ${{ secrets.ENDPOINT_URL }} \
             -H "Accept: application/json" \
@@ -139,7 +142,8 @@ jobs:
             "link": ${{ toJSON(github.event.client_payload.link) }},
             "content": "🔁Converting..."
           }
-          EOF || :
+          EOF
+          } || :
           dir=$(pwd) && \
           cd download && \
           files_num=$(ls -tr | wc -l) && \
