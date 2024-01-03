@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import bot from "@bot/bot.ts";
 import fileToBlob from "@utils/fileToBlob.ts";
 import { FileContent } from "discordeno";
+import { Constants } from "@libs";
 import { CallbackTypes } from "@router/types/callbackTypes.ts";
 
 const callback = new Hono();
@@ -79,7 +80,10 @@ const callbackSuccessActions: CallbackTypes.Actions.callbackSuccess = {
             }
           )
         );
-        if (900000 < runTime || body.oversize === "true") {
+        if (
+          Constants.UPDATE_TIME_LIMIT < runTime ||
+          body.oversize === Constants.CallbackObject.Oversize.TRUE
+        ) {
           return await bot.helpers
             .sendMessage(`${body.channel}`, {
               content: "**✅Done!**",
@@ -198,31 +202,34 @@ const callbackProgressAction: CallbackTypes.Actions.callbackProgress = {
   },
 };
 
-callback.post("/callback", async (c: CallbackTypes.ContextType) => {
-  let body: CallbackTypes.bodyDataObject | null = null;
-  try {
-    body = (await c.req.raw.clone().json()) as CallbackTypes.bodyDataObject;
-  } catch (_e) {
-    body = (await c.req.parseBody()) as CallbackTypes.bodyDataObject;
+callback.post(
+  "/callback",
+  async (c: CallbackTypes.ContextType): Promise<Response | undefined> => {
+    let body: CallbackTypes.bodyDataObject | null = null;
+    try {
+      body = (await c.req.raw.clone().json()) as CallbackTypes.bodyDataObject;
+    } catch (_e) {
+      body = (await c.req.parseBody()) as CallbackTypes.bodyDataObject;
+    }
+    if (body.status === Constants.CallbackObject.Status.SUCCESS)
+      return await callbackSuccessActions[body.status][body.commandType!]
+        [body.actionType!](c, body)
+        .finally((): void => {
+          body = null;
+        });
+    if (body.status === Constants.CallbackObject.Status.FAILURE)
+      return await callbackFailureAction[body.status](c, body).finally(
+        (): void => {
+          body = null;
+        }
+      );
+    if (body.status === Constants.CallbackObject.Status.PROGRESS)
+      return await callbackProgressAction[body.status](c, body).finally(
+        (): void => {
+          body = null;
+        }
+      );
   }
-  if (body.status === "success")
-    return await callbackSuccessActions[body.status][body.commandType!]
-      [body.actionType!](c, body)
-      .finally((): void => {
-        body = null;
-      });
-  if (body.status === "failure")
-    return await callbackFailureAction[body.status](c, body).finally(
-      (): void => {
-        body = null;
-      }
-    );
-  if (body.status === "progress")
-    return await callbackProgressAction[body.status](c, body).finally(
-      (): void => {
-        body = null;
-      }
-    );
-});
+);
 
 export default callback;
