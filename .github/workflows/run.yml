@@ -301,12 +301,21 @@ jobs:
             else
               options+=(-F "oversize=true")
             fi
-            curl -s -X POST -H "Content-type: multipart/form-data" "${options[@]}" ${{ secrets.ENDPOINT_URL }}
+            curl -s -X POST \
+              -H "Content-type: multipart/form-data" \
+              -m 18000 \
+              --retry 100 \
+              --retry-all-errors \
+              "${options[@]}" \
+              ${{ secrets.ENDPOINT_URL }}
           else
             file_name="$(ls)" && \
             if (( "$(wc -c < ${file_name})" <= 26214400 )); then
               curl -s -X POST \
                 -H "Content-type: multipart/form-data" \
+                -m 18000 \
+                --retry 100 \
+                --retry-all-errors \
                 -F "status=success" \
                 -F "commandType=dl" \
                 -F "actionType=single" \
@@ -323,6 +332,9 @@ jobs:
             else
               curl -s -X POST \
                 -H "Content-type: multipart/form-data" \
+                -m 18000 \
+                --retry 100 \
+                --retry-all-errors \
                 -F "status=success" \
                 -F "commandType=dl" \
                 -F "actionType=single" \
