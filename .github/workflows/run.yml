@@ -311,6 +311,7 @@ jobs:
           else
             file_name="$(ls)" && \
             if (( "$(wc -c < ${file_name})" <= 26214400 )); then
+              echo "Total size: $(wc -c < ${file_name})"
               curl -s -X POST \
                 -H "Content-type: multipart/form-data" \
                 -m 18000 \
@@ -330,6 +331,7 @@ jobs:
                 -F "file1=@${file_name}" \
                 ${{ secrets.ENDPOINT_URL }}
             else
+              echo "Total size: $(wc -c < ${dir}/conv/${file_name%.*}.webm)"
               curl -s -X POST \
                 -H "Content-type: multipart/form-data" \
                 -m 18000 \
