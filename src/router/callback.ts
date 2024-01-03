@@ -14,34 +14,72 @@ const callbackSuccessActions: CallbackTypes.Actions.callbackSuccess = {
         c: CallbackTypes.ContextType,
         body: CallbackTypes.bodyDataObject
       ): Promise<Response> => {
+        const runTime: number = new Date().getTime() - Number(body.startTime);
         let blobData: Blob | null = await fileToBlob(body.file1 as File);
-        return await bot.helpers
-          .editFollowupMessage(`${body.token}`, `${body.message}`, {
-            content: "**✅Done!**",
-            embeds: [
-              {
-                fields: [
-                  { name: "🎞 Video Name", value: `> \`${body.name1}\`` },
-                  { name: "🔗Tweet URL", value: `> ${body.link}` },
-                ],
-                color: 0x4db56a,
-                timestamp: new Date().getTime(),
+        if (
+          Constants.UPDATE_TIME_LIMIT < runTime ||
+          body.oversize === Constants.CallbackObject.Oversize.TRUE
+        ) {
+          return await bot.helpers
+            .sendMessage(`${body.channel}`, {
+              content: "**✅Done!**",
+              embeds: [
+                {
+                  fields: [
+                    { name: "🎞 Video Name", value: `> \`${body.name1}\`` },
+                    { name: "🔗Tweet URL", value: `> ${body.link}` },
+                  ],
+                  color: 0x4db56a,
+                  timestamp: new Date().getTime(),
+                },
+              ],
+              file: {
+                blob: blobData,
+                name: `${body.name1}`,
               },
-            ],
-            file: {
-              blob: blobData,
-              name: `${body.name1}`,
-            },
-          })
-          .then((): Response => {
-            blobData = null;
-            return c.body(null, 204);
-          })
-          .catch((e): Response => {
-            console.log(e);
-            blobData = null;
-            return c.body(null, 500);
-          });
+              messageReference: {
+                messageId: `${body.message}`,
+                channelId: `${body.channel}`,
+                failIfNotExists: true,
+              },
+            })
+            .then((): Response => {
+              blobData = null;
+              return c.body(null, 204);
+            })
+            .catch((): Response => {
+              blobData = null;
+              return c.body(null, 500);
+            });
+        } else {
+          return await bot.helpers
+            .editFollowupMessage(`${body.token}`, `${body.message}`, {
+              content: "**✅Done!**",
+              embeds: [
+                {
+                  fields: [
+                    { name: "🎞 Video Name", value: `> \`${body.name1}\`` },
+                    { name: "🔗Tweet URL", value: `> ${body.link}` },
+                  ],
+                  color: 0x4db56a,
+                  timestamp: new Date().getTime(),
+                },
+              ],
+              file: {
+                blob: blobData,
+                name: `${body.name1}`,
+              },
+            })
+            .then((): Response => {
+              blobData = null;
+              return c.body(null, 204);
+            })
+            .catch((e): Response => {
+              console.log(e);
+              blobData = null;
+              return c.body(null, 500);
+            });
+        }
       },
       multi: async (
         c: CallbackTypes.ContextType,
