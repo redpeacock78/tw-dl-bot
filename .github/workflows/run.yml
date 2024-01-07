@@ -123,6 +123,7 @@ jobs:
           fi
       - name: Start Download
         if: ${{ success() }}
+        id: download
         timeout-minutes: 10
         shell: bash
         run: |
@@ -183,6 +184,8 @@ jobs:
             fi
           done
           if "${not_video}"; then
+            status="notvideo" && \
+            echo "status=${status}" >> "${GITHUB_OUTPUT}" && \
             exit 2
           fi
       - name: Check and Convert Files
@@ -260,6 +263,17 @@ jobs:
           cd download && \
           IFS=$'\n' && \
           if (( "$(ls|wc -l)" > 1 )); then
+            for file_name in $(ls -tr); do
+              if (( "$(wc -c < "${file_name}")" <= 26214400 )); then
+                :
+              elif (( "$(wc -c < "${dir}/conv/${file_name%.*}.webm")" <= 26214400 )); then
+                :
+              else
+                status="sizeover" && \
+                echo "status=${status}" >> "${GITHUB_OUTPUT}" && \
+                exit 2
+              fi
+            done
             options=()
             options+=(-F 'status=success')
             options+=(-F 'commandType=dl')
@@ -310,8 +324,8 @@ jobs:
               ${{ secrets.ENDPOINT_URL }}
           else
             file_name="$(ls)" && \
-            if (( "$(wc -c < ${file_name})" <= 26214400 )); then
-              echo "Total size: $(wc -c < ${file_name})"
+            if (( "$(wc -c < "${file_name}")" <= 26214400 )); then
+              echo "Total size: $(wc -c < "${file_name}")"
               curl -s -X POST \
                 -H "Content-type: multipart/form-data" \
                 -m 18000 \
@@ -331,32 +345,41 @@ jobs:
                 -F "file1=@${file_name}" \
                 ${{ secrets.ENDPOINT_URL }}
             else
-              echo "Total size: $(wc -c < ${dir}/conv/${file_name%.*}.webm)"
-              curl -s -X POST \
-                -H "Content-type: multipart/form-data" \
-                -m 18000 \
-                --retry 100 \
-                --retry-all-errors \
-                -F "status=success" \
-                -F "commandType=dl" \
-                -F "actionType=single" \
-                -F "convert=true" \
-                -F "oversize=false" \
-                -F 'startTime=${{ toJSON(github.event.client_payload.startTime) }}' \
-                -F 'channel=${{ toJSON(github.event.client_payload.channel) }}' \
-                -F 'message=${{ toJSON(github.event.client_payload.message) }}' \
-                -F 'token=${{ toJSON(github.event.client_payload.token) }}' \
-                -F 'link=${{ toJSON(github.event.client_payload.link) }}' \
-                -F "name1=${file_name%.*}.webm" \
-                -F "file1=@${dir}/conv/${file_name%.*}.webm" \
-                ${{ secrets.ENDPOINT_URL }}
+            　total_size=$(wc -c < "${dir}/conv/${file_name%.*}.webm")
+              echo "Total size: ${total_size}"
+              if (( "${total_size}" <= 26214400 )); then
+                curl -s -X POST \
+                  -H "Content-type: multipart/form-data" \
+                  -m 18000 \
+                  --retry 100 \
+                  --retry-all-errors \
+                  -F "status=success" \
+                  -F "commandType=dl" \
+                  -F "actionType=single" \
+                  -F "convert=true" \
+                  -F "oversize=false" \
+                  -F 'startTime=${{ toJSON(github.event.client_payload.startTime) }}' \
+                  -F 'channel=${{ toJSON(github.event.client_payload.channel) }}' \
+                  -F 'message=${{ toJSON(github.event.client_payload.message) }}' \
+                  -F 'token=${{ toJSON(github.event.client_payload.token) }}' \
+                  -F 'link=${{ toJSON(github.event.client_payload.link) }}' \
+                  -F "name1=${file_name%.*}.webm" \
+                  -F "file1=@${dir}/conv/${file_name%.*}.webm" \
+                  ${{ secrets.ENDPOINT_URL }}
+              else
+                status="sizeover" && \
+                echo "status=${status}" >> "${GITHUB_OUTPUT}" && \
+                exit 2
+              fi
             fi
           fi
-      - name: Download file not found
+      - name: Link has expired
         if: >-
           ${{
             failure() &&
-            steps.link_status.outputs.status != ''
+            steps.link_status.outputs.status == 'notfound' &&
+            steps.download.outputs.status == '' &&
+            steps.upload.outputs.status == ''
           }}
         shell: bash
         run: |
@@ -374,11 +397,13 @@ jobs:
             "content": "Sorry! This link has expired."
           }
           EOF
-      - name: Download timed out
+      - name: Download video file not found
         if: >-
           ${{
             failure() &&
-            steps.link_status.outputs.status == ''
+            steps.link_status.outputs.status == '' &&
+            steps.download.outputs.status == 'notvideo' &&
+            steps.upload.outputs.status == ''
           }}
         shell: bash
         run: |
@@ -393,6 +418,54 @@ jobs:
             "message": ${{ toJSON(github.event.client_payload.message) }},
             "token": ${{ toJSON(github.event.client_payload.token) }},
             "link": ${{ toJSON(github.event.client_payload.link) }},
-            "content": "Sorry! Processing time exceeded 5 hours and timed out."
+            "content": "Sorry, this link has expired! The video file did not exist at this link."
+          }
+          EOF
+      - name: Uploaded file size exceeded
+        if: >-
+          ${{
+            failure() &&
+            steps.link_status.outputs.status == '' &&
+            steps.download.outputs.status == '' &&
+            steps.upload.outputs.status == 'sizeover'
+          }}
+        shell: bash
+        run: |
+          curl -s -X POST \
+            ${{ secrets.ENDPOINT_URL }} \
+            -H "Accept: application/json" \
+            -H "Content-type: application/json" \
+            -d @- <<EOF
+          {
+            "status": "failure",
+            "channel": ${{ toJSON(github.event.client_payload.channel) }},
+            "message": ${{ toJSON(github.event.client_payload.message) }},
+            "token": ${{ toJSON(github.event.client_payload.token) }},
+            "link": ${{ toJSON(github.event.client_payload.link) }},
+            "content": "Sorry, this link has expired! The file could not be uploaded because its size exceeds 25 MB."
+          }
+          EOF
+      - name: Download timed out
+        if: >-
+          ${{
+            failure() &&
+            steps.link_status.outputs.status == '' &&
+            steps.download.outputs.status == '' &&
+            steps.upload.outputs.status == ''
+          }}
+        shell: bash
+        run: |
+          curl -s -X POST \
+            ${{ secrets.ENDPOINT_URL }} \
+            -H "Accept: application/json" \
+            -H "Content-type: application/json" \
+            -d @- <<EOF
+          {
+            "status": "failure",
+            "channel": ${{ toJSON(github.event.client_payload.channel) }},
+            "message": ${{ toJSON(github.event.client_payload.message) }},
+            "token": ${{ toJSON(github.event.client_payload.token) }},
+            "link": ${{ toJSON(github.event.client_payload.link) }},
+            "content": "Sorry! Processing time exceeded 10 minits and timed out."
           }
           EOF
