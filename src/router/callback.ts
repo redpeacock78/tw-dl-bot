@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import bot from "@bot/bot.ts";
 import fileToBlob from "@utils/fileToBlob.ts";
+import unitChangeForByte from "@utils/unitChangeForByte.ts";
 import { FileContent } from "discordeno";
 import { Constants } from "@libs";
 import { CallbackTypes } from "@router/types/callbackTypes.ts";
@@ -34,7 +35,7 @@ const callbackSuccessActions: CallbackTypes.Actions.callbackSuccess = {
                     },
                     {
                       name: "📂 Total File Size",
-                      value: `> \`${body.size}\``,
+                      value: `> \`${unitChangeForByte(body.size!)}\``,
                       inline: true,
                     },
                     { name: "🔗 Tweet URL", value: `> ${body.link}` },
@@ -76,7 +77,7 @@ const callbackSuccessActions: CallbackTypes.Actions.callbackSuccess = {
                     },
                     {
                       name: "📂 Total File Size",
-                      value: `> \`${body.size}\``,
+                      value: `> \`${unitChangeForByte(body.size!)}\``,
                       inline: true,
                     },
                     { name: "🔗 Tweet URL", value: `> ${body.link}` },
@@ -158,7 +159,7 @@ const callbackSuccessActions: CallbackTypes.Actions.callbackSuccess = {
                     },
                     {
                       name: "📂 Total File Size",
-                      value: `> \`${body.size}\``,
+                      value: `> \`${unitChangeForByte(body.size!)}\``,
                       inline: true,
                     },
                     { name: "🔗 Tweet URL", value: `> ${body.link}` },
@@ -203,7 +204,7 @@ const callbackSuccessActions: CallbackTypes.Actions.callbackSuccess = {
                     },
                     {
                       name: "📂 Total File Size",
-                      value: `> \`${body.size}\``,
+                      value: `> \`${unitChangeForByte(body.size!)}\``,
                       inline: true,
                     },
                     { name: "🔗 Tweet URL", value: `> ${body.link}` },
