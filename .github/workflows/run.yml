@@ -83,15 +83,28 @@ jobs:
         if: ${{ success() }}
         uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: ffmpeg
+          packages: ffmpeg ffprobe
           version: 1.0
           execute_install_scripts: true
       - name: When ffmpeg is not found in the cache
         if: ${{ success() }}
         shell: bash
         run: |
-          type ffmpeg > /dev/null 2>&1 || sudo apt-get update && sudo apt-get install -y ffmpeg
-          type ffprobe > /dev/null 2>&1 || sudo apt-get update && sudo apt-get install -y ffmpeg
+          retry=0
+          flag=false
+          until "${flag}" || (( "${retry}" == 1000 )); do
+            if type ffmpeg > /dev/null 2>&1 || type ffprobe > /dev/null 2>&1; then
+              flag=true
+            else
+              sudo apt-get update
+              sudo apt-get install -y ffmpeg
+              if type ffmpeg > /dev/null 2>&1 || type ffprobe > /dev/null 2>&1; then
+                flag=true
+              else
+                ((retry++)) || true
+              fi
+            fi
+          done
       - name: Confirmation of link survival
         if: ${{ success() }}
         id: link_status
