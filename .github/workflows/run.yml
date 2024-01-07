@@ -413,7 +413,7 @@ jobs:
             "content": "Sorry! This link has expired."
           }
           EOF
-      - name: Download video file not found
+      - name: Video file not found
         if: >-
           ${{
             failure() &&
