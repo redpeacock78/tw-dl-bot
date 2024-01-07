@@ -98,7 +98,12 @@ bot.events.interactionCreate = async (
                             content: `**⚠️Error**`,
                             embeds: [
                               {
-                                description: `> ${contents.join("\n")}`,
+                                fields: [
+                                  {
+                                    name: "🔗 Tweet URL",
+                                    value: `> ${contents.join("\n")}`,
+                                  },
+                                ],
                                 color: 0x4db56a,
                                 timestamp: new Date().getTime(),
                               },
