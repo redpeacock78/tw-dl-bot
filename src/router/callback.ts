@@ -26,8 +26,18 @@ const callbackSuccessActions: CallbackTypes.Actions.callbackSuccess = {
               embeds: [
                 {
                   fields: [
-                    { name: "🎞 Video Name", value: `> \`${body.name1}\`` },
-                    { name: "🔗Tweet URL", value: `> ${body.link}` },
+                    { name: "#️⃣ Run Number", value: `> \`${body.number}\`` },
+                    {
+                      name: "🎞 Video Name",
+                      value: `> \`${body.name1}\``,
+                      inline: true,
+                    },
+                    {
+                      name: "📂 Total File Size",
+                      value: `> \`${body.size}\``,
+                      inline: true,
+                    },
+                    { name: "🔗 Tweet URL", value: `> ${body.link}` },
                   ],
                   color: 0x4db56a,
                   timestamp: new Date().getTime(),
@@ -58,8 +68,18 @@ const callbackSuccessActions: CallbackTypes.Actions.callbackSuccess = {
               embeds: [
                 {
                   fields: [
-                    { name: "🎞 Video Name", value: `> \`${body.name1}\`` },
-                    { name: "🔗Tweet URL", value: `> ${body.link}` },
+                    { name: "#️⃣ Run Number", value: `> \`${body.number}\`` },
+                    {
+                      name: "🎞 Video Name",
+                      value: `> \`${body.name1}\``,
+                      inline: true,
+                    },
+                    {
+                      name: "📂 Total File Size",
+                      value: `> \`${body.size}\``,
+                      inline: true,
+                    },
+                    { name: "🔗 Tweet URL", value: `> ${body.link}` },
                   ],
                   color: 0x4db56a,
                   timestamp: new Date().getTime(),
@@ -128,13 +148,20 @@ const callbackSuccessActions: CallbackTypes.Actions.callbackSuccess = {
               embeds: [
                 {
                   fields: [
+                    { name: "#️⃣ Run Number", value: `> \`${body.number}\`` },
                     {
                       name: "🎞 Video Name",
                       value: namesArray
                         .map((i: string | File): string => `> \`${i}\``)
                         .join("\n"),
+                      inline: true,
                     },
-                    { name: "🔗Tweet URL", value: `> ${body.link}` },
+                    {
+                      name: "📂 Total File Size",
+                      value: `> \`${body.size}\``,
+                      inline: true,
+                    },
+                    { name: "🔗 Tweet URL", value: `> ${body.link}` },
                   ],
                   color: 0x4db56a,
                   timestamp: new Date().getTime(),
@@ -166,13 +193,20 @@ const callbackSuccessActions: CallbackTypes.Actions.callbackSuccess = {
               embeds: [
                 {
                   fields: [
+                    { name: "#️⃣ Run Number", value: `> \`${body.number}\`` },
                     {
                       name: "🎞 Video Name",
                       value: namesArray
                         .map((i: string | File): string => `> \`${i}\``)
                         .join("\n"),
+                      inline: true,
                     },
-                    { name: "🔗Tweet URL", value: `> ${body.link}` },
+                    {
+                      name: "📂 Total File Size",
+                      value: `> \`${body.size}\``,
+                      inline: true,
+                    },
+                    { name: "🔗 Tweet URL", value: `> ${body.link}` },
                   ],
                   color: 0x4db56a,
                   timestamp: new Date().getTime(),
@@ -208,7 +242,11 @@ const callbackFailureAction: CallbackTypes.Actions.callbackFailure = {
         content: "**❌Failure!**",
         embeds: [
           {
-            description: `> ${body.link}\n${body.content}`,
+            fields: [
+              { name: "#️⃣ Run Number", value: `> \`${body.number}\`` },
+              { name: "🔗 Tweet URL", value: `> ${body.link}` },
+            ],
+            description: body.content,
             color: 0x4db56a,
             timestamp: new Date().getTime(),
           },
@@ -229,7 +267,10 @@ const callbackProgressAction: CallbackTypes.Actions.callbackProgress = {
         content: `**${body.content}**`,
         embeds: [
           {
-            description: `> ${body.link}`,
+            fields: [
+              { name: "#️⃣ Run Number", value: `> \`${body.number}\`` },
+              { name: "🔗 Tweet URL", value: `> ${body.link}` },
+            ],
             color: 0x4db56a,
             timestamp: new Date().getTime(),
           },
