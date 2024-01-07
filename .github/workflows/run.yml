@@ -93,12 +93,12 @@ jobs:
           retry=0
           flag=false
           until "${flag}" || (( "${retry}" == 1000 )); do
-            if type ffmpeg > /dev/null 2>&1 || type ffprobe > /dev/null 2>&1; then
+            if type ffmpeg > /dev/null 2>&1 && type ffprobe > /dev/null 2>&1; then
               flag=true
             else
               sudo apt-get update
               sudo apt-get install -y ffmpeg
-              if type ffmpeg > /dev/null 2>&1 || type ffprobe > /dev/null 2>&1; then
+              if type ffmpeg > /dev/null 2>&1 && type ffprobe > /dev/null 2>&1; then
                 flag=true
               else
                 ((retry++)) || true
