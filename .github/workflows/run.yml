@@ -38,6 +38,7 @@ jobs:
               -d @- <<EOF
             {
               "status": "progress",
+              "number": ${{ github.run_number }},
               "channel": ${{ toJSON(github.event.client_payload.channel) }},
               "message": ${{ toJSON(github.event.client_payload.message) }},
               "token": ${{ toJSON(github.event.client_payload.token) }},
@@ -70,6 +71,7 @@ jobs:
               -d @- <<EOF
             {
               "status": "progress",
+              "number": ${{ github.run_number }},
               "channel": ${{ toJSON(github.event.client_payload.channel) }},
               "message": ${{ toJSON(github.event.client_payload.message) }},
               "token": ${{ toJSON(github.event.client_payload.token) }},
@@ -93,6 +95,8 @@ jobs:
           retry=0
           flag=false
           until "${flag}" || (( "${retry}" == 1000 )); do
+            echo "Retry count: ${retry}"
+            echo "Flag status: ${flag}"
             if type ffmpeg > /dev/null 2>&1 && type ffprobe > /dev/null 2>&1; then
               flag=true
             else
@@ -122,6 +126,7 @@ jobs:
                 -d @- <<EOF
               {
                 "status": "progress",
+                "number": ${{ github.run_number }},
                 "channel": ${{ toJSON(github.event.client_payload.channel) }},
                 "message": ${{ toJSON(github.event.client_payload.message) }},
                 "token": ${{ toJSON(github.event.client_payload.token) }},
@@ -167,6 +172,7 @@ jobs:
               -d @- <<EOF
             {
               "status": "progress",
+              "number": ${{ github.run_number }},
               "channel": ${{ toJSON(github.event.client_payload.channel) }},
               "message": ${{ toJSON(github.event.client_payload.message) }},
               "token": ${{ toJSON(github.event.client_payload.token) }},
@@ -251,6 +257,7 @@ jobs:
                     -d @- <<EOF
                   {
                     "status": "progress",
+                    "number": ${{ github.run_number }},
                     "channel": ${{ toJSON(github.event.client_payload.channel) }},
                     "message": ${{ toJSON(github.event.client_payload.message) }},
                     "token": ${{ toJSON(github.event.client_payload.token) }},
@@ -280,6 +287,7 @@ jobs:
               -d @- <<EOF
             {
               "status": "progress",
+              "number": ${{ github.run_number }},
               "channel": ${{ toJSON(github.event.client_payload.channel) }},
               "message": ${{ toJSON(github.event.client_payload.message) }},
               "token": ${{ toJSON(github.event.client_payload.token) }},
@@ -305,6 +313,7 @@ jobs:
             done
             options=()
             options+=(-F 'status=success')
+            options+=(-F 'number=${{ github.run_number }}')
             options+=(-F 'commandType=dl')
             options+=(-F 'actionType=multi')
             options+=(-F 'channel=${{ toJSON(github.event.client_payload.channel) }}')
@@ -312,7 +321,7 @@ jobs:
             options+=(-F 'token=${{ toJSON(github.event.client_payload.token) }}')
             options+=(-F 'link=${{ toJSON(github.event.client_payload.link) }}')
             options+=(-F 'startTime=${{ toJSON(github.event.client_payload.startTime) }}')
-            if (( "$(echo $(ls -l|awk 'NR>1{print $5}'|tr \\n +)0|bc)" <= 26214400 )); then
+            if (( "$(echo $(ls -l | awk 'NR>1{print $5}' | tr \\n +)0 | bc)" <= 26214400 )); then
               options+=(-F "convert=false")
             else
               options+=(-F "convert=true")
@@ -339,6 +348,7 @@ jobs:
             done
             total_size=$(echo $(echo "${list[@]}" | tr ' ' \\n | grep -v '^$' | xargs -I@ bash -c 'ls -l @' | awk '{print $5}' | grep -v '^$' | tr \\n '+')0 | bc)
             echo "Total size: ${total_size}"
+            options+=(-F "size=${total_size}")
             if (( "${total_size}" <= 26214400 )); then
               options+=(-F "oversize=false")
             else
@@ -361,10 +371,12 @@ jobs:
                 --retry 100 \
                 --retry-all-errors \
                 -F "status=success" \
+                -F 'number=${{ github.run_number }}' \
                 -F "commandType=dl" \
                 -F "actionType=single" \
                 -F "convert=false" \
                 -F "oversize=false" \
+                -F "size=$(wc -c < "${file_name}")" \
                 -F 'startTime=${{ toJSON(github.event.client_payload.startTime) }}' \
                 -F 'channel=${{ toJSON(github.event.client_payload.channel) }}' \
                 -F 'message=${{ toJSON(github.event.client_payload.message) }}' \
@@ -374,7 +386,7 @@ jobs:
                 -F "file1=@${file_name}" \
                 ${{ secrets.ENDPOINT_URL }}
             else
-            　total_size=$(wc -c < "${dir}/conv/${file_name%.*}.webm")
+              total_size=$(wc -c < "${dir}/conv/${file_name%.*}.webm")
               echo "Total size: ${total_size}"
               if (( "${total_size}" <= 26214400 )); then
                 curl -s -X POST \
@@ -383,10 +395,12 @@ jobs:
                   --retry 100 \
                   --retry-all-errors \
                   -F "status=success" \
+                  -F 'number=${{ github.run_number }}' \
                   -F "commandType=dl" \
                   -F "actionType=single" \
                   -F "convert=true" \
                   -F "oversize=false" \
+                  -F "size=${total_size}" \
                   -F 'startTime=${{ toJSON(github.event.client_payload.startTime) }}' \
                   -F 'channel=${{ toJSON(github.event.client_payload.channel) }}' \
                   -F 'message=${{ toJSON(github.event.client_payload.message) }}' \
@@ -419,6 +433,7 @@ jobs:
             -d @- <<EOF
           {
             "status": "failure",
+            "number": ${{ github.run_number }},
             "channel": ${{ toJSON(github.event.client_payload.channel) }},
             "message": ${{ toJSON(github.event.client_payload.message) }},
             "token": ${{ toJSON(github.event.client_payload.token) }},
@@ -443,11 +458,12 @@ jobs:
             -d @- <<EOF
           {
             "status": "failure",
+            "number": ${{ github.run_number }},
             "channel": ${{ toJSON(github.event.client_payload.channel) }},
             "message": ${{ toJSON(github.event.client_payload.message) }},
             "token": ${{ toJSON(github.event.client_payload.token) }},
             "link": ${{ toJSON(github.event.client_payload.link) }},
-            "content": "Sorry, this link has expired! The video file did not exist at this link."
+            "content": "Sorry, the video file did not exist at this link!"
           }
           EOF
       - name: Uploaded file size exceeded
@@ -467,11 +483,12 @@ jobs:
             -d @- <<EOF
           {
             "status": "failure",
+            "number": ${{ github.run_number }},
             "channel": ${{ toJSON(github.event.client_payload.channel) }},
             "message": ${{ toJSON(github.event.client_payload.message) }},
             "token": ${{ toJSON(github.event.client_payload.token) }},
             "link": ${{ toJSON(github.event.client_payload.link) }},
-            "content": "Sorry, this link has expired! The file could not be uploaded because its size exceeds 25 MB."
+            "content": "Sorry, the file could not be uploaded because its size exceeds 25 MB!"
           }
           EOF
       - name: Download timed out
@@ -491,6 +508,7 @@ jobs:
             -d @- <<EOF
           {
             "status": "failure",
+            "number": ${{ github.run_number }},
             "channel": ${{ toJSON(github.event.client_payload.channel) }},
             "message": ${{ toJSON(github.event.client_payload.message) }},
             "token": ${{ toJSON(github.event.client_payload.token) }},
