@@ -24,7 +24,7 @@ jobs:
           jq -r .client_payload.token < "${GITHUB_EVENT_PATH}" >> secrets.txt && \
           cat secrets.txt && \
           rm -rf secrets.txt
-      - name: Create directory
+      - name: Start Steps
         shell: bash
         run: |
           {
@@ -46,13 +46,16 @@ jobs:
             }
           EOF
           } || :
+      - name: Create directory
+        shell: bash
+        run: |
           mkdir -p download
       - name: Setup Python3
         if: ${{ success() }}
         uses: actions/setup-python@v4
         with:
           python-version: "3.x"
-      - name: Setup Dependencies
+      - name: Setup latest yt-dlp
         if: ${{ success() }}
         shell: bash
         run: |
@@ -75,9 +78,22 @@ jobs:
             }
           EOF
           } || :
-          type ffmpeg > /dev/null 2>&1 || sudo apt-get update && sudo apt-get install -y ffmpeg
           type yt-dlp > /dev/null 2>&1 || python3 -m pip install -U yt-dlp
+      - name: Setup and cache ffmpeg
+        if: ${{ success() }}
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: ffmpeg
+          version: 1.0
+          execute_install_scripts: true
+      - name: When ffmpeg is not found in the cache
+        if: ${{ success() }}
+        shell: bash
+        run: |
+          type fffmpeg > /dev/null 2>&1 || sudo apt-get update && sudo apt-get install -y ffmpeg
+          type ffprobe > /dev/null 2>&1 || sudo apt-get update && sudo apt-get install -y ffmpeg
       - name: Confirmation of link survival
+        if: ${{ success() }}
         id: link_status
         shell: bash
         run: |
