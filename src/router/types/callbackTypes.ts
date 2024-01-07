@@ -4,6 +4,7 @@ import { Context, Env } from "hono";
 export namespace CallbackTypes {
   export type bodyDataObject = {
     status: "success" | "failure" | "progress";
+    number: string;
     commandType?: "dl";
     actionType?: "single" | "multi";
     startTime?: string;
@@ -21,6 +22,7 @@ export namespace CallbackTypes {
     file2?: File;
     file3?: File;
     file4?: File;
+    size?: string;
     type: string;
     content?: string;
   };
