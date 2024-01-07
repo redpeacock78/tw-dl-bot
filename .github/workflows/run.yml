@@ -90,7 +90,7 @@ jobs:
         if: ${{ success() }}
         shell: bash
         run: |
-          type fffmpeg > /dev/null 2>&1 || sudo apt-get update && sudo apt-get install -y ffmpeg
+          type ffmpeg > /dev/null 2>&1 || sudo apt-get update && sudo apt-get install -y ffmpeg
           type ffprobe > /dev/null 2>&1 || sudo apt-get update && sudo apt-get install -y ffmpeg
       - name: Confirmation of link survival
         if: ${{ success() }}
