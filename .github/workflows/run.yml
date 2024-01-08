@@ -138,7 +138,7 @@ jobs:
                   rx=(Dura*px)/Prog-px
                   Remain=sprintf(" ETA: %02d:%02d:%02d", int(int(rx)/3600), int(int(rx)/60)%60, int(rx)%60)
                 }
-                printf ("%s/%s(%3d%%) ERT: %02d:%02d:%02d%s\n", Now, TIME, Ratio, int(int(px)/3600), int(int(px)/60)%60, int(px)%60, Remain)
+                printf ("%s/%s(%3d%%) %s\n", Now, TIME, Ratio, Remain)
                 system("")
               }
               Old=Ratio
