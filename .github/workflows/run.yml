@@ -145,6 +145,39 @@ jobs:
             }
           }
           EOF
+      - name: Setup bash script
+        if: ${{ success() }}
+        shell: bash
+        run: |
+          cat <<'EOF' > conv_progress.sh
+          #!/usr/bin/env bash
+          run_number=${{ github.run_number }}
+          channel=${{ toJSON(github.event.client_payload.channel) }}
+          message=${{ toJSON(github.event.client_payload.message) }}
+          token=${{ toJSON(github.event.client_payload.token) }}
+          link=${{ toJSON(github.event.client_payload.link) }}
+
+          interval=1
+          last="$(openssl sha256 -r ${@} | awk '{print $1}')"
+          while true; do
+            sleep "${interval}"
+            current="$(openssl sha256 -r ${@} | awk '{print $1}')"
+            if [[ "${last}" != "{current}" ]]; then
+              progress="$(cat ${@} | tail -n1)"
+              echo '{"status": "progress", "number": "'"${run_number}"'", "channel": "'"${channel}"'", "message": "'"${message}"'", "token": "'"${token}"'", "link": "'"${link}"'", "content": "'"🔁Converting...(${num} / ${#file_list[@]})\n[${progress}]"'"}' | \
+              curl -s -X POST \
+                ${{ secrets.ENDPOINT_URL }} \
+                -H "Accept: application/json" \
+                -H "Content-type: application/json" \
+                -m 18000 \
+                --retry 100 \
+                --retry-all-errors \
+                -d @-
+              last="${current}"
+            fi
+          done
+          EOF
+          chmod +x conv_progress.sh
       - name: Confirmation of link survival
         if: ${{ success() }}
         id: link_status
@@ -307,10 +340,11 @@ jobs:
                   }
           EOF
                 } || :
+                progress="$(mktemp)"
+                nohup ./conv_progress.sh "${progress}" &
                 mkdir -p "${dir}/conv" && \
                 ffmpeg -i "${file_name}" -c:v libvpx -r 25 -crf 33 -b:v 0 -fs $(( 25 / "${files_num}" ))MB "${dir}/conv/${file_name%.*}.webm" 2>&1 | \
-                  awk -f "${dir}/progress.awk" | \
-                  echo '{"status": "progress", "number": "'"${run_number}"'", "channel": "'"${channel}"'", "message": "'"${message}"'", "token": "'"${token}"'", "link": "'"${link}"'", "content": "'"🔁Converting...(${num} / ${#file_list[@]})\n[$(cat)]"'"}'
+                  awk -f "${dir}/progress.awk" >> "${progress}"
               fi
             done
           fi
