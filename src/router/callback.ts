@@ -267,7 +267,9 @@ const callbackProgressAction: CallbackTypes.Actions.callbackProgress = {
       .editFollowupMessage(`${body.token}`, `${body.message}`, {
         content: body
           .content!.split("\n")
-          .map((i: string, n: number): string => (n === 0 ? `**${i}**` : i))
+          .map((i: string, n: number): string =>
+            n === 0 ? `**${i}**` : `> \`${i}\``
+          )
           .join("\n"),
         embeds: [
           {
