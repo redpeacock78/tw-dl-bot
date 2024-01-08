@@ -264,6 +264,11 @@ jobs:
         shell: bash
         run: |
           dir=$(pwd) && \
+          run_number=${{ github.run_number }} && \
+          channel=${{ toJSON(github.event.client_payload.channel) }} && \
+          message=${{ toJSON(github.event.client_payload.message) }} && \
+          token=${{ toJSON(github.event.client_payload.token) }} && \
+          link=${{ toJSON(github.event.client_payload.link) }} && \
           cd download && \
           files_num=$(ls -tr | wc -l) && \
           if (( 26214400 < $(echo $(ls -trl|awk 'NR>1{print $5}'|tr \\n +)0|bc) )); then
@@ -305,7 +310,7 @@ jobs:
                 mkdir -p "${dir}/conv" && \
                 ffmpeg -i "${file_name}" -c:v libvpx -r 25 -crf 33 -b:v 0 -fs $(( 25 / "${files_num}" ))MB "${dir}/conv/${file_name%.*}.webm" 2>&1 | \
                   awk -f "${dir}/progress.awk" | \
-                  echo '{"status": "progress", "number": "${{ github.run_number }}", "channel": ${{ toJSON(github.event.client_payload.channel) }}, "message": ${{ toJSON(github.event.client_payload.message) }}, "token": ${{ toJSON(github.event.client_payload.token) }}, "link": ${{ toJSON(github.event.client_payload.link) }}, "content": "'"🔁Converting...(${num} / ${#file_list[@]})\n[$(cat)]"'"}' | \
+                  echo '{"status": "progress", "number": "'"${run_number}"'", "channel": "'"${channel}"'", "message": "'"${message}"'", "token": "'"${token}"'", "link": "'"${link}"'", "content": "'"🔁Converting...(${num} / ${#file_list[@]})\n[$(cat)]"'"}' | \
                   curl -s -X POST \
                     ${{ secrets.ENDPOINT_URL }} \
                     -H "Accept: application/json" \
