@@ -268,7 +268,7 @@ const callbackProgressAction: CallbackTypes.Actions.callbackProgress = {
         content: body
           .content!.split("\n")
           .map((i: string, n: number): string =>
-            n === 0 ? `**${i}**` : `> \`${i}\``
+            n === 0 ? `**${i}**` : `\`${i}\``
           )
           .join("\n"),
         embeds: [
