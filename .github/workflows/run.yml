@@ -149,7 +149,7 @@ jobs:
         if: ${{ success() }}
         shell: bash
         run: |
-          cat <<'EOF' > conv_progress.sh
+          cat <<'EOF' > /usr/local/bin/conv_progress.sh
           #!/usr/bin/env bash
           run_number=${{ github.run_number }}
           channel=${{ toJSON(github.event.client_payload.channel) }}
@@ -177,7 +177,7 @@ jobs:
             fi
           done
           EOF
-          chmod +x conv_progress.sh
+          chmod +x /usr/local/bin/conv_progress.sh
       - name: Confirmation of link survival
         if: ${{ success() }}
         id: link_status
@@ -341,7 +341,7 @@ jobs:
           EOF
                 } || :
                 progress="$(mktemp)"
-                nohup .${dir}/conv_progress.sh "${progress}" &
+                nohup conv_progress.sh "${progress}" &
                 mkdir -p "${dir}/conv" && \
                 ffmpeg -i "${file_name}" -c:v libvpx -r 25 -crf 33 -b:v 0 -fs $(( 25 / "${files_num}" ))MB "${dir}/conv/${file_name%.*}.webm" 2>&1 | \
                   awk -f "${dir}/progress.awk" >> "${progress}"
