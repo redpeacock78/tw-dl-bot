@@ -158,13 +158,13 @@ jobs:
           link=${{ toJSON(github.event.client_payload.link) }}
 
           interval=1
-          last="$(openssl sha256 -r ${@} | awk '{print $1}')"
+          last="$(openssl sha256 -r ${1} | awk '{print $1}')"
           while true; do
             sleep "${interval}"
-            current="$(openssl sha256 -r ${@} | awk '{print $1}')"
+            current="$(openssl sha256 -r ${1} | awk '{print $1}')"
             if [[ "${last}" != "{current}" ]]; then
               progress="$(cat ${@} | tail -n1)"
-              echo '{"status": "progress", "number": "'"${run_number}"'", "channel": "'"${channel}"'", "message": "'"${message}"'", "token": "'"${token}"'", "link": "'"${link}"'", "content": "'"🔁Converting...(${num} / ${#file_list[@]})\n[${progress}]"'"}' | \
+              echo '{"status": "progress", "number": "'"${run_number}"'", "channel": "'"${channel}"'", "message": "'"${message}"'", "token": "'"${token}"'", "link": "'"${link}"'", "content": "'"🔁Converting...(${2} / ${3})\n[${progress}]"'"}' | \
               curl -s -X POST \
                 ${{ secrets.ENDPOINT_URL }} \
                 -H "Accept: application/json" \
@@ -172,7 +172,7 @@ jobs:
                 -m 18000 \
                 --retry 100 \
                 --retry-all-errors \
-                -d @-
+                -d @- > /dev/null 2>&1 || :
               last="${current}"
             fi
           done
@@ -341,10 +341,13 @@ jobs:
           EOF
                 } || :
                 progress="$(mktemp)"
-                nohup conv_progress.sh "${progress}" &
+                pid="$(mktemp)"
+                nohup conv_progress.sh "${progress}" ${num} ${#file_list[@]} &
+                echo "${!}" > "${pid}"
                 mkdir -p "${dir}/conv" && \
                 ffmpeg -i "${file_name}" -c:v libvpx -r 25 -crf 33 -b:v 0 -fs $(( 25 / "${files_num}" ))MB "${dir}/conv/${file_name%.*}.webm" 2>&1 | \
                   awk -f "${dir}/progress.awk" >> "${progress}"
+                cat "${pid}" | xargs kill -term
               fi
             done
           fi
