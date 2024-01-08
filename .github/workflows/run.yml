@@ -164,7 +164,7 @@ jobs:
             current="$(openssl sha256 -r ${1} | awk '{print $1}')"
             if [[ "${last}" != "{current}" ]]; then
               progress="$(cat ${1} | tail -n1)"
-              echo '{"status": "progress", "number": "'"${run_number}"'", "channel": "'"${channel}"'", "message": "'"${message}"'", "token": "'"${token}"'", "link": "'"${link}"'", "content": "'"🔁Converting...(${2} / ${3})\n[${progress}]"'"}' | \
+              echo '{"status": "progress", "number": "'"${run_number}"'", "channel": "'"${channel}"'", "message": "'"${message}"'", "token": "'"${token}"'", "link": "'"${link}"'", "content": "'"🔁Converting...(${2} / ${3})\n${progress}"'"}' | \
               curl -s -X POST \
                 ${{ secrets.ENDPOINT_URL }} \
                 -H "Accept: application/json" \
