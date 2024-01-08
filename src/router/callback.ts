@@ -265,7 +265,10 @@ const callbackProgressAction: CallbackTypes.Actions.callbackProgress = {
   ): Promise<Response> => {
     return await bot.helpers
       .editFollowupMessage(`${body.token}`, `${body.message}`, {
-        content: `**${body.content}**`,
+        content: body
+          .content!.split("\n")
+          .map((i: string, n: number): string => (n === 0 ? `**${i}**` : i))
+          .join("\n"),
         embeds: [
           {
             fields: [

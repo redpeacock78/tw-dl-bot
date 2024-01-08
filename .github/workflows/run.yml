@@ -109,6 +109,42 @@ jobs:
               fi
             fi
           done
+      - name: Setup awk script
+        if: ${{ success() }}
+        shell: bash
+        run: |
+          cat <<EOF > progress.awk
+          BEGIN{RS="frame="}
+          /Duration: /{
+            match($0, /[0-2][0-3]:[0-5][0-9]:[0-5][0-9]/)
+            TIME=substr($0, RSTART, RLENGTH)
+            split(TIME, array, ":")
+            Dura=array[1]*3600+array[2]*60+array[3]
+            Start=systime()
+            Old=-1
+          }
+          /time=/{
+            match($0, /[0-2][0-3]:[0-5][0-9]:[0-5][0-9]/)
+            Now=substr($0, RSTART, RLENGTH)
+            split(Now, array1, ":")
+            Prog=array1[1]*3600+array1[2]*60+array1[3]
+            Ratio=int(Prog/Dura*100)
+            if ( Ratio != Old ) {
+              if ( Ratio % 5 == 0 ) {
+                Current=systime()
+                px=Current-Start
+                Remain=""
+                if ( Prog != 0 ) {
+                  rx=(Dura*px)/Prog-px
+                  Remain=sprintf(" ETA: %02d:%02d:%02d", int(int(rx)/3600), int(int(rx)/60)%60, int(rx)%60)
+                }
+                printf ("%s/%s(%3d%%) ERT: %02d:%02d:%02d%s\n", Now, TIME, Ratio, int(int(px)/3600), int(int(px)/60)%60, int(px)%60, Remain)
+                system("")
+              }
+              Old=Ratio
+            }
+          }
+          EOF
       - name: Confirmation of link survival
         if: ${{ success() }}
         id: link_status
@@ -267,7 +303,17 @@ jobs:
           EOF
                 } || :
                 mkdir -p "${dir}/conv" && \
-                ffmpeg -i "${file_name}" -c:v libvpx -r 25 -crf 33 -b:v 0 -fs $(( 25 / "${files_num}" ))MB "${dir}/conv/${file_name%.*}.webm"
+                ffmpeg -i "${file_name}" -c:v libvpx -r 25 -crf 33 -b:v 0 -fs $(( 25 / "${files_num}" ))MB "${dir}/conv/${file_name%.*}.webm" | \
+                  awk -f "${dir}/progress.awk" | \
+                  echo '{"status": "progress", "number": ${{ github.run_number }}, "channel": ${{ toJSON(github.event.client_payload.channel) }}, "message": ${{ toJSON(github.event.client_payload.message) }}, "token": ${{ toJSON(github.event.client_payload.token) }}, "link": ${{ toJSON(github.event.client_payload.link) }}, "content": "'"🔁Converting...(${num} / ${#file_list[@]})\n[$(cat)]"'"}' | \
+                  curl -s -X POST \
+                    ${{ secrets.ENDPOINT_URL }} \
+                    -H "Accept: application/json" \
+                    -H "Content-type: application/json" \
+                    -m 18000 \
+                    --retry 100 \
+                    --retry-all-errors \
+                    -d @- || :
               fi
             done
           fi
