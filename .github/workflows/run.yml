@@ -136,7 +136,7 @@ jobs:
                 Remain=""
                 if ( Prog != 0 ) {
                   rx=(Dura*px)/Prog-px
-                  Remain=sprintf(" ETA: %02d:%02d:%02d", int(int(rx)/3600), int(int(rx)/60)%60, int(rx)%60)
+                  Remain=sprintf("ETA: %02d:%02d:%02d", int(int(rx)/3600), int(int(rx)/60)%60, int(rx)%60)
                 }
                 printf ("%s/%s(%3d%%) %s\n", Now, TIME, Ratio, Remain)
                 system("")
