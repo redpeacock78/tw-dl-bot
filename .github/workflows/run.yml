@@ -310,15 +310,7 @@ jobs:
                 mkdir -p "${dir}/conv" && \
                 ffmpeg -i "${file_name}" -c:v libvpx -r 25 -crf 33 -b:v 0 -fs $(( 25 / "${files_num}" ))MB "${dir}/conv/${file_name%.*}.webm" 2>&1 | \
                   awk -f "${dir}/progress.awk" | \
-                  echo '{"status": "progress", "number": "'"${run_number}"'", "channel": "'"${channel}"'", "message": "'"${message}"'", "token": "'"${token}"'", "link": "'"${link}"'", "content": "'"🔁Converting...(${num} / ${#file_list[@]})\n[$(cat)]"'"}' | \
-                  curl -s -X POST \
-                    ${{ secrets.ENDPOINT_URL }} \
-                    -H "Accept: application/json" \
-                    -H "Content-type: application/json" \
-                    -m 18000 \
-                    --retry 100 \
-                    --retry-all-errors \
-                    -d @- || :
+                  echo '{"status": "progress", "number": "'"${run_number}"'", "channel": "'"${channel}"'", "message": "'"${message}"'", "token": "'"${token}"'", "link": "'"${link}"'", "content": "'"🔁Converting...(${num} / ${#file_list[@]})\n[$(cat)]"'"}'
               fi
             done
           fi
