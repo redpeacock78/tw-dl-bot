@@ -138,7 +138,7 @@ jobs:
                   rx=(Dura*px)/Prog-px
                   Remain=sprintf("ETA: %02d:%02d:%02d", int(int(rx)/3600), int(int(rx)/60)%60, int(rx)%60)
                 }
-                printf ("%s/%s(%3d%%) %s\n", Now, TIME, Ratio, Remain)
+                printf ("%s/%s(%s%) %s\n", Now, TIME, Ratio, Remain)
                 system("")
               }
               Old=Ratio
@@ -349,6 +349,7 @@ jobs:
                   ffmpeg -i "${file_name}" -c:v libvpx -r 25 -crf 33 -b:v 0 -fs $(( 25 / "${files_num}" ))MB "${dir}/conv/${file_name%.*}.webm" 2>&1 | \
                   awk -f "${dir}/progress.awk" >> "${progress}"
                 } && \
+                sleep 1 && \
                 cat "${pid}" | xargs kill -term
               fi
             done
