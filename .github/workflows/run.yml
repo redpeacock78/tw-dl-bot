@@ -303,7 +303,7 @@ jobs:
           EOF
                 } || :
                 mkdir -p "${dir}/conv" && \
-                ffmpeg -i "${file_name}" -c:v libvpx -r 25 -crf 33 -b:v 0 -fs $(( 25 / "${files_num}" ))MB "${dir}/conv/${file_name%.*}.webm" | \
+                ffmpeg -i "${file_name}" -c:v libvpx -r 25 -crf 33 -b:v 0 -fs $(( 25 / "${files_num}" ))MB "${dir}/conv/${file_name%.*}.webm" 2>&1 | \
                   awk -f "${dir}/progress.awk" | \
                   echo '{"status": "progress", "number": ${{ github.run_number }}, "channel": ${{ toJSON(github.event.client_payload.channel) }}, "message": ${{ toJSON(github.event.client_payload.message) }}, "token": ${{ toJSON(github.event.client_payload.token) }}, "link": ${{ toJSON(github.event.client_payload.link) }}, "content": "'"🔁Converting...(${num} / ${#file_list[@]})\n[$(cat)]"'"}' | \
                   curl -s -X POST \
