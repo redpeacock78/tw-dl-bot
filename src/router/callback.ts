@@ -314,6 +314,8 @@ callback.post(
           body = null;
         }
       );
+    body = null;
+    return c.body(null, 200);
   }
 );
 
