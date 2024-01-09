@@ -27,7 +27,7 @@ const callbackSuccessActions: CallbackTypes.Actions.callbackSuccess = {
               embeds: [
                 {
                   fields: [
-                    { name: "#️⃣ Run Number", value: `> \`${body.number}\`` },
+                    { name: "#️⃣ Run Number", value: `> \`#${body.number}\`` },
                     {
                       name: "🎞 Video Name",
                       value: `> \`${body.name1}\``,
@@ -69,7 +69,7 @@ const callbackSuccessActions: CallbackTypes.Actions.callbackSuccess = {
               embeds: [
                 {
                   fields: [
-                    { name: "#️⃣ Run Number", value: `> \`${body.number}\`` },
+                    { name: "#️⃣ Run Number", value: `> \`#${body.number}\`` },
                     {
                       name: "🎞 Video Name",
                       value: `> \`${body.name1}\``,
@@ -95,8 +95,7 @@ const callbackSuccessActions: CallbackTypes.Actions.callbackSuccess = {
               blobData = null;
               return c.body(null, 204);
             })
-            .catch((e): Response => {
-              console.log(e);
+            .catch((): Response => {
               blobData = null;
               return c.body(null, 500);
             });
@@ -149,7 +148,7 @@ const callbackSuccessActions: CallbackTypes.Actions.callbackSuccess = {
               embeds: [
                 {
                   fields: [
-                    { name: "#️⃣ Run Number", value: `> \`${body.number}\`` },
+                    { name: "#️⃣ Run Number", value: `> \`#${body.number}\`` },
                     {
                       name: "🎞 Video Name",
                       value: namesArray
@@ -194,7 +193,7 @@ const callbackSuccessActions: CallbackTypes.Actions.callbackSuccess = {
               embeds: [
                 {
                   fields: [
-                    { name: "#️⃣ Run Number", value: `> \`${body.number}\`` },
+                    { name: "#️⃣ Run Number", value: `> \`#${body.number}\`` },
                     {
                       name: "🎞 Video Name",
                       value: namesArray
@@ -244,7 +243,7 @@ const callbackFailureAction: CallbackTypes.Actions.callbackFailure = {
         embeds: [
           {
             fields: [
-              { name: "#️⃣ Run Number", value: `> \`${body.number}\`` },
+              { name: "#️⃣ Run Number", value: `> \`#${body.number}\`` },
               { name: "🔗 Tweet URL", value: `> ${body.link}` },
             ],
             description: body.content,
@@ -274,7 +273,7 @@ const callbackProgressAction: CallbackTypes.Actions.callbackProgress = {
         embeds: [
           {
             fields: [
-              { name: "#️⃣ Run Number", value: `> \`${body.number}\`` },
+              { name: "#️⃣ Run Number", value: `> \`#${body.number}\`` },
               { name: "🔗 Tweet URL", value: `> ${body.link}` },
             ],
             color: 0x4db56a,
