@@ -78,10 +78,10 @@ jobs:
           type yt-dlp > /dev/null 2>&1 || \
           {
             sudo curl -sL \
-            --retry 100 \
-            --retry-all-errors \
-            -o /usr/local/bin/yt-dlp \
-            https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp  && \
+              --retry 100 \
+              --retry-all-errors \
+              -o /usr/local/bin/yt-dlp \
+              https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp  && \
             sudo chmod a+rx /usr/local/bin/yt-dlp
           }
       - name: Setup and cache dependency
