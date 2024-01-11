@@ -268,7 +268,7 @@ jobs:
               ${{ toJSON(github.event.client_payload.link) }} > /dev/null 2>&1 && yt_status="0" || yt_status="1"
             echo "yt-dlp status: ${yt_status}"
             echo "Result files: $(ls | tr \\n ' ')"
-            if [[ "${yt_status}" == "0" || "$(ls)" != "" ]]; then
+            if [[ "${yt_status}" == "0" && "$(ls)" != "" ]]; then
               for file_name in $(ls -tr); do
                 if ffprobe -v error -f lavfi movie="${file_name}" > /dev/null 2>&1; then
                   flag=true
