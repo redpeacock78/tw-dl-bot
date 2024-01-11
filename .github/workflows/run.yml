@@ -275,8 +275,6 @@ jobs:
                 yt_status="1"
                 true
               }
-            echo "yt-dlp status: ${yt_status}"
-            echo "Result files: $(ls | tr \\n ' ')"
             if [[ "${yt_status}" == "0" ]]; then
               if [[ "$(cat ${yt_result} | tail -n1 | grep 'No video')" == "" ]]; then
                 for file_name in $(ls -tr); do
