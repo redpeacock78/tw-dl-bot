@@ -260,6 +260,7 @@ jobs:
             echo "Retry count: ${retry}"
             echo "Flag status: ${flag}"
             yt-dlp -q \
+              -R 100 \
               --force-overwrites \
               --cookies "${cookie_path}/cookie.txt" \
               --downloader "$(type ffmpeg | awk '{print $3}')" \
