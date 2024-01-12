@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import bot from "@bot/bot.ts";
 import fileToBlob from "@utils/fileToBlob.ts";
 import unitChangeForByte from "@utils/unitChangeForByte.ts";
+import millisecondChangeFormat from "@utils/millisecondChangeFormat.ts";
 import { FileContent } from "discordeno";
 import { Constants } from "@libs";
 import { CallbackTypes } from "@router/types/callbackTypes.ts";
@@ -28,6 +29,10 @@ const callbackSuccessActions: CallbackTypes.Actions.callbackSuccess = {
                 {
                   fields: [
                     { name: "#️⃣ Run Number", value: `> \`#${body.number}\`` },
+                    {
+                      name: "🕑 Total Time",
+                      value: `> \`${millisecondChangeFormat(runTime)}\``,
+                    },
                     {
                       name: "🎞 Video Name",
                       value: `> \`${body.name1}\``,
@@ -70,6 +75,10 @@ const callbackSuccessActions: CallbackTypes.Actions.callbackSuccess = {
                 {
                   fields: [
                     { name: "#️⃣ Run Number", value: `> \`#${body.number}\`` },
+                    {
+                      name: "🕑 Total Time",
+                      value: `> \`${millisecondChangeFormat(runTime)}\``,
+                    },
                     {
                       name: "🎞 Video Name",
                       value: `> \`${body.name1}\``,
@@ -150,6 +159,10 @@ const callbackSuccessActions: CallbackTypes.Actions.callbackSuccess = {
                   fields: [
                     { name: "#️⃣ Run Number", value: `> \`#${body.number}\`` },
                     {
+                      name: "🕑 Total Time",
+                      value: `> \`${millisecondChangeFormat(runTime)}\``,
+                    },
+                    {
                       name: "🎞 Video Name",
                       value: namesArray
                         .map((i: string | File): string => `> \`${i}\``)
@@ -194,6 +207,10 @@ const callbackSuccessActions: CallbackTypes.Actions.callbackSuccess = {
                 {
                   fields: [
                     { name: "#️⃣ Run Number", value: `> \`#${body.number}\`` },
+                    {
+                      name: "🕑 Total Time",
+                      value: `> \`${millisecondChangeFormat(runTime)}\``,
+                    },
                     {
                       name: "🎞 Video Name",
                       value: namesArray
