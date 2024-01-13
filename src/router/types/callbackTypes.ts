@@ -7,7 +7,7 @@ export namespace CallbackTypes {
     number: string;
     commandType?: "dl";
     actionType?: "single" | "multi";
-    startTime?: string;
+    startTime: string;
     channel: string;
     message: string;
     token: string;
