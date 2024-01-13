@@ -30,7 +30,7 @@ const callbackSuccessActions: CallbackTypes.Actions.callbackSuccess = {
                   fields: [
                     { name: "#️⃣ Run Number", value: `> \`#${body.number}\`` },
                     {
-                      name: "🕑 Total Time",
+                      name: "🕑 Total Times",
                       value: `> \`${millisecondChangeFormat(runTime)}\``,
                     },
                     {
@@ -76,7 +76,7 @@ const callbackSuccessActions: CallbackTypes.Actions.callbackSuccess = {
                   fields: [
                     { name: "#️⃣ Run Number", value: `> \`#${body.number}\`` },
                     {
-                      name: "🕑 Total Time",
+                      name: "🕑 Total Times",
                       value: `> \`${millisecondChangeFormat(runTime)}\``,
                     },
                     {
@@ -159,11 +159,11 @@ const callbackSuccessActions: CallbackTypes.Actions.callbackSuccess = {
                   fields: [
                     { name: "#️⃣ Run Number", value: `> \`#${body.number}\`` },
                     {
-                      name: "🕑 Total Time",
+                      name: "🕑 Total Times",
                       value: `> \`${millisecondChangeFormat(runTime)}\``,
                     },
                     {
-                      name: "🎞 Video Name",
+                      name: "🎞 Video Names",
                       value: namesArray
                         .map((i: string | File): string => `> \`${i}\``)
                         .join("\n"),
@@ -208,11 +208,11 @@ const callbackSuccessActions: CallbackTypes.Actions.callbackSuccess = {
                   fields: [
                     { name: "#️⃣ Run Number", value: `> \`#${body.number}\`` },
                     {
-                      name: "🕑 Total Time",
+                      name: "🕑 Total Times",
                       value: `> \`${millisecondChangeFormat(runTime)}\``,
                     },
                     {
-                      name: "🎞 Video Name",
+                      name: "🎞 Video Names",
                       value: namesArray
                         .map((i: string | File): string => `> \`${i}\``)
                         .join("\n"),
