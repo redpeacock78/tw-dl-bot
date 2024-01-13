@@ -28,7 +28,7 @@ const callbackSuccessActions: CallbackTypes.Actions.callbackSuccess = {
                   fields: [
                     { name: "#️⃣ Run Number", value: `> \`#${body.number}\`` },
                     {
-                      name: "🕑 Total Times",
+                      name: "🕑 Total Time",
                       value: `> \`${millisecondChangeFormat(runTime)}\``,
                     },
                     {
@@ -74,7 +74,7 @@ const callbackSuccessActions: CallbackTypes.Actions.callbackSuccess = {
                   fields: [
                     { name: "#️⃣ Run Number", value: `> \`#${body.number}\`` },
                     {
-                      name: "🕑 Total Times",
+                      name: "🕑 Total Time",
                       value: `> \`${millisecondChangeFormat(runTime)}\``,
                     },
                     {
@@ -157,7 +157,7 @@ const callbackSuccessActions: CallbackTypes.Actions.callbackSuccess = {
                   fields: [
                     { name: "#️⃣ Run Number", value: `> \`#${body.number}\`` },
                     {
-                      name: "🕑 Total Times",
+                      name: "🕑 Total Time",
                       value: `> \`${millisecondChangeFormat(runTime)}\``,
                     },
                     {
@@ -206,7 +206,7 @@ const callbackSuccessActions: CallbackTypes.Actions.callbackSuccess = {
                   fields: [
                     { name: "#️⃣ Run Number", value: `> \`#${body.number}\`` },
                     {
-                      name: "🕑 Total Times",
+                      name: "🕑 Total Time",
                       value: `> \`${millisecondChangeFormat(runTime)}\``,
                     },
                     {
@@ -260,7 +260,7 @@ const callbackFailureAction: CallbackTypes.Actions.callbackFailure = {
             fields: [
               { name: "#️⃣ Run Number", value: `> \`#${body.number}\`` },
               {
-                name: "🕑 Elapsed Times",
+                name: "🕑 Total Time",
                 value: `> \`${millisecondChangeFormat(
                   new Date().getTime() - Number(body.startTime)
                 )}\``,
