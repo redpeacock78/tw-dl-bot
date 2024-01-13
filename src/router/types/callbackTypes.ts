@@ -31,7 +31,7 @@ export namespace CallbackTypes {
     "/callback",
     Record<string | number | symbol, never>
   >;
-  export namespace Actions {
+  export namespace Functions {
     export type callbackSuccess = {
       [key: string]: {
         [key: string]: {
