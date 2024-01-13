@@ -261,6 +261,12 @@ const callbackFailureAction: CallbackTypes.Actions.callbackFailure = {
           {
             fields: [
               { name: "#️⃣ Run Number", value: `> \`#${body.number}\`` },
+              {
+                name: "🕑 Elapsed Times",
+                value: `> \`${millisecondChangeFormat(
+                  new Date().getTime() - Number(body.startTime)
+                )}\``,
+              },
               { name: "🔗 Tweet URL", value: `> ${body.link}` },
             ],
             description: body.content,
@@ -291,6 +297,12 @@ const callbackProgressAction: CallbackTypes.Actions.callbackProgress = {
           {
             fields: [
               { name: "#️⃣ Run Number", value: `> \`#${body.number}\`` },
+              {
+                name: "🕑 Elapsed Times",
+                value: `> \`${millisecondChangeFormat(
+                  new Date().getTime() - Number(body.startTime)
+                )}\``,
+              },
               { name: "🔗 Tweet URL", value: `> ${body.link}` },
             ],
             color: 0x4db56a,
