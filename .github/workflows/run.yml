@@ -39,6 +39,7 @@ jobs:
             {
               "status": "progress",
               "number": ${{ github.run_number }},
+              "startTime": ${{ toJSON(github.event.client_payload.startTime) }},
               "channel": ${{ toJSON(github.event.client_payload.channel) }},
               "message": ${{ toJSON(github.event.client_payload.message) }},
               "token": ${{ toJSON(github.event.client_payload.token) }},
@@ -67,6 +68,7 @@ jobs:
             {
               "status": "progress",
               "number": ${{ github.run_number }},
+              "startTime": ${{ toJSON(github.event.client_payload.startTime) }},
               "channel": ${{ toJSON(github.event.client_payload.channel) }},
               "message": ${{ toJSON(github.event.client_payload.message) }},
               "token": ${{ toJSON(github.event.client_payload.token) }},
@@ -155,6 +157,7 @@ jobs:
           cat <<'EOF' > /usr/local/bin/conv_progress.sh
           #!/usr/bin/env bash
           run_number=${{ github.run_number }}
+          start_time=${{ toJSON(github.event.client_payload.startTime) }}
           channel=${{ toJSON(github.event.client_payload.channel) }}
           message=${{ toJSON(github.event.client_payload.message) }}
           token=${{ toJSON(github.event.client_payload.token) }}
@@ -167,7 +170,7 @@ jobs:
             current="$(openssl sha256 -r ${1} | awk '{print $1}')"
             if [[ "${last}" != "{current}" ]]; then
               progress="$(cat ${1} | tail -n1)"
-              echo '{"status": "progress", "number": "'"${run_number}"'", "channel": "'"${channel}"'", "message": "'"${message}"'", "token": "'"${token}"'", "link": "'"${link}"'", "content": "'"🔁Converting...(${2} / ${3})\n${progress}"'"}' | \
+              echo '{"status": "progress", "number": "'"${run_number}"'", "startTime": "'"${start_time}"'", "channel": "'"${channel}"'", "message": "'"${message}"'", "token": "'"${token}"'", "link": "'"${link}"'", "content": "'"🔁Converting...(${2} / ${3})\n${progress}"'"}' | \
               curl -s -X POST \
                 ${{ secrets.ENDPOINT_URL }} \
                 -H "Accept: application/json" \
@@ -199,6 +202,7 @@ jobs:
               {
                 "status": "progress",
                 "number": ${{ github.run_number }},
+                "startTime": ${{ toJSON(github.event.client_payload.startTime) }},
                 "channel": ${{ toJSON(github.event.client_payload.channel) }},
                 "message": ${{ toJSON(github.event.client_payload.message) }},
                 "token": ${{ toJSON(github.event.client_payload.token) }},
@@ -245,6 +249,7 @@ jobs:
             {
               "status": "progress",
               "number": ${{ github.run_number }},
+              "startTime": ${{ toJSON(github.event.client_payload.startTime) }},
               "channel": ${{ toJSON(github.event.client_payload.channel) }},
               "message": ${{ toJSON(github.event.client_payload.message) }},
               "token": ${{ toJSON(github.event.client_payload.token) }},
@@ -353,6 +358,7 @@ jobs:
                   {
                     "status": "progress",
                     "number": ${{ github.run_number }},
+                    "startTime": ${{ toJSON(github.event.client_payload.startTime) }},
                     "channel": ${{ toJSON(github.event.client_payload.channel) }},
                     "message": ${{ toJSON(github.event.client_payload.message) }},
                     "token": ${{ toJSON(github.event.client_payload.token) }},
@@ -396,6 +402,7 @@ jobs:
             {
               "status": "progress",
               "number": ${{ github.run_number }},
+              "startTime": ${{ toJSON(github.event.client_payload.startTime) }},
               "channel": ${{ toJSON(github.event.client_payload.channel) }},
               "message": ${{ toJSON(github.event.client_payload.message) }},
               "token": ${{ toJSON(github.event.client_payload.token) }},
@@ -542,6 +549,7 @@ jobs:
           {
             "status": "failure",
             "number": ${{ github.run_number }},
+            "startTime": ${{ toJSON(github.event.client_payload.startTime) }},
             "channel": ${{ toJSON(github.event.client_payload.channel) }},
             "message": ${{ toJSON(github.event.client_payload.message) }},
             "token": ${{ toJSON(github.event.client_payload.token) }},
@@ -567,6 +575,7 @@ jobs:
           {
             "status": "failure",
             "number": ${{ github.run_number }},
+            "startTime": ${{ toJSON(github.event.client_payload.startTime) }},
             "channel": ${{ toJSON(github.event.client_payload.channel) }},
             "message": ${{ toJSON(github.event.client_payload.message) }},
             "token": ${{ toJSON(github.event.client_payload.token) }},
@@ -592,6 +601,7 @@ jobs:
           {
             "status": "failure",
             "number": ${{ github.run_number }},
+            "startTime": ${{ toJSON(github.event.client_payload.startTime) }},
             "channel": ${{ toJSON(github.event.client_payload.channel) }},
             "message": ${{ toJSON(github.event.client_payload.message) }},
             "token": ${{ toJSON(github.event.client_payload.token) }},
@@ -617,6 +627,7 @@ jobs:
           {
             "status": "failure",
             "number": ${{ github.run_number }},
+            "startTime": ${{ toJSON(github.event.client_payload.startTime) }},
             "channel": ${{ toJSON(github.event.client_payload.channel) }},
             "message": ${{ toJSON(github.event.client_payload.message) }},
             "token": ${{ toJSON(github.event.client_payload.token) }},
