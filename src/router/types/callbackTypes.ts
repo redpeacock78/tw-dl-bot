@@ -37,7 +37,7 @@ export namespace CallbackTypes {
         [key: string]: {
           [key: string]: (
             c: ContextType,
-            body: CallbackTypes.bodyDataObject
+            body: CallbackTypes.bodyDataObject | null
           ) => Promise<Response>;
         };
       };
