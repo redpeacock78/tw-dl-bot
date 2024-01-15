@@ -10,68 +10,74 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
     dl: {
       single: async (
         c: CallbackTypes.ContextType,
-        body: CallbackTypes.bodyDataObject
+        body: CallbackTypes.bodyDataObject | null
       ): Promise<Response> => {
-        const runTime: number = new Date().getTime() - Number(body.startTime);
+        const runTime: number = new Date().getTime() - Number(body!.startTime);
         const editFlag: boolean =
           runTime <= Constants.UPDATE_TIME_LIMIT ||
-          body.oversize !== Constants.CallbackObject.Oversize.TRUE;
-        let blobData: Blob | null = await fileToBlob(body.file1 as File);
+          body!.oversize !== Constants.CallbackObject.Oversize.TRUE;
+        let blobData: Blob | null = await fileToBlob(body!.file1 as File);
         if (editFlag)
           return await bot.helpers
             .editFollowupMessage(
-              `${body.token}`,
-              `${body.message}`,
+              `${body!.token}`,
+              `${body!.message}`,
               createSuccessMessage({
-                runNumber: body.number,
+                runNumber: body!.number,
                 runTime: runTime,
-                totalSize: body.size!,
-                fileName: body.name1!,
-                link: body.link,
+                totalSize: body!.size!,
+                fileName: body!.name1!,
+                link: body!.link,
                 file: blobData,
                 editFlag: editFlag,
               })
             )
             .then((): Response => c.body(null, 204))
             .catch((): Response => c.body(null, 500))
-            .finally((): null => (blobData = null));
+            .finally((): void => {
+              body = null;
+              blobData = null;
+            });
         return await bot.helpers
           .sendMessage(
-            `${body.channel}`,
+            `${body!.channel}`,
             createSuccessMessage({
-              messageId: body.message,
-              channelId: body.channel,
-              runNumber: body.number,
+              messageId: body!.message,
+              channelId: body!.channel,
+              runNumber: body!.number,
               runTime: runTime,
-              totalSize: body.size!,
-              fileName: body.name1!,
-              link: body.link,
+              totalSize: body!.size!,
+              fileName: body!.name1!,
+              link: body!.link,
               file: blobData,
               editFlag: editFlag,
             })
           )
           .then((): Response => c.body(null, 204))
           .catch((): Response => c.body(null, 500))
-          .finally((): null => (blobData = null));
+          .finally((): void => {
+            body = null;
+            blobData = null;
+          });
       },
       multi: async (
         c: CallbackTypes.ContextType,
-        body: CallbackTypes.bodyDataObject
+        body: CallbackTypes.bodyDataObject | null
       ): Promise<Response> => {
-        const runTime: number = new Date().getTime() - Number(body.startTime);
-        let filesArray: (string | File)[] | null = Object.keys(body)
+        const runTime: number = new Date().getTime() - Number(body!.startTime);
+        let filesArray: (string | File)[] | null = Object.keys(body!)
           .filter((i: string): RegExpMatchArray | null => i.match(/file/))
           .map((i: string): string | File => {
             const key: keyof CallbackTypes.bodyDataObject =
               i as keyof CallbackTypes.bodyDataObject;
-            return body[key] as string | File;
+            return body![key] as string | File;
           });
-        let namesArray: (string | File)[] | null = Object.keys(body)
+        let namesArray: (string | File)[] | null = Object.keys(body!)
           .filter((i: string): RegExpMatchArray | null => i.match(/name/))
           .map((i: string): string | File => {
             const key: keyof CallbackTypes.bodyDataObject =
               i as keyof CallbackTypes.bodyDataObject;
-            return body[key] as string | File;
+            return body![key] as string | File;
           });
         let fileContentArray: FileContent[] | null = await Promise.all(
           namesArray.map(
@@ -93,15 +99,15 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
         );
         if (
           Constants.UPDATE_TIME_LIMIT < runTime ||
-          body.oversize === Constants.CallbackObject.Oversize.TRUE
+          body!.oversize === Constants.CallbackObject.Oversize.TRUE
         )
           return await bot.helpers
-            .sendMessage(`${body.channel}`, {
+            .sendMessage(`${body!.channel}`, {
               content: "**✅Done!**",
               embeds: [
                 {
                   fields: [
-                    { name: "#️⃣ Run Number", value: `> \`#${body.number}\`` },
+                    { name: "#️⃣ Run Number", value: `> \`#${body!.number}\`` },
                     {
                       name: "🕑 Total Time",
                       value: `> \`${millisecondChangeFormat(runTime)}\``,
@@ -115,10 +121,10 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
                     },
                     {
                       name: "📂 Total File Size",
-                      value: `> \`${unitChangeForByte(body.size!)}\``,
+                      value: `> \`${unitChangeForByte(body!.size!)}\``,
                       inline: true,
                     },
-                    { name: "🔗 Tweet URL", value: `> ${body.link}` },
+                    { name: "🔗 Tweet URL", value: `> ${body!.link}` },
                   ],
                   color: 0x4db56a,
                   timestamp: new Date().getTime(),
@@ -126,8 +132,8 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
               ],
               file: fileContentArray,
               messageReference: {
-                messageId: `${body.message}`,
-                channelId: `${body.channel}`,
+                messageId: `${body!.message}`,
+                channelId: `${body!.channel}`,
                 failIfNotExists: true,
               },
             })
@@ -144,12 +150,12 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
               return c.body(null, 500);
             });
         return await bot.helpers
-          .editFollowupMessage(`${body.token}`, `${body.message}`, {
+          .editFollowupMessage(`${body!.token}`, `${body!.message}`, {
             content: "**✅Done!**",
             embeds: [
               {
                 fields: [
-                  { name: "#️⃣ Run Number", value: `> \`#${body.number}\`` },
+                  { name: "#️⃣ Run Number", value: `> \`#${body!.number}\`` },
                   {
                     name: "🕑 Total Time",
                     value: `> \`${millisecondChangeFormat(runTime)}\``,
@@ -163,10 +169,10 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
                   },
                   {
                     name: "📂 Total File Size",
-                    value: `> \`${unitChangeForByte(body.size!)}\``,
+                    value: `> \`${unitChangeForByte(body!.size!)}\``,
                     inline: true,
                   },
-                  { name: "🔗 Tweet URL", value: `> ${body.link}` },
+                  { name: "🔗 Tweet URL", value: `> ${body!.link}` },
                 ],
                 color: 0x4db56a,
                 timestamp: new Date().getTime(),
