@@ -3,6 +3,7 @@ import { Constants } from "@libs";
 import { FileContent } from "discordeno";
 import { CallbackTypes } from "@router/types/callbackTypes.ts";
 import { fileToBlob, unitChangeForByte, millisecondChangeFormat } from "@utils";
+import { createSuccessMessage } from "@router/messages/index.ts";
 
 const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
   success: {
@@ -12,98 +13,46 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
         body: CallbackTypes.bodyDataObject
       ): Promise<Response> => {
         const runTime: number = new Date().getTime() - Number(body.startTime);
+        const editFlag: boolean =
+          runTime <= Constants.UPDATE_TIME_LIMIT ||
+          body.oversize !== Constants.CallbackObject.Oversize.TRUE;
         let blobData: Blob | null = await fileToBlob(body.file1 as File);
-        if (
-          Constants.UPDATE_TIME_LIMIT < runTime ||
-          body.oversize === Constants.CallbackObject.Oversize.TRUE
-        ) {
+        if (editFlag)
           return await bot.helpers
-            .sendMessage(`${body.channel}`, {
-              content: "**✅Done!**",
-              embeds: [
-                {
-                  fields: [
-                    { name: "#️⃣ Run Number", value: `> \`#${body.number}\`` },
-                    {
-                      name: "🕑 Total Time",
-                      value: `> \`${millisecondChangeFormat(runTime)}\``,
-                    },
-                    {
-                      name: "🎞 Video Name",
-                      value: `> \`${body.name1}\``,
-                      inline: true,
-                    },
-                    {
-                      name: "📂 Total File Size",
-                      value: `> \`${unitChangeForByte(body.size!)}\``,
-                      inline: true,
-                    },
-                    { name: "🔗 Tweet URL", value: `> ${body.link}` },
-                  ],
-                  color: 0x4db56a,
-                  timestamp: new Date().getTime(),
-                },
-              ],
-              file: {
-                blob: blobData,
-                name: `${body.name1}`,
-              },
-              messageReference: {
-                messageId: `${body.message}`,
-                channelId: `${body.channel}`,
-                failIfNotExists: true,
-              },
+            .editFollowupMessage(
+              `${body.token}`,
+              `${body.message}`,
+              createSuccessMessage({
+                runNumber: body.number,
+                runTime: runTime,
+                totalSize: body.size!,
+                fileName: body.name1!,
+                link: body.link,
+                file: blobData,
+                editFlag: editFlag,
+              })
+            )
+            .then((): Response => c.body(null, 204))
+            .catch((): Response => c.body(null, 500))
+            .finally((): null => (blobData = null));
+        return await bot.helpers
+          .sendMessage(
+            `${body.channel}`,
+            createSuccessMessage({
+              messageId: body.message,
+              channelId: body.channel,
+              runNumber: body.number,
+              runTime: runTime,
+              totalSize: body.size!,
+              fileName: body.name1!,
+              link: body.link,
+              file: blobData,
+              editFlag: editFlag,
             })
-            .then((): Response => {
-              blobData = null;
-              return c.body(null, 204);
-            })
-            .catch((): Response => {
-              blobData = null;
-              return c.body(null, 500);
-            });
-        } else {
-          return await bot.helpers
-            .editFollowupMessage(`${body.token}`, `${body.message}`, {
-              content: "**✅Done!**",
-              embeds: [
-                {
-                  fields: [
-                    { name: "#️⃣ Run Number", value: `> \`#${body.number}\`` },
-                    {
-                      name: "🕑 Total Time",
-                      value: `> \`${millisecondChangeFormat(runTime)}\``,
-                    },
-                    {
-                      name: "🎞 Video Name",
-                      value: `> \`${body.name1}\``,
-                      inline: true,
-                    },
-                    {
-                      name: "📂 Total File Size",
-                      value: `> \`${unitChangeForByte(body.size!)}\``,
-                      inline: true,
-                    },
-                    { name: "🔗 Tweet URL", value: `> ${body.link}` },
-                  ],
-                  color: 0x4db56a,
-                  timestamp: new Date().getTime(),
-                },
-              ],
-              file: {
-                blob: blobData,
-                name: `${body.name1}`,
-              },
-            })
-            .then((): Response => {
-              blobData = null;
-              return c.body(null, 204);
-            })
-            .catch((): Response => {
-              blobData = null;
-              return c.body(null, 500);
-            });
-        }
+          )
+          .then((): Response => c.body(null, 204))
+          .catch((): Response => c.body(null, 500))
+          .finally((): null => (blobData = null));
       },
       multi: async (
         c: CallbackTypes.ContextType,
@@ -145,7 +94,7 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
         if (
           Constants.UPDATE_TIME_LIMIT < runTime ||
           body.oversize === Constants.CallbackObject.Oversize.TRUE
-        ) {
+        )
           return await bot.helpers
             .sendMessage(`${body.channel}`, {
               content: "**✅Done!**",
@@ -194,51 +143,49 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
               fileContentArray = null;
               return c.body(null, 500);
             });
-        } else {
-          return await bot.helpers
-            .editFollowupMessage(`${body.token}`, `${body.message}`, {
-              content: "**✅Done!**",
-              embeds: [
-                {
-                  fields: [
-                    { name: "#️⃣ Run Number", value: `> \`#${body.number}\`` },
-                    {
-                      name: "🕑 Total Time",
-                      value: `> \`${millisecondChangeFormat(runTime)}\``,
-                    },
-                    {
-                      name: "🎞 Video Names",
-                      value: namesArray
-                        .map((i: string | File): string => `> \`${i}\``)
-                        .join("\n"),
-                      inline: true,
-                    },
-                    {
-                      name: "📂 Total File Size",
-                      value: `> \`${unitChangeForByte(body.size!)}\``,
-                      inline: true,
-                    },
-                    { name: "🔗 Tweet URL", value: `> ${body.link}` },
-                  ],
-                  color: 0x4db56a,
-                  timestamp: new Date().getTime(),
-                },
-              ],
-              file: fileContentArray,
-            })
-            .then((): Response => {
-              filesArray = null;
-              namesArray = null;
-              fileContentArray = null;
-              return c.body(null, 204);
-            })
-            .catch((): Response => {
-              filesArray = null;
-              namesArray = null;
-              fileContentArray = null;
-              return c.body(null, 500);
-            });
-        }
+        return await bot.helpers
+          .editFollowupMessage(`${body.token}`, `${body.message}`, {
+            content: "**✅Done!**",
+            embeds: [
+              {
+                fields: [
+                  { name: "#️⃣ Run Number", value: `> \`#${body.number}\`` },
+                  {
+                    name: "🕑 Total Time",
+                    value: `> \`${millisecondChangeFormat(runTime)}\``,
+                  },
+                  {
+                    name: "🎞 Video Names",
+                    value: namesArray
+                      .map((i: string | File): string => `> \`${i}\``)
+                      .join("\n"),
+                    inline: true,
+                  },
+                  {
+                    name: "📂 Total File Size",
+                    value: `> \`${unitChangeForByte(body.size!)}\``,
+                    inline: true,
+                  },
+                  { name: "🔗 Tweet URL", value: `> ${body.link}` },
+                ],
+                color: 0x4db56a,
+                timestamp: new Date().getTime(),
+              },
+            ],
+            file: fileContentArray,
+          })
+          .then((): Response => {
+            filesArray = null;
+            namesArray = null;
+            fileContentArray = null;
+            return c.body(null, 204);
+          })
+          .catch((): Response => {
+            filesArray = null;
+            namesArray = null;
+            fileContentArray = null;
+            return c.body(null, 500);
+          });
       },
     },
   },
