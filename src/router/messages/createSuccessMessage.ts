@@ -1,4 +1,8 @@
-import { FileContent } from "discordeno";
+import {
+  FileContent,
+  CreateMessage,
+  InteractionCallbackData,
+} from "discordeno";
 import { unitChangeForByte, millisecondChangeFormat } from "@utils";
 
 type messageInfo = {
@@ -15,8 +19,10 @@ type messageInfo = {
   editFlag: boolean;
 };
 
-const createSuccessMessage = (info: messageInfo) => {
-  const message = {
+const createSuccessMessage = (
+  info: messageInfo
+): CreateMessage | InteractionCallbackData => {
+  let message: CreateMessage | InteractionCallbackData | null = {
     content: "**✅Done!**",
     embeds: [
       {
@@ -65,7 +71,11 @@ const createSuccessMessage = (info: messageInfo) => {
     };
     Object.assign(message, messageReference);
   }
-  return message;
+  try {
+    return message;
+  } finally {
+    message = null;
+  }
 };
 
 export default createSuccessMessage;
