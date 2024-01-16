@@ -1,5 +1,5 @@
 export const Constants = {
-  UPDATE_TIME_LIMIT: 900000,
+  EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT: 900000,
   CallbackObject: {
     Status: {
       SUCCESS: "success",
