@@ -4,7 +4,7 @@ import { CallbackTypes } from "@router/types/callbackTypes.ts";
 
 const callbackProgressFunctions: CallbackTypes.Functions.callbackProgress = {
   progress: async (
-    c: CallbackTypes.ContextType,
+    c: CallbackTypes.contextType,
     body: CallbackTypes.bodyDataObject | null
   ): Promise<Response> =>
     await bot.helpers
