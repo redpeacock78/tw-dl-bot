@@ -14,7 +14,7 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
       ): Promise<Response> => {
         const runTime: number = new Date().getTime() - Number(body!.startTime);
         const editFollowupMessageFlag: boolean =
-          runTime <= Constants.UPDATE_TIME_LIMIT ||
+          runTime <= Constants.EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT ||
           body!.oversize !== Constants.CallbackObject.Oversize.TRUE;
         let blobData: Blob | null = await fileToBlob(body!.file1 as File);
         if (editFollowupMessageFlag)
@@ -98,7 +98,7 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
           )
         );
         if (
-          Constants.UPDATE_TIME_LIMIT < runTime ||
+          Constants.EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT < runTime ||
           body!.oversize === Constants.CallbackObject.Oversize.TRUE
         )
           return await bot.helpers
