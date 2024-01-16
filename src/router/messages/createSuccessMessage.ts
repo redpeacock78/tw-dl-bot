@@ -47,8 +47,8 @@ const createSuccessMessage = (
   if (!info.editFollowupMessageFlag) {
     const messageReference = {
       messageReference: {
-        messageId: `${info.messageId}`,
-        channelId: `${info.channelId}`,
+        messageId: `${info!.messageId}`,
+        channelId: `${info!.channelId}`,
         failIfNotExists: true,
       },
     };
