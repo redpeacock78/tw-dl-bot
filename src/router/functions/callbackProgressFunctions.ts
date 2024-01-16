@@ -1,40 +1,40 @@
 import bot from "@bot/bot.ts";
-import { millisecondChangeFormat } from "@utils";
+import { Constants } from "@libs";
 import { CallbackTypes } from "@router/types/callbackTypes.ts";
+import { createProgressMessage } from "@router/messages/index.ts";
 
 const callbackProgressFunctions: CallbackTypes.Functions.callbackProgress = {
   progress: async <T extends string>(
     c: CallbackTypes.contextType<T>,
     body: CallbackTypes.bodyDataObject | null
-  ): Promise<Response> =>
-    await bot.helpers
-      .editFollowupMessage(`${body!.token}`, `${body!.message}`, {
-        content: body!
-          .content!.split("\n")
-          .map((i: string, n: number): string =>
-            n === 0 ? `**${i}**` : `\`${i}\``
-          )
-          .join("\n"),
-        embeds: [
-          {
-            fields: [
-              { name: "#️⃣ Run Number", value: `> \`#${body!.number}\`` },
-              {
-                name: "🕑 Elapsed Times",
-                value: `> \`${millisecondChangeFormat(
-                  new Date().getTime() - Number(body!.startTime)
-                )}\``,
-              },
-              { name: "🔗 Tweet URL", value: `> ${body!.link}` },
-            ],
-            color: 0x4db56a,
-            timestamp: new Date().getTime(),
-          },
-        ],
-      })
-      .then((): Response => c.body(null, 204))
-      .catch((): Response => c.body(null, 500))
-      .finally((): null => (body = null)),
+  ): Promise<Response> => {
+    const runTime: number = new Date().getTime() - Number(body!.startTime);
+    const editFollowupMessageFlag: boolean =
+      runTime <= Constants.EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT;
+    if (editFollowupMessageFlag)
+      return await bot.helpers
+        .editFollowupMessage(
+          `${body!.token}`,
+          `${body!.message}`,
+          createProgressMessage({
+            runNumber: body!.number,
+            runTime: runTime,
+            link: body!.link,
+            content: body!.content as string,
+          })
+        )
+        .then((): Response => c.body(null, Constants.HttpStatus.NO_CONTENT))
+        .catch(
+          (): Response =>
+            c.body(null, Constants.HttpStatus.INTERNAL_SERVER_ERROR)
+        )
+        .finally((): null => (body = null));
+    try {
+      return c.body(null, Constants.HttpStatus.NO_CONTENT);
+    } finally {
+      body = null;
+    }
+  },
 };
 
 export default callbackProgressFunctions;
