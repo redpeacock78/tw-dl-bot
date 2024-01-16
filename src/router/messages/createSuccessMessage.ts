@@ -1,26 +1,9 @@
-import {
-  FileContent,
-  CreateMessage,
-  InteractionCallbackData,
-} from "discordeno";
+import { CreateMessage, InteractionCallbackData } from "discordeno";
 import { unitChangeForByte, millisecondChangeFormat } from "@utils";
-
-type messageInfo = {
-  messageId?: string;
-  channelId?: string;
-  runNumber: string;
-  runTime: number;
-  totalSize: string;
-  fileName?: string;
-  fileNamesArray?: string[];
-  link: string;
-  file?: Blob;
-  filesArray?: FileContent[];
-  editFollowupMessageFlag: boolean;
-};
+import { CreateMessageTypes } from "@router/types/createMessageTypes.ts";
 
 const createSuccessMessage = (
-  info: messageInfo
+  info: CreateMessageTypes.successMessageInfo
 ): CreateMessage | InteractionCallbackData => {
   let message: CreateMessage | InteractionCallbackData | null = {
     content: "**✅Done!**",
