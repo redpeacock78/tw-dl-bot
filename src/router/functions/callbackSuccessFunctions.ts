@@ -13,11 +13,11 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
         body: CallbackTypes.bodyDataObject | null
       ): Promise<Response> => {
         const runTime: number = new Date().getTime() - Number(body!.startTime);
-        const editFlag: boolean =
+        const editFollowupMessageFlag: boolean =
           runTime <= Constants.UPDATE_TIME_LIMIT ||
           body!.oversize !== Constants.CallbackObject.Oversize.TRUE;
         let blobData: Blob | null = await fileToBlob(body!.file1 as File);
-        if (editFlag)
+        if (editFollowupMessageFlag)
           return await bot.helpers
             .editFollowupMessage(
               `${body!.token}`,
@@ -29,7 +29,7 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
                 fileName: body!.name1!,
                 link: body!.link,
                 file: blobData,
-                editFlag: editFlag,
+                editFollowupMessageFlag: editFollowupMessageFlag,
               })
             )
             .then((): Response => c.body(null, 204))
@@ -50,7 +50,7 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
               fileName: body!.name1!,
               link: body!.link,
               file: blobData,
-              editFlag: editFlag,
+              editFollowupMessageFlag: editFollowupMessageFlag,
             })
           )
           .then((): Response => c.body(null, 204))
