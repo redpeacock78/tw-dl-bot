@@ -5,32 +5,32 @@ import { CallbackTypes } from "@router/types/callbackTypes.ts";
 const callbackFailureFunctions: CallbackTypes.Functions.callbackFailure = {
   failure: async (
     c: CallbackTypes.ContextType,
-    body: CallbackTypes.bodyDataObject
-  ): Promise<Response> => {
-    return await bot.helpers
-      .editFollowupMessage(`${body.token}`, `${body.message}`, {
+    body: CallbackTypes.bodyDataObject | null
+  ): Promise<Response> =>
+    await bot.helpers
+      .editFollowupMessage(`${body!.token}`, `${body!.message}`, {
         content: "**❌Failure!**",
         embeds: [
           {
             fields: [
-              { name: "#️⃣ Run Number", value: `> \`#${body.number}\`` },
+              { name: "#️⃣ Run Number", value: `> \`#${body!.number}\`` },
               {
                 name: "🕑 Total Time",
                 value: `> \`${millisecondChangeFormat(
-                  new Date().getTime() - Number(body.startTime)
+                  new Date().getTime() - Number(body!.startTime)
                 )}\``,
               },
-              { name: "🔗 Tweet URL", value: `> ${body.link}` },
+              { name: "🔗 Tweet URL", value: `> ${body!.link}` },
             ],
-            description: body.content,
+            description: body!.content,
             color: 0x4db56a,
             timestamp: new Date().getTime(),
           },
         ],
       })
       .then((): Response => c.body(null, 204))
-      .catch((): Response => c.body(null, 500));
-  },
+      .catch((): Response => c.body(null, 500))
+      .finally((): null => (body = null)),
 };
 
 export default callbackFailureFunctions;
