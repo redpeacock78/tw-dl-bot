@@ -32,8 +32,11 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
                 editFollowupMessageFlag: editFollowupMessageFlag,
               })
             )
-            .then((): Response => c.body(null, 204))
-            .catch((): Response => c.body(null, 500))
+            .then((): Response => c.body(null, Constants.HttpStatus.NO_CONTENT))
+            .catch(
+              (): Response =>
+                c.body(null, Constants.HttpStatus.INTERNAL_SERVER_ERROR)
+            )
             .finally((): void => {
               body = null;
               blobData = null;
@@ -53,8 +56,11 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
               editFollowupMessageFlag: editFollowupMessageFlag,
             })
           )
-          .then((): Response => c.body(null, 204))
-          .catch((): Response => c.body(null, 500))
+          .then((): Response => c.body(null, Constants.HttpStatus.NO_CONTENT))
+          .catch(
+            (): Response =>
+              c.body(null, Constants.HttpStatus.INTERNAL_SERVER_ERROR)
+          )
           .finally((): void => {
             body = null;
             blobData = null;
