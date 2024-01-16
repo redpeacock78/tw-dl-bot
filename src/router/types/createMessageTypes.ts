@@ -2,7 +2,7 @@
 import { FileContent } from "discordeno";
 
 export namespace CreateMessageTypes {
-  export type successMessageInfoType = {
+  export type successMessageInfo = {
     messageId?: string;
     channelId?: string;
     runNumber: string;
@@ -15,7 +15,7 @@ export namespace CreateMessageTypes {
     filesArray?: FileContent[];
     editFollowupMessageFlag: boolean;
   };
-  export type failureMessageInfoType = {
+  export type failureMessageInfo = {
     messageId?: string;
     channelId?: string;
     runNumber: string;
