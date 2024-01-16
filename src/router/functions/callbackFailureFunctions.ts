@@ -24,8 +24,11 @@ const callbackFailureFunctions: CallbackTypes.Functions.callbackFailure = {
             editFollowupMessageFlag: editFollowupMessageFlag,
           })
         )
-        .then((): Response => c.body(null, 204))
-        .catch((): Response => c.body(null, 500))
+        .then((): Response => c.body(null, Constants.HttpStatus.NO_CONTENT))
+        .catch(
+          (): Response =>
+            c.body(null, Constants.HttpStatus.INTERNAL_SERVER_ERROR)
+        )
         .finally((): null => (body = null));
     return await bot.helpers
       .sendMessage(
@@ -40,8 +43,10 @@ const callbackFailureFunctions: CallbackTypes.Functions.callbackFailure = {
           editFollowupMessageFlag: editFollowupMessageFlag,
         })
       )
-      .then((): Response => c.body(null, 204))
-      .catch((): Response => c.body(null, 500))
+      .then((): Response => c.body(null, Constants.HttpStatus.NO_CONTENT))
+      .catch(
+        (): Response => c.body(null, Constants.HttpStatus.INTERNAL_SERVER_ERROR)
+      )
       .finally((): null => (body = null));
   },
 };
