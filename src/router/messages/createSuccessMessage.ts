@@ -16,7 +16,7 @@ type messageInfo = {
   link: string;
   file?: Blob;
   filesArray?: FileContent[];
-  editFlag: boolean;
+  editFollowupMessageFlag: boolean;
 };
 
 const createSuccessMessage = (
@@ -61,7 +61,7 @@ const createSuccessMessage = (
         }
       : info.filesArray!,
   };
-  if (!info.editFlag) {
+  if (!info.editFollowupMessageFlag) {
     const messageReference = {
       messageReference: {
         messageId: `${info.messageId}`,
