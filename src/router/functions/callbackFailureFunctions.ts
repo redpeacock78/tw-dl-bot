@@ -4,8 +4,8 @@ import { CallbackTypes } from "@router/types/callbackTypes.ts";
 import { createFailureMessage } from "@router/messages/index.ts";
 
 const callbackFailureFunctions: CallbackTypes.Functions.callbackFailure = {
-  failure: async (
-    c: CallbackTypes.contextType,
+  failure: async <T extends string>(
+    c: CallbackTypes.contextType<T>,
     body: CallbackTypes.bodyDataObject | null
   ): Promise<Response> => {
     const runTime: number = new Date().getTime() - Number(body!.startTime);
