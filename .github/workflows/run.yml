@@ -580,7 +580,7 @@ jobs:
             "message": ${{ toJSON(github.event.client_payload.message) }},
             "token": ${{ toJSON(github.event.client_payload.token) }},
             "link": ${{ toJSON(github.event.client_payload.link) }},
-            "content": "Sorry, the video file did not exist at this link!"
+            "content": "Sorry, The video file did not exist at this link!"
           }
           EOF
       - name: Uploaded file size exceeded
@@ -606,7 +606,7 @@ jobs:
             "message": ${{ toJSON(github.event.client_payload.message) }},
             "token": ${{ toJSON(github.event.client_payload.token) }},
             "link": ${{ toJSON(github.event.client_payload.link) }},
-            "content": "Sorry, the file could not be uploaded because its size exceeds 25 MB!"
+            "content": "Sorry, The file could not be uploaded because its size exceeds 25 MB!"
           }
           EOF
       - name: Download timed out
