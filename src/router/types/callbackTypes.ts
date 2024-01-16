@@ -1,5 +1,5 @@
 // deno-lint-ignore-file no-namespace
-import { Context, Env } from "hono";
+import { Hono, Context, Env } from "hono";
 
 export namespace CallbackTypes {
   export type bodyDataObject = {
@@ -26,17 +26,24 @@ export namespace CallbackTypes {
     type: string;
     content?: string;
   };
-  export type ContextType = Context<
+
+  export type honoType = Hono<
+    Env,
+    Record<string | number | symbol, never>,
+    "/"
+  >;
+  export type contextType = Context<
     Env,
     "/callback",
     Record<string | number | symbol, never>
   >;
+
   export namespace Functions {
     export type callbackSuccess = {
       [key: string]: {
         [key: string]: {
           [key: string]: (
-            c: ContextType,
+            c: CallbackTypes.contextType,
             body: CallbackTypes.bodyDataObject | null
           ) => Promise<Response>;
         };
@@ -44,14 +51,13 @@ export namespace CallbackTypes {
     };
     export type callbackFailure = {
       [key: string]: (
-        c: ContextType,
+        c: CallbackTypes.contextType,
         body: CallbackTypes.bodyDataObject
       ) => Promise<Response>;
     };
-
     export type callbackProgress = {
       [key: string]: (
-        c: ContextType,
+        c: CallbackTypes.contextType,
         body: CallbackTypes.bodyDataObject | null
       ) => Promise<Response>;
     };
