@@ -606,7 +606,7 @@ jobs:
             "message": ${{ toJSON(github.event.client_payload.message) }},
             "token": ${{ toJSON(github.event.client_payload.token) }},
             "link": ${{ toJSON(github.event.client_payload.link) }},
-            "content": "Sorry, The file could not be uploaded because its size exceeds 25 MB!"
+            "content": "Sorry, The file could not be uploaded because its size exceeds 25MB!"
           }
           EOF
       - name: Download timed out
