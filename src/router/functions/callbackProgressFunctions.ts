@@ -3,8 +3,8 @@ import { millisecondChangeFormat } from "@utils";
 import { CallbackTypes } from "@router/types/callbackTypes.ts";
 
 const callbackProgressFunctions: CallbackTypes.Functions.callbackProgress = {
-  progress: async (
-    c: CallbackTypes.contextType,
+  progress: async <T extends string>(
+    c: CallbackTypes.contextType<T>,
     body: CallbackTypes.bodyDataObject | null
   ): Promise<Response> =>
     await bot.helpers
