@@ -9,7 +9,7 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
   success: {
     dl: {
       single: async (
-        c: CallbackTypes.ContextType,
+        c: CallbackTypes.contextType,
         body: CallbackTypes.bodyDataObject | null
       ): Promise<Response> => {
         const runTime: number = new Date().getTime() - Number(body!.startTime);
@@ -61,7 +61,7 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
           });
       },
       multi: async (
-        c: CallbackTypes.ContextType,
+        c: CallbackTypes.contextType,
         body: CallbackTypes.bodyDataObject | null
       ): Promise<Response> => {
         const runTime: number = new Date().getTime() - Number(body!.startTime);
