@@ -8,8 +8,8 @@ import { createSuccessMessage } from "@router/messages/index.ts";
 const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
   success: {
     dl: {
-      single: async (
-        c: CallbackTypes.contextType,
+      single: async <T extends string>(
+        c: CallbackTypes.contextType<T>,
         body: CallbackTypes.bodyDataObject | null
       ): Promise<Response> => {
         const runTime: number = new Date().getTime() - Number(body!.startTime);
@@ -60,8 +60,8 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
             blobData = null;
           });
       },
-      multi: async (
-        c: CallbackTypes.contextType,
+      multi: async <T extends string>(
+        c: CallbackTypes.contextType<T>,
         body: CallbackTypes.bodyDataObject | null
       ): Promise<Response> => {
         const runTime: number = new Date().getTime() - Number(body!.startTime);
