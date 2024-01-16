@@ -4,7 +4,7 @@ import { CallbackTypes } from "@router/types/callbackTypes.ts";
 
 const callbackFailureFunctions: CallbackTypes.Functions.callbackFailure = {
   failure: async (
-    c: CallbackTypes.ContextType,
+    c: CallbackTypes.contextType,
     body: CallbackTypes.bodyDataObject | null
   ): Promise<Response> =>
     await bot.helpers
