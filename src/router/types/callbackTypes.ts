@@ -27,14 +27,14 @@ export namespace CallbackTypes {
     content?: string;
   };
 
-  export type honoType = Hono<
+  export type honoType<T extends string = "/"> = Hono<
     Env,
     Record<string | number | symbol, never>,
-    "/"
+    T
   >;
-  export type contextType = Context<
+  export type contextType<T extends string> = Context<
     Env,
-    "/callback",
+    T,
     Record<string | number | symbol, never>
   >;
 
@@ -42,22 +42,22 @@ export namespace CallbackTypes {
     export type callbackSuccess = {
       [key: string]: {
         [key: string]: {
-          [key: string]: (
-            c: CallbackTypes.contextType,
+          [key: string]: <T extends string>(
+            c: CallbackTypes.contextType<T>,
             body: CallbackTypes.bodyDataObject | null
           ) => Promise<Response>;
         };
       };
     };
     export type callbackFailure = {
-      [key: string]: (
-        c: CallbackTypes.contextType,
+      [key: string]: <T extends string>(
+        c: CallbackTypes.contextType<T>,
         body: CallbackTypes.bodyDataObject
       ) => Promise<Response>;
     };
     export type callbackProgress = {
-      [key: string]: (
-        c: CallbackTypes.contextType,
+      [key: string]: <T extends string>(
+        c: CallbackTypes.contextType<T>,
         body: CallbackTypes.bodyDataObject | null
       ) => Promise<Response>;
     };
