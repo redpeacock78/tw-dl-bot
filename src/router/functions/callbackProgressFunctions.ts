@@ -34,7 +34,7 @@ const callbackProgressFunctions: CallbackTypes.Functions.callbackProgress = {
       })
       .then((): Response => c.body(null, 204))
       .catch((): Response => c.body(null, 500))
-      .finally(() => (body = null)),
+      .finally((): null => (body = null)),
 };
 
 export default callbackProgressFunctions;
