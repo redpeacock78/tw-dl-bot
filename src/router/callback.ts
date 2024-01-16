@@ -29,7 +29,7 @@ callback.post(
         return await callbackFailureFunctions[body.status](c, body);
       if (body.status === Constants.CallbackObject.Status.PROGRESS)
         return await callbackProgressFunctions[body.status](c, body);
-      return c.body(null, 200);
+      return c.body(null, Constants.HttpStatus.BAD_REQUEST);
     } finally {
       body = null;
     }
