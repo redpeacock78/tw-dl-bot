@@ -7,11 +7,13 @@ import {
 } from "@router/functions/index.ts";
 import { CallbackTypes } from "@router/types/callbackTypes.ts";
 
-const callback: CallbackTypes.honoType = new Hono();
+const callback: CallbackTypes.honoType<"/"> = new Hono();
 
 callback.post(
-  "/callback",
-  async (c: CallbackTypes.contextType): Promise<Response | undefined> => {
+  Constants.CALLBACK_PATH,
+  async (
+    c: CallbackTypes.contextType<typeof Constants.CALLBACK_PATH>
+  ): Promise<Response | undefined> => {
     let body: CallbackTypes.bodyDataObject | null = null;
     try {
       body = (await c.req.raw.clone().json()) as CallbackTypes.bodyDataObject;
