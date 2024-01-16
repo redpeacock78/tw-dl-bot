@@ -17,7 +17,7 @@ const createFailureMessage = (
           },
           { name: "🔗 Tweet URL", value: `> ${info.link}` },
         ],
-        description: info.content,
+        description: `**${info.content}**`,
         color: 0x4db56a,
         timestamp: new Date().getTime(),
       },
@@ -26,8 +26,8 @@ const createFailureMessage = (
   if (!info.editFollowupMessageFlag) {
     const messageReference = {
       messageReference: {
-        messageId: `${info.messageId}`,
-        channelId: `${info.channelId}`,
+        messageId: `${info!.messageId}`,
+        channelId: `${info!.channelId}`,
         failIfNotExists: true,
       },
     };
