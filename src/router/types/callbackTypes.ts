@@ -52,7 +52,7 @@ export namespace CallbackTypes {
     export type callbackProgress = {
       [key: string]: (
         c: ContextType,
-        body: CallbackTypes.bodyDataObject
+        body: CallbackTypes.bodyDataObject | null
       ) => Promise<Response>;
     };
   }
