@@ -1,7 +1,6 @@
 import bot from "@bot/bot.ts";
-import { Constants } from "@libs";
+import { Constants, messages } from "@libs";
 import { CallbackTypes } from "@router/types/callbackTypes.ts";
-import { createProgressMessage } from "@router/messages/index.ts";
 
 const callbackProgressFunctions: CallbackTypes.Functions.callbackProgress = {
   progress: async <T extends string>(
@@ -16,7 +15,7 @@ const callbackProgressFunctions: CallbackTypes.Functions.callbackProgress = {
         .editFollowupMessage(
           `${body!.token}`,
           `${body!.message}`,
-          createProgressMessage({
+          messages.createProgressMessage({
             runNumber: body!.number,
             runTime: runTime,
             link: body!.link,

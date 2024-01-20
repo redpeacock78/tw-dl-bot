@@ -1,9 +1,8 @@
 import bot from "@bot/bot.ts";
-import { Constants } from "@libs";
+import { Constants, messages } from "@libs";
 import { FileContent } from "discordeno";
 import { CallbackTypes } from "@router/types/callbackTypes.ts";
 import { fileToBlob, unitChangeForByte, millisecondChangeFormat } from "@utils";
-import { createSuccessMessage } from "@router/messages/index.ts";
 
 const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
   success: {
@@ -22,7 +21,7 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
             .editFollowupMessage(
               `${body!.token}`,
               `${body!.message}`,
-              createSuccessMessage({
+              messages.createSuccessMessage({
                 runNumber: body!.number,
                 runTime: runTime,
                 totalSize: body!.size!,
@@ -44,7 +43,7 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
         return await bot.helpers
           .sendMessage(
             `${body!.channel}`,
-            createSuccessMessage({
+            messages.createSuccessMessage({
               messageId: body!.message,
               channelId: body!.channel,
               runNumber: body!.number,

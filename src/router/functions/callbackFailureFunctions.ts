@@ -1,7 +1,6 @@
 import bot from "@bot/bot.ts";
-import { Constants } from "@libs";
+import { Constants, messages } from "@libs";
 import { CallbackTypes } from "@router/types/callbackTypes.ts";
-import { createFailureMessage } from "@router/messages/index.ts";
 
 const callbackFailureFunctions: CallbackTypes.Functions.callbackFailure = {
   failure: async <T extends string>(
@@ -16,7 +15,7 @@ const callbackFailureFunctions: CallbackTypes.Functions.callbackFailure = {
         .editFollowupMessage(
           `${body!.token}`,
           `${body!.message}`,
-          createFailureMessage({
+          messages.createFailureMessage({
             runNumber: body!.number,
             runTime: runTime,
             link: body!.link,
@@ -33,7 +32,7 @@ const callbackFailureFunctions: CallbackTypes.Functions.callbackFailure = {
     return await bot.helpers
       .sendMessage(
         `${body!.channel}`,
-        createFailureMessage({
+        messages.createFailureMessage({
           messageId: body!.message,
           channelId: body!.channel,
           runNumber: body!.number,
