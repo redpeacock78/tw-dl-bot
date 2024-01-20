@@ -1,6 +1,6 @@
-import createSuccessMessage from "@router/messages/createSuccessMessage.ts";
-import createFailureMessage from "@router/messages/createFailureMessage.ts";
-import createProgressMessage from "@router/messages/createProgressMessage.ts";
+import createSuccessMessage from "@libs/messages/createSuccessMessage.ts";
+import createFailureMessage from "@libs/messages/createFailureMessage.ts";
+import createProgressMessage from "@libs/messages/createProgressMessage.ts";
 
 export const messages = {
   createSuccessMessage,
