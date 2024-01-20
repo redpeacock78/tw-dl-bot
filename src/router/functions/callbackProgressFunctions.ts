@@ -1,6 +1,9 @@
 import bot from "@bot/bot.ts";
-import { Constants, messages } from "@libs";
+import { Constants, Messages } from "@libs";
 import { CallbackTypes } from "@router/types/callbackTypes.ts";
+
+const noContent: number = Constants.HttpStatus.NO_CONTENT;
+const internalServerError: number = Constants.HttpStatus.INTERNAL_SERVER_ERROR;
 
 const callbackProgressFunctions: CallbackTypes.Functions.callbackProgress = {
   progress: async <T extends string>(
@@ -15,21 +18,18 @@ const callbackProgressFunctions: CallbackTypes.Functions.callbackProgress = {
         .editFollowupMessage(
           `${body!.token}`,
           `${body!.message}`,
-          messages.createProgressMessage({
+          Messages.createProgressMessage({
             runNumber: body!.number,
             runTime: runTime,
             link: body!.link,
             content: body!.content as string,
           })
         )
-        .then((): Response => c.body(null, Constants.HttpStatus.NO_CONTENT))
-        .catch(
-          (): Response =>
-            c.body(null, Constants.HttpStatus.INTERNAL_SERVER_ERROR)
-        )
+        .then((): Response => c.body(null, noContent))
+        .catch((): Response => c.body(null, internalServerError))
         .finally((): null => (body = null));
     try {
-      return c.body(null, Constants.HttpStatus.NO_CONTENT);
+      return c.body(null, noContent);
     } finally {
       body = null;
     }

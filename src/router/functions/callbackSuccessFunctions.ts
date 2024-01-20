@@ -1,8 +1,11 @@
 import bot from "@bot/bot.ts";
-import { Constants, messages } from "@libs";
+import { Constants, Messages } from "@libs";
 import { FileContent } from "discordeno";
 import { CallbackTypes } from "@router/types/callbackTypes.ts";
 import { fileToBlob, unitChangeForByte, millisecondChangeFormat } from "@utils";
+
+const noContent: number = Constants.HttpStatus.NO_CONTENT;
+const internalServerError: number = Constants.HttpStatus.INTERNAL_SERVER_ERROR;
 
 const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
   success: {
@@ -21,7 +24,7 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
             .editFollowupMessage(
               `${body!.token}`,
               `${body!.message}`,
-              messages.createSuccessMessage({
+              Messages.createSuccessMessage({
                 runNumber: body!.number,
                 runTime: runTime,
                 totalSize: body!.size!,
@@ -31,11 +34,8 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
                 editFollowupMessageFlag: editFollowupMessageFlag,
               })
             )
-            .then((): Response => c.body(null, Constants.HttpStatus.NO_CONTENT))
-            .catch(
-              (): Response =>
-                c.body(null, Constants.HttpStatus.INTERNAL_SERVER_ERROR)
-            )
+            .then((): Response => c.body(null, noContent))
+            .catch((): Response => c.body(null, internalServerError))
             .finally((): void => {
               body = null;
               blobData = null;
@@ -43,7 +43,7 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
         return await bot.helpers
           .sendMessage(
             `${body!.channel}`,
-            messages.createSuccessMessage({
+            Messages.createSuccessMessage({
               messageId: body!.message,
               channelId: body!.channel,
               runNumber: body!.number,
@@ -55,11 +55,8 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
               editFollowupMessageFlag: editFollowupMessageFlag,
             })
           )
-          .then((): Response => c.body(null, Constants.HttpStatus.NO_CONTENT))
-          .catch(
-            (): Response =>
-              c.body(null, Constants.HttpStatus.INTERNAL_SERVER_ERROR)
-          )
+          .then((): Response => c.body(null, noContent))
+          .catch((): Response => c.body(null, internalServerError))
           .finally((): void => {
             body = null;
             blobData = null;

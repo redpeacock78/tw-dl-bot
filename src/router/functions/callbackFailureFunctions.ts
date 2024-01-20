@@ -1,6 +1,9 @@
 import bot from "@bot/bot.ts";
-import { Constants, messages } from "@libs";
+import { Constants, Messages } from "@libs";
 import { CallbackTypes } from "@router/types/callbackTypes.ts";
+
+const noContent: number = Constants.HttpStatus.NO_CONTENT;
+const internalServerError: number = Constants.HttpStatus.INTERNAL_SERVER_ERROR;
 
 const callbackFailureFunctions: CallbackTypes.Functions.callbackFailure = {
   failure: async <T extends string>(
@@ -15,7 +18,7 @@ const callbackFailureFunctions: CallbackTypes.Functions.callbackFailure = {
         .editFollowupMessage(
           `${body!.token}`,
           `${body!.message}`,
-          messages.createFailureMessage({
+          Messages.createFailureMessage({
             runNumber: body!.number,
             runTime: runTime,
             link: body!.link,
@@ -23,16 +26,13 @@ const callbackFailureFunctions: CallbackTypes.Functions.callbackFailure = {
             editFollowupMessageFlag: editFollowupMessageFlag,
           })
         )
-        .then((): Response => c.body(null, Constants.HttpStatus.NO_CONTENT))
-        .catch(
-          (): Response =>
-            c.body(null, Constants.HttpStatus.INTERNAL_SERVER_ERROR)
-        )
+        .then((): Response => c.body(null, noContent))
+        .catch((): Response => c.body(null, internalServerError))
         .finally((): null => (body = null));
     return await bot.helpers
       .sendMessage(
         `${body!.channel}`,
-        messages.createFailureMessage({
+        Messages.createFailureMessage({
           messageId: body!.message,
           channelId: body!.channel,
           runNumber: body!.number,
@@ -42,10 +42,8 @@ const callbackFailureFunctions: CallbackTypes.Functions.callbackFailure = {
           editFollowupMessageFlag: editFollowupMessageFlag,
         })
       )
-      .then((): Response => c.body(null, Constants.HttpStatus.NO_CONTENT))
-      .catch(
-        (): Response => c.body(null, Constants.HttpStatus.INTERNAL_SERVER_ERROR)
-      )
+      .then((): Response => c.body(null, noContent))
+      .catch((): Response => c.body(null, internalServerError))
       .finally((): null => (body = null));
   },
 };
