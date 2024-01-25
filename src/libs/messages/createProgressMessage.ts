@@ -15,11 +15,17 @@ const createProgressMessage = (
     embeds: [
       {
         fields: [
-          { name: "#️⃣ Run Number", value: `> \`#${info.runNumber}\`` },
-          {
-            name: "🕑 Elapsed Times",
-            value: `> \`${millisecondChangeFormat(info.runTime)}\``,
-          },
+          ...(typeof info.runNumber !== "undefined"
+            ? [{ name: "#️⃣ Run Number", value: `> \`#${info.runNumber}\`` }]
+            : []),
+          ...(typeof info.runTime !== "undefined"
+            ? [
+                {
+                  name: "🕑 Elapsed Times",
+                  value: `> \`${millisecondChangeFormat(info.runTime)}\``,
+                },
+              ]
+            : []),
           { name: "🔗 Tweet URL", value: `> ${info.link}` },
         ],
         color: 0x4db56a,
