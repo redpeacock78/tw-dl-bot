@@ -6,8 +6,8 @@ export const webhook = async (message: {
   channelId: bigint;
   id: bigint;
   token: string;
-}): Promise<KyResponse> => {
-  return await ky.post(Secrets.DISPATCH_URL, {
+}): Promise<KyResponse> =>
+  await ky.post(Secrets.DISPATCH_URL, {
     json: {
       event_type: Constants.Webhook.Json.EVENT_TYPE,
       client_payload: {
@@ -24,4 +24,3 @@ export const webhook = async (message: {
       Accept: Constants.Webhook.Headers.ACCEPT,
     },
   });
-};
