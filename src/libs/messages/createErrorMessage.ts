@@ -31,6 +31,15 @@ const createErrorMessage = (
         timestamp: new Date().getTime(),
       },
     ],
+    ...(info.editFollowupMessageFlag
+      ? {}
+      : {
+          messageReference: {
+            messageId: `${info!.messageId}`,
+            channelId: `${info!.channelId}`,
+            failIfNotExists: true,
+          },
+        }),
   };
   try {
     return message;
