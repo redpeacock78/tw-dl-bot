@@ -18,7 +18,7 @@ export namespace CallbackTypes {
     name2?: string;
     name3?: string;
     name4?: string;
-    file1: File;
+    file1?: File;
     file2?: File;
     file3?: File;
     file4?: File;
