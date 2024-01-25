@@ -1,7 +1,7 @@
 import { fileToBlob } from "@utils";
 import { CallbackTypes } from "@router/types/callbackTypes.ts";
 
-const fileContent = async (body: CallbackTypes.bodyDataObject | null) => {
+const singleFileContent = async (body: CallbackTypes.bodyDataObject | null) => {
   try {
     if (body!.file1 === undefined || body!.name1 === undefined)
       throw new Error(
@@ -16,4 +16,4 @@ const fileContent = async (body: CallbackTypes.bodyDataObject | null) => {
   }
 };
 
-export default fileContent;
+export default singleFileContent;
