@@ -25,8 +25,8 @@ export namespace CreateMessageTypes {
     editFollowupMessageFlag: boolean;
   };
   export type progressMessageInfo = {
-    runNumber: string;
-    runTime: number;
+    runNumber?: string;
+    runTime?: number;
     link: string;
     content: string;
   };
