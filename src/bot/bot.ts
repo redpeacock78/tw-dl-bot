@@ -42,9 +42,9 @@ bot.events.interactionCreate = async (
       if (!contents.every((i: string): boolean => isUrl(i))) {
         await b.helpers.sendFollowupMessage(interaction.token, {
           type: InteractionResponseTypes.ChannelMessageWithSource,
-          data: {
-            content: `**⚠️Error**\n${contents.join("\n")}`,
-          },
+          data: Messages.createErrorMessage({
+            description: contents.join("\n"),
+          }),
         });
       } else {
         await Promise.all(
@@ -79,25 +79,14 @@ bot.events.interactionCreate = async (
                       },
                     })
                     .catch(
-                      async (): Promise<Message> =>
-                        await b.helpers.editMessage(
-                          message.channelId,
+                      async (e: Error): Promise<Message> =>
+                        await b.helpers.editFollowupMessage(
+                          interaction.token,
                           message.id,
-                          {
-                            content: `**⚠️Error**`,
-                            embeds: [
-                              {
-                                fields: [
-                                  {
-                                    name: "🔗 Tweet URL",
-                                    value: `> ${contents.join("\n")}`,
-                                  },
-                                ],
-                                color: 0x4db56a,
-                                timestamp: new Date().getTime(),
-                              },
-                            ],
-                          }
+                          Messages.createErrorMessage({
+                            link: contents.join("\n"),
+                            description: e.message,
+                          })
                         )
                     );
                 })
