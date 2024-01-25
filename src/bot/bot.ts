@@ -1,6 +1,6 @@
-import ky, { KyResponse } from "ky";
+import { KyResponse } from "ky";
 import { Commands } from "@bot/commands.ts";
-import { Secrets, Messages, isUrl } from "@libs";
+import { Secrets, Messages, isUrl, webhook } from "@libs";
 import {
   Bot,
   createBot,
@@ -58,38 +58,25 @@ bot.events.interactionCreate = async (
                     link: contents.join("\n"),
                   }),
                 })
-                .then(async (i: Message): Promise<Message | KyResponse> => {
-                  const message: Message = i;
-                  return await ky
-                    .post(Secrets.DISPATCH_URL, {
-                      json: {
-                        event_type: "download",
-                        client_payload: {
-                          commandType: "dl",
-                          link: `${content}`,
-                          channel: `${message.channelId}`,
-                          message: `${message.id}`,
-                          token: `${interaction.token}`,
-                          startTime: new Date().getTime().toString(),
-                        },
-                      },
-                      headers: {
-                        Authorization: `token ${Secrets.GITHUB_TOKEN}`,
-                        Accept: "application/vnd.github.everest-preview+json",
-                      },
-                    })
-                    .catch(
+                .then(
+                  async (i: Message): Promise<Message | KyResponse> =>
+                    await webhook({
+                      content: content,
+                      channelId: i.channelId,
+                      id: i.id,
+                      token: interaction.token,
+                    }).catch(
                       async (e: Error): Promise<Message> =>
                         await b.helpers.editFollowupMessage(
                           interaction.token,
-                          message.id,
+                          i.id,
                           Messages.createErrorMessage({
                             link: contents.join("\n"),
                             description: e.message,
                           })
                         )
-                    );
-                })
+                    )
+                )
           )
         );
       }
