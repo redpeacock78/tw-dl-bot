@@ -26,7 +26,7 @@ const createErrorMessage = (
               ],
             }
           : {}),
-        description: info.description,
+        description: `**${info.description}**`,
         color: 0x4db56a,
         timestamp: new Date().getTime(),
       },
