@@ -11,6 +11,14 @@ const createErrorMessage = (
         ...(typeof info.link !== "undefined"
           ? {
               fields: [
+                ...(typeof info.runNumber !== "undefined"
+                  ? [
+                      {
+                        name: "#️⃣ Run Number",
+                        value: `> \`#${info.runNumber}\``,
+                      },
+                    ]
+                  : []),
                 {
                   name: "🔗 Tweet URL",
                   value: `> ${info.link}`,
