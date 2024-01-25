@@ -2,9 +2,7 @@ import { fileToBlob } from "@utils";
 import { FileContent } from "discordeno";
 import { CallbackTypes } from "@router/types/callbackTypes.ts";
 
-export const multiFilesContent = async (
-  body: CallbackTypes.bodyDataObject | null
-) => {
+const multiFilesContent = async (body: CallbackTypes.bodyDataObject | null) => {
   let namesArray: string[] | null = Object.keys(body!).filter(
     (i: string): RegExpMatchArray | null => i.match(/^name[0-9].*$/)
   );
@@ -52,3 +50,5 @@ export const multiFilesContent = async (
     filesArray = null;
   }
 };
+
+export default multiFilesContent;
