@@ -5,7 +5,7 @@ const createErrorMessage = (
   info: CreateMessageTypes.errorMessageInfo
 ): CreateMessage | InteractionCallbackData => {
   let message: CreateMessage | InteractionCallbackData | null = {
-    content: `**⚠️Error**`,
+    content: `**⚠️Error!**`,
     embeds: [
       {
         ...(typeof info.link !== "undefined"
