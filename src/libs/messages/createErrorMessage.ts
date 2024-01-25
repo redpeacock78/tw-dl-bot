@@ -1,8 +1,10 @@
-import { InteractionCallbackData } from "discordeno";
+import { CreateMessage, InteractionCallbackData } from "discordeno";
 import { CreateMessageTypes } from "@router/types/createMessageTypes.ts";
 
-const createErrorMessage = (info: CreateMessageTypes.errorMessageInfo) => {
-  let message: InteractionCallbackData | null = {
+const createErrorMessage = (
+  info: CreateMessageTypes.errorMessageInfo
+): CreateMessage | InteractionCallbackData => {
+  let message: CreateMessage | InteractionCallbackData | null = {
     content: `**⚠️Error**`,
     embeds: [
       {
