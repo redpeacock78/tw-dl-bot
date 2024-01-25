@@ -1,7 +1,7 @@
 import bot from "@bot/bot.ts";
 import { fileToBlob } from "@utils";
 import { FileContent } from "discordeno";
-import { Constants, Messages } from "@libs";
+import { Constants, Messages, multiFilesContent } from "@libs";
 import { CallbackTypes } from "@router/types/callbackTypes.ts";
 
 const noContent: number = Constants.HttpStatus.NO_CONTENT;
@@ -70,26 +70,40 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
         const editFollowupMessageFlag: boolean =
           runTime <= Constants.EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT ||
           body!.oversize !== Constants.CallbackObject.Oversize.TRUE;
-        let filesArray: File[] | null = Object.keys(body!)
-          .filter((i: string): RegExpMatchArray | null => i.match(/file/))
-          .map(
-            (i: string): File =>
-              body![i as keyof CallbackTypes.bodyDataObject] as File
-          );
-        let namesArray: string[] | null = Object.keys(body!)
-          .filter((i: string): RegExpMatchArray | null => i.match(/name/))
-          .map(
-            (i: string): string =>
-              body![i as keyof CallbackTypes.bodyDataObject] as string
-          );
-        let fileContentArray: FileContent[] | null = await Promise.all(
-          namesArray.map(async (i: string, n: number): Promise<FileContent> => {
-            return {
-              name: i as string,
-              blob: await fileToBlob((filesArray as File[])[n] as File),
-            };
-          })
-        );
+        let multiFilesObject: {
+          fileNamesArray: string[];
+          filesArray: FileContent[];
+        } | null;
+        try {
+          multiFilesObject = await multiFilesContent(body!);
+        } catch (e: unknown) {
+          if (editFollowupMessageFlag)
+            return await bot.helpers
+              .editFollowupMessage(
+                body!.token,
+                body!.message,
+                Messages.createErrorMessage({
+                  runNumber: body!.number,
+                  description: (e as Error).message,
+                  link: body!.link,
+                })
+              )
+              .then((): Response => c.body(null, noContent))
+              .catch((): Response => c.body(null, internalServerError))
+              .finally((): null => (body = null));
+          return await bot.helpers
+            .sendMessage(
+              body!.channel,
+              Messages.createErrorMessage({
+                runNumber: body!.number,
+                description: (e as Error).message,
+                link: body!.link,
+              })
+            )
+            .then((): Response => c.body(null, noContent))
+            .catch((): Response => c.body(null, internalServerError))
+            .finally((): null => (body = null));
+        }
         if (editFollowupMessageFlag)
           return await bot.helpers
             .editFollowupMessage(
@@ -99,18 +113,17 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
                 runNumber: body!.number,
                 runTime: runTime,
                 totalSize: body!.size!,
-                fileNamesArray: namesArray,
+                fileNamesArray: multiFilesObject!.fileNamesArray,
                 link: body!.link,
-                filesArray: fileContentArray,
+                filesArray: multiFilesObject!.filesArray,
                 editFollowupMessageFlag: editFollowupMessageFlag,
               })
             )
             .then((): Response => c.body(null, noContent))
             .catch((): Response => c.body(null, internalServerError))
             .finally((): void => {
-              filesArray = null;
-              namesArray = null;
-              fileContentArray = null;
+              body = null;
+              multiFilesObject = null;
             });
         return await bot.helpers
           .sendMessage(
@@ -121,18 +134,17 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
               runNumber: body!.number,
               runTime: runTime,
               totalSize: body!.size!,
-              fileNamesArray: namesArray,
+              fileNamesArray: multiFilesObject!.fileNamesArray,
               link: body!.link,
-              filesArray: fileContentArray,
+              filesArray: multiFilesObject!.filesArray,
               editFollowupMessageFlag: editFollowupMessageFlag,
             })
           )
           .then((): Response => c.body(null, noContent))
           .catch((): Response => c.body(null, internalServerError))
           .finally((): void => {
-            filesArray = null;
-            namesArray = null;
-            fileContentArray = null;
+            body = null;
+            multiFilesObject = null;
           });
       },
     },
