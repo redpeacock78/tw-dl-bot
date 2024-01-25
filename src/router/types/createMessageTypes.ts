@@ -30,4 +30,8 @@ export namespace CreateMessageTypes {
     link: string;
     content: string;
   };
+  export type errorMessageInfo = {
+    description: string;
+    link?: string;
+  };
 }
