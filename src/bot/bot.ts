@@ -44,6 +44,7 @@ bot.events.interactionCreate = async (
           type: InteractionResponseTypes.ChannelMessageWithSource,
           data: Messages.createErrorMessage({
             description: contents.join("\n"),
+            editFollowupMessageFlag: false,
           }),
         });
       } else {
@@ -73,6 +74,7 @@ bot.events.interactionCreate = async (
                           Messages.createErrorMessage({
                             link: contents.join("\n"),
                             description: e.message,
+                            editFollowupMessageFlag: false,
                           })
                         )
                     )
