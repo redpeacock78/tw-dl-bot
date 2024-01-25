@@ -1,6 +1,6 @@
 import ky, { KyResponse } from "ky";
-import { Secrets, isUrl } from "@libs";
 import { Commands } from "@bot/commands.ts";
+import { Secrets, Messages, isUrl } from "@libs";
 import {
   Bot,
   createBot,
@@ -10,7 +10,7 @@ import {
   Message,
 } from "discordeno";
 
-const bot = createBot({
+const bot: Bot = createBot({
   token: Secrets.DISCORD_TOKEN,
   intents: Intents.Guilds | Intents.GuildMessages | Intents.MessageContent,
   events: {
@@ -53,21 +53,10 @@ bot.events.interactionCreate = async (
               await b.helpers
                 .sendFollowupMessage(interaction.token, {
                   type: InteractionResponseTypes.ChannelMessageWithSource,
-                  data: {
+                  data: Messages.createProgressMessage({
                     content: `**🕑Queuing...**`,
-                    embeds: [
-                      {
-                        fields: [
-                          {
-                            name: "🔗 Tweet URL",
-                            value: `> ${contents.join("\n")}`,
-                          },
-                        ],
-                        color: 0x4db56a,
-                        timestamp: new Date().getTime(),
-                      },
-                    ],
-                  },
+                    link: contents.join("\n"),
+                  }),
                 })
                 .then(async (i: Message): Promise<Message | KyResponse> => {
                   const message: Message = i;
