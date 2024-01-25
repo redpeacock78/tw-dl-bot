@@ -43,17 +43,16 @@ const createSuccessMessage = (
           name: `${info.fileName}`,
         }
       : info.filesArray!,
+    ...(info.editFollowupMessageFlag
+      ? {}
+      : {
+          messageReference: {
+            messageId: `${info!.messageId}`,
+            channelId: `${info!.channelId}`,
+            failIfNotExists: true,
+          },
+        }),
   };
-  if (!info.editFollowupMessageFlag) {
-    const messageReference = {
-      messageReference: {
-        messageId: `${info!.messageId}`,
-        channelId: `${info!.channelId}`,
-        failIfNotExists: true,
-      },
-    };
-    Object.assign(message, messageReference);
-  }
   try {
     return message;
   } finally {
