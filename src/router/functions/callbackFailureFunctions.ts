@@ -16,8 +16,8 @@ const callbackFailureFunctions: CallbackTypes.Functions.callbackFailure = {
     if (editFollowupMessageFlag)
       return await bot.helpers
         .editFollowupMessage(
-          `${body!.token}`,
-          `${body!.message}`,
+          body!.token,
+          body!.message,
           Messages.createFailureMessage({
             runNumber: body!.number,
             runTime: runTime,
@@ -31,7 +31,7 @@ const callbackFailureFunctions: CallbackTypes.Functions.callbackFailure = {
         .finally((): null => (body = null));
     return await bot.helpers
       .sendMessage(
-        `${body!.channel}`,
+        body!.channel,
         Messages.createFailureMessage({
           messageId: body!.message,
           channelId: body!.channel,
