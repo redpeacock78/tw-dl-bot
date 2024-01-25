@@ -22,7 +22,7 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
           blobData: Blob;
         } | null;
         try {
-          filesObject = await Contents.fileContent(body!);
+          filesObject = await Contents.singleFileContent(body!);
         } catch (e: unknown) {
           if (editFollowupMessageFlag)
             return await bot.helpers
