@@ -3,7 +3,7 @@ import { CallbackTypes } from "@router/types/callbackTypes.ts";
 
 const fileContent = async (body: CallbackTypes.bodyDataObject | null) => {
   try {
-    if (body!.file1 !== undefined || typeof body!.name1 !== "string")
+    if (body!.file1 === undefined || body!.name1 === undefined)
       throw new Error(
         "The number of files given and the number of files expected are different."
       );
