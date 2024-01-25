@@ -4,6 +4,17 @@ export const Constants = {
   PING_PATH: "/ping",
   CALLBACK_PATH: "/callback",
   EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT: 900000,
+  Webhook: {
+    Json: {
+      EVENT_TYPE: "download",
+      ClientPayload: {
+        COMMAND_TYPE: "dl",
+      },
+    },
+    Headers: {
+      ACCEPT: "application/vnd.github.everest-preview+json",
+    },
+  },
   CallbackObject: {
     Status: {
       SUCCESS: "success",
