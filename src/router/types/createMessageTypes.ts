@@ -31,8 +31,11 @@ export namespace CreateMessageTypes {
     content: string;
   };
   export type errorMessageInfo = {
+    messageId?: string;
+    channelId?: string;
     runNumber?: string;
     description: string;
     link?: string;
+    editFollowupMessageFlag: boolean;
   };
 }
