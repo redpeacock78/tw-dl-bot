@@ -1,7 +1,6 @@
 import bot from "@bot/bot.ts";
-import { fileToBlob } from "@utils";
 import { FileContent } from "discordeno";
-import { Constants, Messages, multiFilesContent } from "@libs";
+import { Constants, Messages, Contents } from "@libs";
 import { CallbackTypes } from "@router/types/callbackTypes.ts";
 
 const noContent: number = Constants.HttpStatus.NO_CONTENT;
@@ -18,7 +17,40 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
         const editFollowupMessageFlag: boolean =
           runTime <= Constants.EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT ||
           body!.oversize !== Constants.CallbackObject.Oversize.TRUE;
-        let blobData: Blob | null = await fileToBlob(body!.file1 as File);
+        let filesObject: {
+          fileName: string;
+          blobData: Blob;
+        } | null;
+        try {
+          filesObject = await Contents.fileContent(body!);
+        } catch (e: unknown) {
+          if (editFollowupMessageFlag)
+            return await bot.helpers
+              .editFollowupMessage(
+                body!.token,
+                body!.message,
+                Messages.createErrorMessage({
+                  runNumber: body!.number,
+                  description: (e as Error).message,
+                  link: body!.link,
+                })
+              )
+              .then((): Response => c.body(null, noContent))
+              .catch((): Response => c.body(null, internalServerError))
+              .finally((): null => (body = null));
+          return await bot.helpers
+            .sendMessage(
+              body!.channel,
+              Messages.createErrorMessage({
+                runNumber: body!.number,
+                description: (e as Error).message,
+                link: body!.link,
+              })
+            )
+            .then((): Response => c.body(null, noContent))
+            .catch((): Response => c.body(null, internalServerError))
+            .finally((): null => (body = null));
+        }
         if (editFollowupMessageFlag)
           return await bot.helpers
             .editFollowupMessage(
@@ -28,9 +60,9 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
                 runNumber: body!.number,
                 runTime: runTime,
                 totalSize: body!.size!,
-                fileName: body!.name1!,
+                fileName: filesObject!.fileName,
                 link: body!.link,
-                file: blobData,
+                file: filesObject!.blobData,
                 editFollowupMessageFlag: editFollowupMessageFlag,
               })
             )
@@ -38,7 +70,7 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
             .catch((): Response => c.body(null, internalServerError))
             .finally((): void => {
               body = null;
-              blobData = null;
+              filesObject = null;
             });
         return await bot.helpers
           .sendMessage(
@@ -49,9 +81,9 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
               runNumber: body!.number,
               runTime: runTime,
               totalSize: body!.size!,
-              fileName: body!.name1!,
+              fileName: filesObject!.fileName,
               link: body!.link,
-              file: blobData,
+              file: filesObject!.blobData,
               editFollowupMessageFlag: editFollowupMessageFlag,
             })
           )
@@ -59,7 +91,7 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
           .catch((): Response => c.body(null, internalServerError))
           .finally((): void => {
             body = null;
-            blobData = null;
+            filesObject = null;
           });
       },
       multi: async <T extends string>(
@@ -75,7 +107,7 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
           filesArray: FileContent[];
         } | null;
         try {
-          multiFilesObject = await multiFilesContent(body!);
+          multiFilesObject = await Contents.multiFilesContent(body!);
         } catch (e: unknown) {
           if (editFollowupMessageFlag)
             return await bot.helpers
