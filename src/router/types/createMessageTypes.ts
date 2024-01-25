@@ -31,6 +31,7 @@ export namespace CreateMessageTypes {
     content: string;
   };
   export type errorMessageInfo = {
+    runNumber?: string;
     description: string;
     link?: string;
   };
