@@ -16,8 +16,8 @@ const callbackProgressFunctions: CallbackTypes.Functions.callbackProgress = {
     if (editFollowupMessageFlag)
       return await bot.helpers
         .editFollowupMessage(
-          `${body!.token}`,
-          `${body!.message}`,
+          body!.token,
+          body!.message,
           Messages.createProgressMessage({
             runNumber: body!.number,
             runTime: runTime,
