@@ -37,28 +37,28 @@ export namespace CallbackTypes {
     T,
     Record<string | number | symbol, never>
   >;
-
+  export type infoObjectType<T extends string> = {
+    c: CallbackTypes.contextType<T>;
+    body: CallbackTypes.bodyDataObject | null;
+  };
   export namespace Functions {
     export type callbackSuccess = {
       [key: string]: {
         [key: string]: {
           [key: string]: <T extends string>(
-            c: CallbackTypes.contextType<T>,
-            body: CallbackTypes.bodyDataObject | null
+            infoObject: infoObjectType<T>
           ) => Promise<Response>;
         };
       };
     };
     export type callbackFailure = {
       [key: string]: <T extends string>(
-        c: CallbackTypes.contextType<T>,
-        body: CallbackTypes.bodyDataObject
+        infoObject: infoObjectType<T>
       ) => Promise<Response>;
     };
     export type callbackProgress = {
       [key: string]: <T extends string>(
-        c: CallbackTypes.contextType<T>,
-        body: CallbackTypes.bodyDataObject | null
+        infoObject: infoObjectType<T>
       ) => Promise<Response>;
     };
   }
