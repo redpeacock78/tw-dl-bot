@@ -22,7 +22,8 @@ const createFailureMessage = (
         timestamp: new Date().getTime(),
       },
     ],
-    ...(info.editFollowupMessageFlag
+    ...(typeof info!.messageId === "undefined" &&
+    typeof info!.channelId === "undefined"
       ? {}
       : {
           messageReference: {
