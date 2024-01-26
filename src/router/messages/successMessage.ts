@@ -4,8 +4,8 @@ import { Message } from "discordeno";
 import { CreateMessageTypes } from "@router/types/createMessageTypes.ts";
 
 const successMessage = {
-  single: async (
-    singleSuccsessMessageObject: CreateMessageTypes.SendSuccessMessage.singleObject | null
+  singleFile: async (
+    singleSuccsessMessageObject: CreateMessageTypes.SendSuccessMessage.singleFileObject | null
   ): Promise<Message> => {
     try {
       if (singleSuccsessMessageObject!.editFollowupMessageFlag)
@@ -38,8 +38,8 @@ const successMessage = {
       singleSuccsessMessageObject = null;
     }
   },
-  multi: async (
-    multiSuccsessMessageObject: CreateMessageTypes.SendSuccessMessage.multiObject | null
+  multiFiles: async (
+    multiSuccsessMessageObject: CreateMessageTypes.SendSuccessMessage.multiFilesObject | null
   ): Promise<Message> => {
     try {
       if (multiSuccsessMessageObject!.editFollowupMessageFlag)
