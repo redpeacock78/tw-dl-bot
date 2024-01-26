@@ -2,50 +2,49 @@ import { CreateMessage, InteractionCallbackData } from "discordeno";
 import { CreateMessageTypes } from "@router/types/createMessageTypes.ts";
 
 const createErrorMessage = (
-  info: CreateMessageTypes.errorMessageInfo
+  info: CreateMessageTypes.errorMessageInfo | null
 ): CreateMessage | InteractionCallbackData => {
-  let message: CreateMessage | InteractionCallbackData | null = {
-    content: `**⚠️Error!**`,
-    embeds: [
-      {
-        ...(typeof info.link !== "undefined"
-          ? {
-              fields: [
-                ...(typeof info.runNumber !== "undefined"
-                  ? [
-                      {
-                        name: "#️⃣ Run Number",
-                        value: `> \`#${info.runNumber}\``,
-                      },
-                    ]
-                  : []),
-                {
-                  name: "🔗 Tweet URL",
-                  value: `> ${info.link}`,
-                },
-              ],
-            }
-          : {}),
-        description: `**${info.description}**`,
-        color: 0x4db56a,
-        timestamp: new Date().getTime(),
-      },
-    ],
-    ...(typeof info!.messageId === "undefined" &&
-    typeof info!.channelId === "undefined"
-      ? {}
-      : {
-          messageReference: {
-            messageId: `${info!.messageId}`,
-            channelId: `${info!.channelId}`,
-            failIfNotExists: true,
-          },
-        }),
-  };
   try {
-    return message;
+    return {
+      content: `**⚠️Error!**`,
+      embeds: [
+        {
+          ...(typeof info!.link !== "undefined"
+            ? {
+                fields: [
+                  ...(typeof info!.runNumber !== "undefined"
+                    ? [
+                        {
+                          name: "#️⃣ Run Number",
+                          value: `> \`#${info!.runNumber}\``,
+                        },
+                      ]
+                    : []),
+                  {
+                    name: "🔗 Tweet URL",
+                    value: `> ${info!.link}`,
+                  },
+                ],
+              }
+            : {}),
+          description: `**${info!.description}**`,
+          color: 0x4db56a,
+          timestamp: new Date().getTime(),
+        },
+      ],
+      ...(typeof info!.messageId === "undefined" &&
+      typeof info!.channelId === "undefined"
+        ? {}
+        : {
+            messageReference: {
+              messageId: `${info!.messageId}`,
+              channelId: `${info!.channelId}`,
+              failIfNotExists: true,
+            },
+          }),
+    };
   } finally {
-    message = null;
+    info = null;
   }
 };
 
