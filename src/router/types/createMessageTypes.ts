@@ -36,8 +36,8 @@ export namespace CreateMessageTypes {
     link?: string;
   };
   export type sendErrorMessageObject = {
-    token?: string;
-    channel?: string;
+    token: string;
+    channel: string;
     message: string;
     number: string;
     link: string;
