@@ -7,42 +7,42 @@ const internalServerError: number = Constants.HttpStatus.INTERNAL_SERVER_ERROR;
 
 const callbackFailureFunctions: CallbackTypes.Functions.callbackFailure = {
   failure: async <T extends string>(
-    c: CallbackTypes.contextType<T>,
-    body: CallbackTypes.bodyDataObject | null
+    infoObject: CallbackTypes.infoObjectType<T>
   ): Promise<Response> => {
-    const runTime: number = new Date().getTime() - Number(body!.startTime);
+    const runTime: number =
+      new Date().getTime() - Number(infoObject.body!.startTime);
     const editFollowupMessageFlag: boolean =
       runTime <= Constants.EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT;
     if (editFollowupMessageFlag)
       return await bot.helpers
         .editFollowupMessage(
-          body!.token,
-          body!.message,
+          infoObject.body!.token,
+          infoObject.body!.message,
           Messages.createFailureMessage({
-            runNumber: body!.number,
+            runNumber: infoObject.body!.number,
             runTime: runTime,
-            link: body!.link,
-            content: body!.content as string,
+            link: infoObject.body!.link,
+            content: infoObject.body!.content as string,
           })
         )
-        .then((): Response => c.body(null, noContent))
-        .catch((): Response => c.body(null, internalServerError))
-        .finally((): null => (body = null));
+        .then((): Response => infoObject.c.body(null, noContent))
+        .catch((): Response => infoObject.c.body(null, internalServerError))
+        .finally((): null => (infoObject.body = null));
     return await bot.helpers
       .sendMessage(
-        body!.channel,
+        infoObject.body!.channel,
         Messages.createFailureMessage({
-          messageId: body!.message,
-          channelId: body!.channel,
-          runNumber: body!.number,
+          messageId: infoObject.body!.message,
+          channelId: infoObject.body!.channel,
+          runNumber: infoObject.body!.number,
           runTime: runTime,
-          link: body!.link,
-          content: body!.content as string,
+          link: infoObject.body!.link,
+          content: infoObject.body!.content as string,
         })
       )
-      .then((): Response => c.body(null, noContent))
-      .catch((): Response => c.body(null, internalServerError))
-      .finally((): null => (body = null));
+      .then((): Response => infoObject.c.body(null, noContent))
+      .catch((): Response => infoObject.c.body(null, internalServerError))
+      .finally((): null => (infoObject.body = null));
   },
 };
 

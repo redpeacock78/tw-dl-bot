@@ -2,7 +2,7 @@ import callbackSuccessFunctions from "@router/functions/callbackSuccessFunctions
 import callbackFailureFunctions from "@router/functions/callbackFailureFunctions.ts";
 import callbackProgressFunctions from "@router/functions/callbackProgressFunctions.ts";
 
-export {
+export const Functions = {
   callbackSuccessFunctions,
   callbackFailureFunctions,
   callbackProgressFunctions,
