@@ -35,4 +35,13 @@ export namespace CreateMessageTypes {
     description: string;
     link?: string;
   };
+  export type sendErrorMessageObject = {
+    token?: string;
+    channel?: string;
+    message: string;
+    number: string;
+    link: string;
+    description: string;
+    editFollowupMessageFlag: boolean;
+  };
 }
