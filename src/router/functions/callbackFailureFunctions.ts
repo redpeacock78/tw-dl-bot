@@ -23,7 +23,6 @@ const callbackFailureFunctions: CallbackTypes.Functions.callbackFailure = {
             runTime: runTime,
             link: body!.link,
             content: body!.content as string,
-            editFollowupMessageFlag: editFollowupMessageFlag,
           })
         )
         .then((): Response => c.body(null, noContent))
@@ -39,7 +38,6 @@ const callbackFailureFunctions: CallbackTypes.Functions.callbackFailure = {
           runTime: runTime,
           link: body!.link,
           content: body!.content as string,
-          editFollowupMessageFlag: editFollowupMessageFlag,
         })
       )
       .then((): Response => c.body(null, noContent))
