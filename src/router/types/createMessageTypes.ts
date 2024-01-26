@@ -35,6 +35,21 @@ export namespace CreateMessageTypes {
     description: string;
     link?: string;
   };
+
+  export namespace SendSuccessMessage {
+    export type singleObject = {
+      token: string;
+      channelId: string;
+      messageId: string;
+      runNumber: string;
+      runTime: number;
+      totalSize: string;
+      fileName: string;
+      link: string;
+      file: Blob;
+      editFollowupMessageFlag: boolean;
+    };
+  }
   export type sendErrorMessageObject = {
     token: string;
     channel: string;
