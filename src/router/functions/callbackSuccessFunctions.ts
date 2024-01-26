@@ -1,6 +1,6 @@
-import { FileContent } from "discordeno";
 import { Constants, Contents } from "@libs";
 import { SendMessages } from "@router/messages/index.ts";
+import { ContentsTypes } from "@libs/types/contentsTypes.ts";
 import { CallbackTypes } from "@router/types/callbackTypes.ts";
 
 const noContent: number = Constants.HttpStatus.NO_CONTENT;
@@ -17,10 +17,7 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
         const editFollowupMessageFlag: boolean =
           runTime <= Constants.EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT ||
           body!.oversize !== Constants.CallbackObject.Oversize.TRUE;
-        let filesObject: {
-          fileName: string;
-          blobData: Blob;
-        } | null;
+        let filesObject: ContentsTypes.singleFileContentObject | null;
         try {
           filesObject = await Contents.singleFileContent(body!);
         } catch (e: unknown) {
@@ -65,10 +62,7 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
         const editFollowupMessageFlag: boolean =
           runTime <= Constants.EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT ||
           body!.oversize !== Constants.CallbackObject.Oversize.TRUE;
-        let multiFilesObject: {
-          fileNamesArray: string[];
-          filesArray: FileContent[];
-        } | null;
+        let multiFilesObject: ContentsTypes.multiFilesContentObject | null;
         try {
           multiFilesObject = await Contents.multiFilesContent(body!);
         } catch (e: unknown) {
