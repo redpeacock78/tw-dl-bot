@@ -12,7 +12,7 @@ const sendErrorMessage = async (
 ): Promise<Message> => {
   if (errorMessageObject.editFollowupMessageFlag)
     return await bot.helpers.editFollowupMessage(
-      errorMessageObject.token!,
+      errorMessageObject.token,
       errorMessageObject.message,
       Messages.createErrorMessage({
         runNumber: errorMessageObject.number,
@@ -21,10 +21,10 @@ const sendErrorMessage = async (
       })
     );
   return await bot.helpers.sendMessage(
-    errorMessageObject.channel!,
+    errorMessageObject.channel,
     Messages.createErrorMessage({
       messageId: errorMessageObject.message,
-      channelId: errorMessageObject.channel!,
+      channelId: errorMessageObject.channel,
       runNumber: errorMessageObject.number,
       description: errorMessageObject.description,
       link: errorMessageObject.link,
