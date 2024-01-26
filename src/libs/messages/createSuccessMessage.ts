@@ -43,7 +43,8 @@ const createSuccessMessage = (
           name: `${info.fileName}`,
         }
       : info.filesArray!,
-    ...(info.editFollowupMessageFlag
+    ...(typeof info!.messageId === "undefined" &&
+    typeof info!.channelId === "undefined"
       ? {}
       : {
           messageReference: {
