@@ -37,7 +37,7 @@ export namespace CreateMessageTypes {
   };
 
   export namespace SendSuccessMessage {
-    export type singleObject = {
+    export type singleFileObject = {
       token: string;
       channelId: string;
       messageId: string;
@@ -49,7 +49,7 @@ export namespace CreateMessageTypes {
       file: Blob;
       editFollowupMessageFlag: boolean;
     };
-    export type multiObject = {
+    export type multiFilesObject = {
       token: string;
       channelId: string;
       messageId: string;
