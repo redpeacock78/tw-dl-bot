@@ -33,7 +33,6 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
                   runNumber: body!.number,
                   description: (e as Error).message,
                   link: body!.link,
-                  editFollowupMessageFlag: editFollowupMessageFlag,
                 })
               )
               .then((): Response => c.body(null, noContent))
@@ -48,7 +47,6 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
                 runNumber: body!.number,
                 description: (e as Error).message,
                 link: body!.link,
-                editFollowupMessageFlag: editFollowupMessageFlag,
               })
             )
             .then((): Response => c.body(null, noContent))
@@ -67,7 +65,6 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
                 fileName: filesObject!.fileName,
                 link: body!.link,
                 file: filesObject!.blobData,
-                editFollowupMessageFlag: editFollowupMessageFlag,
               })
             )
             .then((): Response => c.body(null, noContent))
@@ -88,7 +85,6 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
               fileName: filesObject!.fileName,
               link: body!.link,
               file: filesObject!.blobData,
-              editFollowupMessageFlag: editFollowupMessageFlag,
             })
           )
           .then((): Response => c.body(null, noContent))
@@ -122,7 +118,6 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
                   runNumber: body!.number,
                   description: (e as Error).message,
                   link: body!.link,
-                  editFollowupMessageFlag: editFollowupMessageFlag,
                 })
               )
               .then((): Response => c.body(null, noContent))
@@ -137,7 +132,6 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
                 runNumber: body!.number,
                 description: (e as Error).message,
                 link: body!.link,
-                editFollowupMessageFlag: editFollowupMessageFlag,
               })
             )
             .then((): Response => c.body(null, noContent))
@@ -156,7 +150,6 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
                 fileNamesArray: multiFilesObject!.fileNamesArray,
                 link: body!.link,
                 filesArray: multiFilesObject!.filesArray,
-                editFollowupMessageFlag: editFollowupMessageFlag,
               })
             )
             .then((): Response => c.body(null, noContent))
@@ -177,7 +170,6 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
               fileNamesArray: multiFilesObject!.fileNamesArray,
               link: body!.link,
               filesArray: multiFilesObject!.filesArray,
-              editFollowupMessageFlag: editFollowupMessageFlag,
             })
           )
           .then((): Response => c.body(null, noContent))
