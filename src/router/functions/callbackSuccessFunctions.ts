@@ -63,6 +63,36 @@ const sendSuccessMessage = {
       })
     );
   },
+  multi: async (
+    multiSuccsessMessageObject: CreateMessageTypes.SendSuccessMessage.multiObject
+  ): Promise<Message> => {
+    if (multiSuccsessMessageObject.editFollowupMessageFlag)
+      return await bot.helpers.editFollowupMessage(
+        multiSuccsessMessageObject.token,
+        multiSuccsessMessageObject.messageId,
+        Messages.createSuccessMessage({
+          runNumber: multiSuccsessMessageObject.runNumber,
+          runTime: multiSuccsessMessageObject.runTime,
+          totalSize: multiSuccsessMessageObject.totalSize,
+          fileNamesArray: multiSuccsessMessageObject.fileNamesArray,
+          link: multiSuccsessMessageObject.link,
+          filesArray: multiSuccsessMessageObject.filesArray,
+        })
+      );
+    return await bot.helpers.sendMessage(
+      multiSuccsessMessageObject.channelId,
+      Messages.createSuccessMessage({
+        messageId: multiSuccsessMessageObject.messageId,
+        channelId: multiSuccsessMessageObject.channelId,
+        runNumber: multiSuccsessMessageObject.runNumber,
+        runTime: multiSuccsessMessageObject.runTime,
+        totalSize: multiSuccsessMessageObject.totalSize,
+        fileNamesArray: multiSuccsessMessageObject.fileNamesArray,
+        link: multiSuccsessMessageObject.link,
+        filesArray: multiSuccsessMessageObject.filesArray,
+      })
+    );
+  },
 };
 
 const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
@@ -83,7 +113,7 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
         try {
           filesObject = await Contents.singleFileContent(body!);
         } catch (e: unknown) {
-          return sendErrorMessage({
+          return await sendErrorMessage({
             token: body!.token,
             channel: body!.channel,
             message: body!.message,
@@ -131,7 +161,7 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
         try {
           multiFilesObject = await Contents.multiFilesContent(body!);
         } catch (e: unknown) {
-          return sendErrorMessage({
+          return await sendErrorMessage({
             token: body!.token,
             channel: body!.channel,
             message: body!.message,
@@ -144,40 +174,19 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
             .catch((): Response => c.body(null, internalServerError))
             .finally((): null => (body = null));
         }
-        if (editFollowupMessageFlag)
-          return await bot.helpers
-            .editFollowupMessage(
-              body!.token,
-              body!.message,
-              Messages.createSuccessMessage({
-                runNumber: body!.number,
-                runTime: runTime,
-                totalSize: body!.size!,
-                fileNamesArray: multiFilesObject!.fileNamesArray,
-                link: body!.link,
-                filesArray: multiFilesObject!.filesArray,
-              })
-            )
-            .then((): Response => c.body(null, noContent))
-            .catch((): Response => c.body(null, internalServerError))
-            .finally((): void => {
-              body = null;
-              multiFilesObject = null;
-            });
-        return await bot.helpers
-          .sendMessage(
-            body!.channel,
-            Messages.createSuccessMessage({
-              messageId: body!.message,
-              channelId: body!.channel,
-              runNumber: body!.number,
-              runTime: runTime,
-              totalSize: body!.size!,
-              fileNamesArray: multiFilesObject!.fileNamesArray,
-              link: body!.link,
-              filesArray: multiFilesObject!.filesArray,
-            })
-          )
+        return await sendSuccessMessage
+          .multi({
+            token: body!.token,
+            channelId: body!.channel,
+            messageId: body!.message,
+            runNumber: body!.number,
+            runTime: runTime,
+            totalSize: body!.size!,
+            fileNamesArray: multiFilesObject!.fileNamesArray,
+            link: body!.link,
+            filesArray: multiFilesObject!.filesArray,
+            editFollowupMessageFlag: editFollowupMessageFlag,
+          })
           .then((): Response => c.body(null, noContent))
           .catch((): Response => c.body(null, internalServerError))
           .finally((): void => {
