@@ -38,7 +38,7 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
             .finally((): null => (body = null));
         }
         return await SendMessages.successMessage
-          .single({
+          .singleFile({
             token: body!.token,
             channelId: body!.channel,
             messageId: body!.message,
@@ -86,7 +86,7 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
             .finally((): null => (body = null));
         }
         return await SendMessages.successMessage
-          .multi({
+          .multiFiles({
             token: body!.token,
             channelId: body!.channel,
             messageId: body!.message,
