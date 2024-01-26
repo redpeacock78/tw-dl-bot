@@ -49,6 +49,18 @@ export namespace CreateMessageTypes {
       file: Blob;
       editFollowupMessageFlag: boolean;
     };
+    export type multiObject = {
+      token: string;
+      channelId: string;
+      messageId: string;
+      runNumber: string;
+      runTime: number;
+      totalSize: string;
+      fileNamesArray: string[];
+      link: string;
+      filesArray: FileContent[];
+      editFollowupMessageFlag: boolean;
+    };
   }
   export type sendErrorMessageObject = {
     token: string;
