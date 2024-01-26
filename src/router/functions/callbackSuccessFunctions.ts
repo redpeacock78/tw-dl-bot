@@ -1,10 +1,41 @@
 import bot from "@bot/bot.ts";
-import { FileContent } from "discordeno";
+import { FileContent, Message } from "discordeno";
 import { Constants, Messages, Contents } from "@libs";
 import { CallbackTypes } from "@router/types/callbackTypes.ts";
 
 const noContent: number = Constants.HttpStatus.NO_CONTENT;
 const internalServerError: number = Constants.HttpStatus.INTERNAL_SERVER_ERROR;
+
+const sendErrorMessage = async (messageObject: {
+  token?: string;
+  channel?: string;
+  message: string;
+  number: string;
+  link: string;
+  description: string;
+  editFollowupMessageFlag: boolean;
+}): Promise<Message> => {
+  if (messageObject.editFollowupMessageFlag)
+    return await bot.helpers.editFollowupMessage(
+      messageObject.token!,
+      messageObject.message,
+      Messages.createErrorMessage({
+        runNumber: messageObject.number,
+        description: messageObject.description,
+        link: messageObject.link,
+      })
+    );
+  return await bot.helpers.sendMessage(
+    messageObject.channel!,
+    Messages.createErrorMessage({
+      messageId: messageObject.message,
+      channelId: messageObject.channel!,
+      runNumber: messageObject.number,
+      description: messageObject.description,
+      link: messageObject.link,
+    })
+  );
+};
 
 const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
   success: {
@@ -24,31 +55,15 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
         try {
           filesObject = await Contents.singleFileContent(body!);
         } catch (e: unknown) {
-          if (editFollowupMessageFlag)
-            return await bot.helpers
-              .editFollowupMessage(
-                body!.token,
-                body!.message,
-                Messages.createErrorMessage({
-                  runNumber: body!.number,
-                  description: (e as Error).message,
-                  link: body!.link,
-                })
-              )
-              .then((): Response => c.body(null, noContent))
-              .catch((): Response => c.body(null, internalServerError))
-              .finally((): null => (body = null));
-          return await bot.helpers
-            .sendMessage(
-              body!.channel,
-              Messages.createErrorMessage({
-                messageId: body!.message,
-                channelId: body!.channel,
-                runNumber: body!.number,
-                description: (e as Error).message,
-                link: body!.link,
-              })
-            )
+          return sendErrorMessage({
+            token: body!.token,
+            channel: body!.channel,
+            message: body!.message,
+            number: body!.number,
+            link: body!.link,
+            description: (e as Error).message,
+            editFollowupMessageFlag: editFollowupMessageFlag,
+          })
             .then((): Response => c.body(null, noContent))
             .catch((): Response => c.body(null, internalServerError))
             .finally((): null => (body = null));
@@ -109,31 +124,15 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
         try {
           multiFilesObject = await Contents.multiFilesContent(body!);
         } catch (e: unknown) {
-          if (editFollowupMessageFlag)
-            return await bot.helpers
-              .editFollowupMessage(
-                body!.token,
-                body!.message,
-                Messages.createErrorMessage({
-                  runNumber: body!.number,
-                  description: (e as Error).message,
-                  link: body!.link,
-                })
-              )
-              .then((): Response => c.body(null, noContent))
-              .catch((): Response => c.body(null, internalServerError))
-              .finally((): null => (body = null));
-          return await bot.helpers
-            .sendMessage(
-              body!.channel,
-              Messages.createErrorMessage({
-                messageId: body!.message,
-                channelId: body!.channel,
-                runNumber: body!.number,
-                description: (e as Error).message,
-                link: body!.link,
-              })
-            )
+          return sendErrorMessage({
+            token: body!.token,
+            channel: body!.channel,
+            message: body!.message,
+            number: body!.number,
+            link: body!.link,
+            description: (e as Error).message,
+            editFollowupMessageFlag: editFollowupMessageFlag,
+          })
             .then((): Response => c.body(null, noContent))
             .catch((): Response => c.body(null, internalServerError))
             .finally((): null => (body = null));
