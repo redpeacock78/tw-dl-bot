@@ -13,7 +13,6 @@ export namespace CreateMessageTypes {
     link: string;
     file?: Blob;
     filesArray?: FileContent[];
-    editFollowupMessageFlag: boolean;
   };
   export type failureMessageInfo = {
     messageId?: string;
@@ -22,7 +21,6 @@ export namespace CreateMessageTypes {
     runTime: number;
     link: string;
     content: string;
-    editFollowupMessageFlag: boolean;
   };
   export type progressMessageInfo = {
     runNumber?: string;
@@ -36,6 +34,5 @@ export namespace CreateMessageTypes {
     runNumber?: string;
     description: string;
     link?: string;
-    editFollowupMessageFlag: boolean;
   };
 }
