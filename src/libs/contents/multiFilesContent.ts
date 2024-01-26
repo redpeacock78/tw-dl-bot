@@ -1,8 +1,11 @@
 import { fileToBlob } from "@utils";
 import { FileContent } from "discordeno";
+import { ContentsTypes } from "@libs/types/contentsTypes.ts";
 import { CallbackTypes } from "@router/types/callbackTypes.ts";
 
-const multiFilesContent = async (body: CallbackTypes.bodyDataObject | null) => {
+const multiFilesContent = async (
+  body: CallbackTypes.bodyDataObject | null
+): Promise<ContentsTypes.multiFilesContentObject> => {
   let namesArray: string[] | null = Object.keys(body!).filter(
     (i: string): RegExpMatchArray | null => i.match(/^name[0-9].*$/)
   );
