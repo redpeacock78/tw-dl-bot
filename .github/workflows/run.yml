@@ -373,7 +373,7 @@ jobs:
                 echo $! > "${pid}" && \
                 mkdir -p "${dir}/conv" && \
                 {
-                  ffmpeg -i "${file_name}" -c:v libvpx -r 25 -crf 33 -b:v 0 -fs $(( 25 / "${files_num}" ))MB "${dir}/conv/${file_name%.*}.webm" 2>&1 | \
+                  ffmpeg -i "${file_name}" -c:v libvpx -r 25 -crf 20 -b:v 0 -fs $(( 25 / "${files_num}" ))MB "${dir}/conv/${file_name%.*}.webm" 2>&1 | \
                   awk -f "${dir}/progress.awk" >> "${progress}"
                 }
                 if [[ ${num} != ${#file_list[@]} ]]; then
