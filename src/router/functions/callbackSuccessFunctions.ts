@@ -2,37 +2,32 @@ import bot from "@bot/bot.ts";
 import { FileContent, Message } from "discordeno";
 import { Constants, Messages, Contents } from "@libs";
 import { CallbackTypes } from "@router/types/callbackTypes.ts";
+import { CreateMessageTypes } from "@router/types/createMessageTypes.ts";
 
 const noContent: number = Constants.HttpStatus.NO_CONTENT;
 const internalServerError: number = Constants.HttpStatus.INTERNAL_SERVER_ERROR;
 
-const sendErrorMessage = async (messageObject: {
-  token?: string;
-  channel?: string;
-  message: string;
-  number: string;
-  link: string;
-  description: string;
-  editFollowupMessageFlag: boolean;
-}): Promise<Message> => {
-  if (messageObject.editFollowupMessageFlag)
+const sendErrorMessage = async (
+  errorMessageObject: CreateMessageTypes.sendErrorMessageObject
+): Promise<Message> => {
+  if (errorMessageObject.editFollowupMessageFlag)
     return await bot.helpers.editFollowupMessage(
-      messageObject.token!,
-      messageObject.message,
+      errorMessageObject.token!,
+      errorMessageObject.message,
       Messages.createErrorMessage({
-        runNumber: messageObject.number,
-        description: messageObject.description,
-        link: messageObject.link,
+        runNumber: errorMessageObject.number,
+        description: errorMessageObject.description,
+        link: errorMessageObject.link,
       })
     );
   return await bot.helpers.sendMessage(
-    messageObject.channel!,
+    errorMessageObject.channel!,
     Messages.createErrorMessage({
-      messageId: messageObject.message,
-      channelId: messageObject.channel!,
-      runNumber: messageObject.number,
-      description: messageObject.description,
-      link: messageObject.link,
+      messageId: errorMessageObject.message,
+      channelId: errorMessageObject.channel!,
+      runNumber: errorMessageObject.number,
+      description: errorMessageObject.description,
+      link: errorMessageObject.link,
     })
   );
 };
