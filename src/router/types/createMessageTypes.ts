@@ -42,24 +42,24 @@ export namespace CreateMessageTypes {
       channelId: string;
       messageId: string;
       runNumber: string;
-      runTime: number;
+      startTime: string;
       totalSize: string;
       fileName: string;
       link: string;
       file: Blob;
-      editFollowupMessageFlag: boolean;
+      oversize: string;
     };
     export type multiFilesObject = {
       token: string;
       channelId: string;
       messageId: string;
       runNumber: string;
-      runTime: number;
+      startTime: string;
       totalSize: string;
       fileNamesArray: string[];
       link: string;
       filesArray: FileContent[];
-      editFollowupMessageFlag: boolean;
+      oversize: string;
     };
   }
   export type sendErrorMessageObject = {
@@ -69,6 +69,7 @@ export namespace CreateMessageTypes {
     number: string;
     link: string;
     description: string;
-    editFollowupMessageFlag: boolean;
+    startTime: string;
+    oversize: string;
   };
 }
