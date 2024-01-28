@@ -28,7 +28,7 @@ const createSuccessMessage = (
               inline: true,
             },
             {
-              name: "📂 Total File Size",
+              name: info!.file ? "📂 File Size" : "📂 Total File Size",
               value: `> \`${unitChangeForByte(info!.totalSize)}\``,
               inline: true,
             },
