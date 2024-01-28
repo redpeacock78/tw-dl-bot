@@ -21,9 +21,7 @@ const createSuccessMessage = (
               value: info!.fileName
                 ? `> \`${info!.fileName}\``
                 : info!
-                    .fileNamesArray!.map(
-                      (i: string | File): string => `> \`${i}\``
-                    )
+                    .fileNamesArray!.map((i: string): string => `> \`${i}\``)
                     .join("\n"),
               inline: true,
             },
