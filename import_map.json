@@ -11,7 +11,7 @@
     "dotenv": "https://deno.land/std@0.133.0/dotenv/load.ts",
     "hono": "https://deno.land/x/hono@v3.3.0/mod.ts",
     "hono-utils-body": "https://deno.land/x/hono@v3.3.0/utils/body.ts",
-    "ky": "https://cdn.skypack.dev/ky?dts",
+    "ky": "https://cdn.skypack.dev/ky@v1.2.0?dts",
     "serve": "https://deno.land/std@0.193.0/http/server.ts"
   }
 }
