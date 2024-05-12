@@ -4,6 +4,14 @@ export const Constants = {
   PING_PATH: "/ping",
   CALLBACK_PATH: "/callback",
   EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT: 900000,
+  Message: {
+    Color: {
+      SUCCESS: 0x4db56a,
+      FAILURE: 0xf1c40f,
+      PROGRESS: 0x3498db,
+      ERROR: 0xe74c3c,
+    },
+  },
   Webhook: {
     Json: {
       EVENT_TYPE: "download",
