@@ -1,6 +1,13 @@
+import { Constants } from "@libs";
 import { CreateMessage, InteractionCallbackData } from "discordeno";
 import { CreateMessageTypes } from "@router/types/createMessageTypes.ts";
 
+/**
+ * Creates an error message with the specified information.
+ *
+ * @param {CreateMessageTypes.errorMessageInfo | null} info - The information for the error message.
+ * @return {CreateMessage | InteractionCallbackData} The error message with content and embeds.
+ */
 const createErrorMessage = (
   info: CreateMessageTypes.errorMessageInfo | null
 ): CreateMessage | InteractionCallbackData => {
@@ -28,7 +35,7 @@ const createErrorMessage = (
               }
             : {}),
           description: `**${info!.description}**`,
-          color: 0x4db56a,
+          color: Constants.Message.Color.ERROR,
           timestamp: new Date().getTime(),
         },
       ],

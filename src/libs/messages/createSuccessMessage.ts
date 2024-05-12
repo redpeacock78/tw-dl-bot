@@ -1,7 +1,14 @@
-import { CreateMessage, InteractionCallbackData } from "discordeno";
+import { Constants } from "@libs";
 import { unitChangeForByte, millisecondChangeFormat } from "@utils";
+import { CreateMessage, InteractionCallbackData } from "discordeno";
 import { CreateMessageTypes } from "@router/types/createMessageTypes.ts";
 
+/**
+ * Creates a success message with information about the run, time, video name, file size, and tweet URL.
+ *
+ * @param {CreateMessageTypes.successMessageInfo | null} info - The information about the run and file.
+ * @return {CreateMessage | InteractionCallbackData} The success message with embeds and file.
+ */
 const createSuccessMessage = (
   info: CreateMessageTypes.successMessageInfo | null
 ): CreateMessage | InteractionCallbackData => {
@@ -32,7 +39,7 @@ const createSuccessMessage = (
             },
             { name: "🔗 Tweet URL", value: `> ${info!.link}` },
           ],
-          color: 0x4db56a,
+          color: Constants.Message.Color.SUCCESS,
           timestamp: new Date().getTime(),
         },
       ],
