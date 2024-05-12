@@ -3,6 +3,12 @@ import { Message } from "discordeno";
 import { Messages, Constants } from "@libs";
 import { CreateMessageTypes } from "@router/types/createMessageTypes.ts";
 
+/**
+ * Asynchronously handles error messages and sends them based on the conditions.
+ *
+ * @param {CreateMessageTypes.sendErrorMessageObject | null} errorMessageObject - The error message object to be processed.
+ * @return {Promise<Message>} A promise that resolves to a message response.
+ */
 const errorMessage = async (
   errorMessageObject: CreateMessageTypes.sendErrorMessageObject | null
 ): Promise<Message> => {

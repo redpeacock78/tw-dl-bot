@@ -4,6 +4,12 @@ import { Messages, Constants } from "@libs";
 import { CreateMessageTypes } from "@router/types/createMessageTypes.ts";
 
 const successMessage = {
+  /**
+   * Asynchronously handles a single success message and sends it based on conditions.
+   *
+   * @param {CreateMessageTypes.SendSuccessMessage.singleFileObject | null} singleSuccsessMessageObject - The object containing the single success message details.
+   * @return {Promise<Message>} A promise that resolves to a message response.
+   */
   singleFile: async (
     singleSuccsessMessageObject: CreateMessageTypes.SendSuccessMessage.singleFileObject | null
   ): Promise<Message> => {
@@ -44,6 +50,12 @@ const successMessage = {
       singleSuccsessMessageObject = null;
     }
   },
+  /**
+   * Asynchronously handles multiple success messages and sends them based on conditions.
+   *
+   * @param {CreateMessageTypes.SendSuccessMessage.multiFilesObject | null} multiSuccsessMessageObject - The object containing the multiple success message details.
+   * @return {Promise<Message>} A promise that resolves to a message response.
+   */
   multiFiles: async (
     multiSuccsessMessageObject: CreateMessageTypes.SendSuccessMessage.multiFilesObject | null
   ): Promise<Message> => {
