@@ -1,6 +1,12 @@
 import { Secrets, Constants } from "@libs";
 import ky, { KyResponse } from "ky";
 
+/**
+ * Sends a webhook message with the provided content to a specified channel.
+ *
+ * @param {object} message - The message object containing content, channelId, id, and token.
+ * @return {Promise<KyResponse>} A promise that resolves with the response from the webhook request.
+ */
 export const webhook = async (message: {
   content: string;
   channelId: bigint;
