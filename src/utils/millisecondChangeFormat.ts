@@ -1,3 +1,9 @@
+/**
+ * Converts milliseconds into a formatted string representing days, hours, minutes, and seconds.
+ *
+ * @param {number} millisecond - The input value in milliseconds to convert.
+ * @return {string} The formatted string representing the time in days, hours, minutes, and seconds.
+ */
 const millisecondChangeFormat = (millisecond: number): string => {
   const days = Math.floor(millisecond / 1000 / 60 / 60 / 24);
   const hours = Math.floor(millisecond / 1000 / 60 / 60) % 24;
