@@ -22,6 +22,13 @@ const bot: Bot = createBot({
 
 await bot.helpers.createGlobalApplicationCommand(Commands.dlCommand);
 
+/**
+ * Handles the interactionCreate event for the bot.
+ *
+ * @param {Bot} b - The bot instance.
+ * @param {Interaction} interaction - The interaction object.
+ * @return {Promise<void>} - A promise that resolves when the function completes.
+ */
 bot.events.interactionCreate = async (
   b: Bot,
   interaction: Interaction
