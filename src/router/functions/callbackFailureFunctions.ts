@@ -6,6 +6,12 @@ const noContent: number = Constants.HttpStatus.NO_CONTENT;
 const internalServerError: number = Constants.HttpStatus.INTERNAL_SERVER_ERROR;
 
 const callbackFailureFunctions: CallbackTypes.Functions.callbackFailure = {
+  /**
+   * Handles the failure callback for the given infoObject.
+   *
+   * @param {CallbackTypes.infoObjectType<T>} infoObject - The info object containing the necessary data for the callback.
+   * @return {Promise<Response>} A promise that resolves to the response of the callback.
+   */
   failure: async <T extends string>(
     infoObject: CallbackTypes.infoObjectType<T>
   ): Promise<Response> => {

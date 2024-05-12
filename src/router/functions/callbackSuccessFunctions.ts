@@ -9,6 +9,12 @@ const serverError: number = Constants.HttpStatus.INTERNAL_SERVER_ERROR;
 const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
   success: {
     dl: {
+      /**
+       * Asynchronously handles a single callback success event.
+       *
+       * @param {CallbackTypes.infoObjectType<T>} infoObject - The information object containing the necessary data for the callback success event.
+       * @return {Promise<Response>} A promise that resolves to a Response object.
+       */
       single: async <T extends string>(
         infoObject: CallbackTypes.infoObjectType<T>
       ): Promise<Response> => {
@@ -48,6 +54,12 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
           filesObject = null;
         }
       },
+      /**
+       * Asynchronously handles a multi callback success event.
+       *
+       * @param {CallbackTypes.infoObjectType<T>} infoObject - The information object containing the necessary data for the callback success event.
+       * @return {Promise<Response>} A promise that resolves to a Response object.
+       */
       multi: async <T extends string>(
         infoObject: CallbackTypes.infoObjectType<T>
       ): Promise<Response> => {

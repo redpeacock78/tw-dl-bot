@@ -6,6 +6,12 @@ const noContent: number = Constants.HttpStatus.NO_CONTENT;
 const internalServerError: number = Constants.HttpStatus.INTERNAL_SERVER_ERROR;
 
 const callbackProgressFunctions: CallbackTypes.Functions.callbackProgress = {
+  /**
+   * Asynchronously updates the progress of a callback by editing a follow-up message.
+   *
+   * @param {CallbackTypes.infoObjectType<T>} infoObject - The information object containing the necessary data for the callback.
+   * @return {Promise<Response>} A promise that resolves to the response of the callback.
+   */
   progress: async <T extends string>(
     infoObject: CallbackTypes.infoObjectType<T>
   ): Promise<Response> => {
