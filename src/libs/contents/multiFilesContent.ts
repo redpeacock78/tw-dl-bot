@@ -3,6 +3,13 @@ import { FileContent } from "discordeno";
 import { ContentsTypes } from "@libs/types/contentsTypes.ts";
 import { CallbackTypes } from "@router/types/callbackTypes.ts";
 
+/**
+ * Retrieves the content of multiple files from the given body data object.
+ *
+ * @param {CallbackTypes.bodyDataObject | null} body - The body data object containing the file information.
+ * @return {Promise<ContentsTypes.multiFilesContentObject>} A promise that resolves to an object containing the file names and blob data.
+ * @throws {Error} If the number of files given and the number of files expected are different.
+ */
 const multiFilesContent = async (
   body: CallbackTypes.bodyDataObject | null
 ): Promise<ContentsTypes.multiFilesContentObject> => {
