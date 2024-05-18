@@ -262,6 +262,7 @@ jobs:
           flag=false
           not_video=false
           cookie_path=$(pwd) && \
+          url="$(echo ${{ toJSON(github.event.client_payload.link) }} | awk -F '/' '{OFS="/";sub(/^x.com$/,"twitter.com",$3);print $0}')" && \
           echo "${{ secrets.TWITTER_COOKIES }}" >> cookie.txt && \
           cd download && \
           IFS=$'\n' && \
@@ -275,7 +276,7 @@ jobs:
               --cookies "${cookie_path}/cookie.txt" \
               --downloader "$(type ffmpeg | awk '{print $3}')" \
               -o "%(id)s_%(autonumber)s.%(ext)s" \
-              ${{ toJSON(github.event.client_payload.link) }} > "${yt_result}" 2>&1 && \
+              "${url}" > "${yt_result}" 2>&1 && \
               {
                 yt_status="0"
                 true
