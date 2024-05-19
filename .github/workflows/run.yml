@@ -84,7 +84,20 @@ jobs:
               --retry-all-errors \
               -o /usr/local/bin/yt-dlp \
               https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp && \
-            sudo chmod a+rx /usr/local/bin/yt-dlp
+            sudo chmod a+rx /usr/local/bin/yt-dlp && \
+            retry=0 && \
+            flag=false && \
+            until "${flag}" || (( "${retry}" == 1000 )); do
+              echo "Retry count: ${retry}"
+              echo "Flag status: ${flag}"
+              sudo yt-dlp --update-to nightly && \
+              {
+                flag=true
+              } || \
+              {
+                ((retry++)) || true
+              }
+            done
           }
       - name: Setup and cache dependency
         if: ${{ success() }}
