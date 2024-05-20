@@ -35,6 +35,7 @@ jobs:
               -m 18000 \
               --retry 100 \
               --retry-all-errors \
+              -o /dev/null \
               -d @- <<EOF
             {
               "status": "progress",
@@ -64,6 +65,7 @@ jobs:
               -m 18000 \
               --retry 100 \
               --retry-all-errors \
+              -o /dev/null \
               -d @- <<EOF
             {
               "status": "progress",
@@ -211,6 +213,7 @@ jobs:
                 -m 18000 \
                 --retry 100 \
                 --retry-all-errors \
+                -o /dev/null \
                 -d @- <<EOF
               {
                 "status": "progress",
@@ -258,6 +261,7 @@ jobs:
               -m 18000 \
               --retry 100 \
               --retry-all-errors \
+              -o /dev/null \
               -d @- <<EOF
             {
               "status": "progress",
@@ -368,6 +372,7 @@ jobs:
                     -m 18000 \
                     --retry 100 \
                     --retry-all-errors \
+                    -o /dev/null \
                     -d @- <<EOF
                   {
                     "status": "progress",
@@ -412,6 +417,7 @@ jobs:
               -m 18000 \
               --retry 100 \
               --retry-all-errors \
+              -o /dev/null \
               -d @- <<EOF
             {
               "status": "progress",
@@ -488,6 +494,7 @@ jobs:
               -m 18000 \
               --retry 100 \
               --retry-all-errors \
+              -o /dev/null \
               "${options[@]}" \
               ${{ secrets.ENDPOINT_URL }}
           else
@@ -499,6 +506,7 @@ jobs:
                 -m 18000 \
                 --retry 100 \
                 --retry-all-errors \
+                -o /dev/null \
                 -F "status=success" \
                 -F 'number=${{ github.run_number }}' \
                 -F "commandType=dl" \
@@ -523,6 +531,7 @@ jobs:
                   -m 18000 \
                   --retry 100 \
                   --retry-all-errors \
+                  -o /dev/null \
                   -F "status=success" \
                   -F 'number=${{ github.run_number }}' \
                   -F "commandType=dl" \
@@ -559,6 +568,10 @@ jobs:
             ${{ secrets.ENDPOINT_URL }} \
             -H "Accept: application/json" \
             -H "Content-type: application/json" \
+            -m 18000 \
+            --retry 100 \
+            --retry-all-errors \
+            -o /dev/null \
             -d @- <<EOF
           {
             "status": "failure",
@@ -585,6 +598,10 @@ jobs:
             ${{ secrets.ENDPOINT_URL }} \
             -H "Accept: application/json" \
             -H "Content-type: application/json" \
+            -m 18000 \
+            --retry 100 \
+            --retry-all-errors \
+            -o /dev/null \
             -d @- <<EOF
           {
             "status": "failure",
@@ -611,6 +628,10 @@ jobs:
             ${{ secrets.ENDPOINT_URL }} \
             -H "Accept: application/json" \
             -H "Content-type: application/json" \
+            -m 18000 \
+            --retry 100 \
+            --retry-all-errors \
+            -o /dev/null \
             -d @- <<EOF
           {
             "status": "failure",
@@ -637,6 +658,10 @@ jobs:
             ${{ secrets.ENDPOINT_URL }} \
             -H "Accept: application/json" \
             -H "Content-type: application/json" \
+            -m 18000 \
+            --retry 100 \
+            --retry-all-errors \
+            -o /dev/null \
             -d @- <<EOF
           {
             "status": "failure",
