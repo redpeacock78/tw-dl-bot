@@ -18,9 +18,9 @@ const callbackFailureFunctions: CallbackTypes.Functions.callbackFailure = {
   ): Promise<Response> => {
     const runTime: number =
       new Date().getTime() - Number(infoObject.body!.startTime);
-    const editFollowupMessageFlag: boolean =
+    const isEditFollowupMessage: boolean =
       runTime <= Constants.EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT;
-    return match(editFollowupMessageFlag)
+    return match(isEditFollowupMessage)
       .with(
         true,
         async (): Promise<Response> =>
@@ -32,7 +32,7 @@ const callbackFailureFunctions: CallbackTypes.Functions.callbackFailure = {
                 runNumber: infoObject.body!.number,
                 runTime: runTime,
                 link: infoObject.body!.link,
-                content: infoObject.body!.content as string,
+                content: infoObject.body!.content!,
               })
             )
             .then((): Response => infoObject.c.body(null, noContent))
@@ -51,7 +51,7 @@ const callbackFailureFunctions: CallbackTypes.Functions.callbackFailure = {
                 runNumber: infoObject.body!.number,
                 runTime: runTime,
                 link: infoObject.body!.link,
-                content: infoObject.body!.content as string,
+                content: infoObject.body!.content!,
               })
             )
             .then((): Response => infoObject.c.body(null, noContent))
