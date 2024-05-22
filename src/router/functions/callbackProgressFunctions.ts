@@ -1,4 +1,5 @@
 import bot from "@bot/bot.ts";
+import { match } from "ts-pattern";
 import { Constants, Messages } from "@libs";
 import { CallbackTypes } from "@router/types/callbackTypes.ts";
 
@@ -12,30 +13,37 @@ const callbackProgressFunctions: CallbackTypes.Functions.callbackProgress = {
    * @param {CallbackTypes.infoObjectType<T>} infoObject - The information object containing the necessary data for the callback.
    * @return {Promise<Response>} A promise that resolves to the response of the callback.
    */
-  progress: async <T extends string>(
+  progress: <T extends string>(
     infoObject: CallbackTypes.infoObjectType<T>
-  ): Promise<Response> => {
+  ): Response | Promise<Response> => {
     const runTime: number =
       new Date().getTime() - Number(infoObject.body!.startTime);
-    const editFollowupMessageFlag: boolean =
+    const isEditFollowupMessage: boolean =
       runTime <= Constants.EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT;
-    if (editFollowupMessageFlag)
-      return await bot.helpers
-        .editFollowupMessage(
-          infoObject.body!.token,
-          infoObject.body!.message,
-          Messages.createProgressMessage({
-            runNumber: infoObject.body!.number,
-            runTime: runTime,
-            link: infoObject.body!.link,
-            content: infoObject.body!.content as string,
-          })
-        )
-        .then((): Response => infoObject.c.body(null, noContent))
-        .catch((): Response => infoObject.c.body(null, internalServerError))
-        .finally((): null => (infoObject.body = null));
     try {
-      return infoObject.c.body(null, noContent);
+      return match(isEditFollowupMessage)
+        .with(
+          true,
+          async (): Promise<Response> =>
+            await bot.helpers
+              .editFollowupMessage(
+                infoObject.body!.token,
+                infoObject.body!.message,
+                Messages.createProgressMessage({
+                  runNumber: infoObject.body!.number,
+                  runTime: runTime,
+                  link: infoObject.body!.link,
+                  content: infoObject.body!.content!,
+                })
+              )
+              .then((): Response => infoObject.c.body(null, noContent))
+              .catch(
+                (): Response => infoObject.c.body(null, internalServerError)
+              )
+              .finally((): null => (infoObject.body = null))
+        )
+        .with(false, (): Response => infoObject.c.body(null, noContent))
+        .exhaustive();
     } finally {
       infoObject.body = null;
     }
