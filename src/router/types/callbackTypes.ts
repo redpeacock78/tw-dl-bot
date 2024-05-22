@@ -59,7 +59,7 @@ export namespace CallbackTypes {
     export type callbackProgress = {
       [key: string]: <T extends string>(
         infoObject: infoObjectType<T>
-      ) => Promise<Response>;
+      ) => Response | Promise<Response>;
     };
   }
 }
