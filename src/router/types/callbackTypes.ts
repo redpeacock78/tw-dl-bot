@@ -27,7 +27,7 @@ export namespace CallbackTypes {
     content?: string;
   };
 
-  export type honoType<T extends string = "/"> = Hono<
+  export type honoType<T extends string> = Hono<
     Env,
     Record<string | number | symbol, never>,
     T
