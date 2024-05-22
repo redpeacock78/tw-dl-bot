@@ -16,10 +16,10 @@ const errorMessage = (
   try {
     const runTime: number =
       new Date().getTime() - Number(errorMessageObject!.startTime);
-    const editFollowupMessageFlag: boolean =
+    const isEditFollowupMessage: boolean =
       runTime <= Constants.EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT ||
       errorMessageObject!.oversize !== Constants.CallbackObject.Oversize.TRUE;
-    return match(editFollowupMessageFlag)
+    return match(isEditFollowupMessage)
       .with(
         true,
         async (): Promise<Message> =>
