@@ -1,4 +1,5 @@
 import bot from "@bot/bot.ts";
+import { match } from "ts-pattern";
 import { Message } from "discordeno";
 import { Messages, Constants } from "@libs";
 import { CreateMessageTypes } from "@router/types/createMessageTypes.ts";
@@ -10,7 +11,7 @@ const successMessage = {
    * @param {CreateMessageTypes.SendSuccessMessage.singleFileObject | null} singleSuccsessMessageObject - The object containing the single success message details.
    * @return {Promise<Message>} A promise that resolves to a message response.
    */
-  singleFile: async (
+  singleFile: (
     singleSuccsessMessageObject: CreateMessageTypes.SendSuccessMessage.singleFileObject | null
   ): Promise<Message> => {
     try {
@@ -20,32 +21,41 @@ const successMessage = {
         runTime <= Constants.EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT ||
         singleSuccsessMessageObject!.oversize !==
           Constants.CallbackObject.Oversize.TRUE;
-      if (editFollowupMessageFlag)
-        return await bot.helpers.editFollowupMessage(
-          singleSuccsessMessageObject!.token,
-          singleSuccsessMessageObject!.messageId,
-          Messages.createSuccessMessage({
-            runNumber: singleSuccsessMessageObject!.runNumber,
-            runTime: runTime,
-            totalSize: singleSuccsessMessageObject!.totalSize,
-            fileName: singleSuccsessMessageObject!.fileName,
-            link: singleSuccsessMessageObject!.link,
-            file: singleSuccsessMessageObject!.file,
-          })
-        );
-      return await bot.helpers.sendMessage(
-        singleSuccsessMessageObject!.channelId,
-        Messages.createSuccessMessage({
-          messageId: singleSuccsessMessageObject!.messageId,
-          channelId: singleSuccsessMessageObject!.channelId,
-          runNumber: singleSuccsessMessageObject!.runNumber,
-          runTime: runTime,
-          totalSize: singleSuccsessMessageObject!.totalSize,
-          fileName: singleSuccsessMessageObject!.fileName,
-          link: singleSuccsessMessageObject!.link,
-          file: singleSuccsessMessageObject!.file,
-        })
-      );
+      return match(editFollowupMessageFlag)
+        .with(
+          true,
+          async (): Promise<Message> =>
+            await bot.helpers.editFollowupMessage(
+              singleSuccsessMessageObject!.token,
+              singleSuccsessMessageObject!.messageId,
+              Messages.createSuccessMessage({
+                runNumber: singleSuccsessMessageObject!.runNumber,
+                runTime: runTime,
+                totalSize: singleSuccsessMessageObject!.totalSize,
+                fileName: singleSuccsessMessageObject!.fileName,
+                link: singleSuccsessMessageObject!.link,
+                file: singleSuccsessMessageObject!.file,
+              })
+            )
+        )
+        .with(
+          false,
+          async (): Promise<Message> =>
+            await bot.helpers.sendMessage(
+              singleSuccsessMessageObject!.channelId,
+              Messages.createSuccessMessage({
+                messageId: singleSuccsessMessageObject!.messageId,
+                channelId: singleSuccsessMessageObject!.channelId,
+                runNumber: singleSuccsessMessageObject!.runNumber,
+                runTime: runTime,
+                totalSize: singleSuccsessMessageObject!.totalSize,
+                fileName: singleSuccsessMessageObject!.fileName,
+                link: singleSuccsessMessageObject!.link,
+                file: singleSuccsessMessageObject!.file,
+              })
+            )
+        )
+        .exhaustive();
     } finally {
       singleSuccsessMessageObject = null;
     }
@@ -56,7 +66,7 @@ const successMessage = {
    * @param {CreateMessageTypes.SendSuccessMessage.multiFilesObject | null} multiSuccsessMessageObject - The object containing the multiple success message details.
    * @return {Promise<Message>} A promise that resolves to a message response.
    */
-  multiFiles: async (
+  multiFiles: (
     multiSuccsessMessageObject: CreateMessageTypes.SendSuccessMessage.multiFilesObject | null
   ): Promise<Message> => {
     try {
@@ -66,32 +76,41 @@ const successMessage = {
         runTime <= Constants.EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT ||
         multiSuccsessMessageObject!.oversize !==
           Constants.CallbackObject.Oversize.TRUE;
-      if (editFollowupMessageFlag)
-        return await bot.helpers.editFollowupMessage(
-          multiSuccsessMessageObject!.token,
-          multiSuccsessMessageObject!.messageId,
-          Messages.createSuccessMessage({
-            runNumber: multiSuccsessMessageObject!.runNumber,
-            runTime: runTime,
-            totalSize: multiSuccsessMessageObject!.totalSize,
-            fileNamesArray: multiSuccsessMessageObject!.fileNamesArray,
-            link: multiSuccsessMessageObject!.link,
-            filesArray: multiSuccsessMessageObject!.filesArray,
-          })
-        );
-      return await bot.helpers.sendMessage(
-        multiSuccsessMessageObject!.channelId,
-        Messages.createSuccessMessage({
-          messageId: multiSuccsessMessageObject!.messageId,
-          channelId: multiSuccsessMessageObject!.channelId,
-          runNumber: multiSuccsessMessageObject!.runNumber,
-          runTime: runTime,
-          totalSize: multiSuccsessMessageObject!.totalSize,
-          fileNamesArray: multiSuccsessMessageObject!.fileNamesArray,
-          link: multiSuccsessMessageObject!.link,
-          filesArray: multiSuccsessMessageObject!.filesArray,
-        })
-      );
+      return match(editFollowupMessageFlag)
+        .with(
+          true,
+          async (): Promise<Message> =>
+            await bot.helpers.editFollowupMessage(
+              multiSuccsessMessageObject!.token,
+              multiSuccsessMessageObject!.messageId,
+              Messages.createSuccessMessage({
+                runNumber: multiSuccsessMessageObject!.runNumber,
+                runTime: runTime,
+                totalSize: multiSuccsessMessageObject!.totalSize,
+                fileNamesArray: multiSuccsessMessageObject!.fileNamesArray,
+                link: multiSuccsessMessageObject!.link,
+                filesArray: multiSuccsessMessageObject!.filesArray,
+              })
+            )
+        )
+        .with(
+          false,
+          async (): Promise<Message> =>
+            await bot.helpers.sendMessage(
+              multiSuccsessMessageObject!.channelId,
+              Messages.createSuccessMessage({
+                messageId: multiSuccsessMessageObject!.messageId,
+                channelId: multiSuccsessMessageObject!.channelId,
+                runNumber: multiSuccsessMessageObject!.runNumber,
+                runTime: runTime,
+                totalSize: multiSuccsessMessageObject!.totalSize,
+                fileNamesArray: multiSuccsessMessageObject!.fileNamesArray,
+                link: multiSuccsessMessageObject!.link,
+                filesArray: multiSuccsessMessageObject!.filesArray,
+              })
+            )
+        )
+        .exhaustive();
     } finally {
       multiSuccsessMessageObject = null;
     }
