@@ -1,50 +1,50 @@
 export const Constants = {
-  ROOT_PATH: "/" as const,
-  BASE_PATH: "/api" as const,
-  PING_PATH: "/ping" as const,
-  CALLBACK_PATH: "/callback" as const,
-  EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT: 900000 as const,
+  ROOT_PATH: "/",
+  BASE_PATH: "/api",
+  PING_PATH: "/ping",
+  CALLBACK_PATH: "/callback",
+  EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT: 900000,
   Message: {
     Color: {
-      SUCCESS: 0x4db56a as const,
-      FAILURE: 0xf1c40f as const,
-      PROGRESS: 0x3498db as const,
-      ERROR: 0xe74c3c as const,
+      SUCCESS: 0x4db56a,
+      FAILURE: 0xf1c40f,
+      PROGRESS: 0x3498db,
+      ERROR: 0xe74c3c,
     },
   },
   Webhook: {
     Json: {
-      EVENT_TYPE: "download" as const,
+      EVENT_TYPE: "download",
       ClientPayload: {
-        COMMAND_TYPE: "dl" as const,
+        COMMAND_TYPE: "dl",
       },
     },
     Headers: {
-      ACCEPT: "application/vnd.github.everest-preview+json" as const,
+      ACCEPT: "application/vnd.github.everest-preview+json",
     },
   },
   CallbackObject: {
     Status: {
-      SUCCESS: "success" as const,
-      FAILURE: "failure" as const,
-      PROGRESS: "progress" as const,
+      SUCCESS: "success",
+      FAILURE: "failure",
+      PROGRESS: "progress",
     },
     commandType: {
-      DL: "dl" as const,
+      DL: "dl",
     },
     actionType: {
-      SINGLE: "single" as const,
-      MULTI: "multi" as const,
+      SINGLE: "single",
+      MULTI: "multi",
     },
     Oversize: {
-      TRUE: "true" as const,
-      FALSE: "false" as const,
+      TRUE: "true",
+      FALSE: "false",
     },
   },
   HttpStatus: {
-    OK: 200 as const,
-    NO_CONTENT: 204 as const,
-    BAD_REQUEST: 400 as const,
-    INTERNAL_SERVER_ERROR: 500 as const,
+    OK: 200,
+    NO_CONTENT: 204,
+    BAD_REQUEST: 400,
+    INTERNAL_SERVER_ERROR: 500,
   },
-};
+} as const;
