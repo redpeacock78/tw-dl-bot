@@ -11,25 +11,25 @@ const pattern = {
         Constants.CallbackObject.Status.SUCCESS,
         Constants.CallbackObject.commandType.DL,
         Constants.CallbackObject.actionType.SINGLE,
-      ] as const,
+      ],
       multi: [
         Constants.CallbackObject.Status.SUCCESS,
         Constants.CallbackObject.commandType.DL,
         Constants.CallbackObject.actionType.MULTI,
-      ] as const,
+      ],
     },
   },
   failure: [
     Constants.CallbackObject.Status.FAILURE,
     Pattern.nullish,
     Pattern.nullish,
-  ] as const,
+  ],
   progress: [
     Constants.CallbackObject.Status.PROGRESS,
     Pattern.nullish,
     Pattern.nullish,
-  ] as const,
-};
+  ],
+} as const;
 const success = Functions.callbackSuccessFunctions.success;
 const failure = Functions.callbackFailureFunctions.failure;
 const progress = Functions.callbackProgressFunctions.progress;
