@@ -17,11 +17,11 @@ const successMessage = {
     try {
       const runTime: number =
         new Date().getTime() - Number(singleSuccsessMessageObject!.startTime);
-      const editFollowupMessageFlag: boolean =
+      const isEditFollowupMessage: boolean =
         runTime <= Constants.EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT ||
         singleSuccsessMessageObject!.oversize !==
           Constants.CallbackObject.Oversize.TRUE;
-      return match(editFollowupMessageFlag)
+      return match(isEditFollowupMessage)
         .with(
           true,
           async (): Promise<Message> =>
