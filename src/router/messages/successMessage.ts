@@ -14,18 +14,18 @@ const successMessage = {
   singleFile: (
     singleSuccsessMessageObject: CreateMessageTypes.SendSuccessMessage.singleFileObject | null
   ): Promise<Message> => {
-    try {
-      const runTime: number =
-        new Date().getTime() - Number(singleSuccsessMessageObject!.startTime);
-      const isEditFollowupMessage: boolean =
-        runTime <= Constants.EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT ||
-        singleSuccsessMessageObject!.oversize !==
-          Constants.CallbackObject.Oversize.TRUE;
-      return match(isEditFollowupMessage)
-        .with(
-          true,
-          async (): Promise<Message> =>
-            await bot.helpers.editFollowupMessage(
+    const runTime: number =
+      new Date().getTime() - Number(singleSuccsessMessageObject!.startTime);
+    const isEditFollowupMessage: boolean =
+      runTime <= Constants.EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT ||
+      singleSuccsessMessageObject!.oversize !==
+        Constants.CallbackObject.Oversize.TRUE;
+    return match(isEditFollowupMessage)
+      .with(
+        true,
+        async (): Promise<Message> =>
+          await bot.helpers
+            .editFollowupMessage(
               singleSuccsessMessageObject!.token,
               singleSuccsessMessageObject!.messageId,
               Messages.createSuccessMessage({
@@ -37,11 +37,13 @@ const successMessage = {
                 file: singleSuccsessMessageObject!.file,
               })
             )
-        )
-        .with(
-          false,
-          async (): Promise<Message> =>
-            await bot.helpers.sendMessage(
+            .finally((): null => (singleSuccsessMessageObject = null))
+      )
+      .with(
+        false,
+        async (): Promise<Message> =>
+          await bot.helpers
+            .sendMessage(
               singleSuccsessMessageObject!.channelId,
               Messages.createSuccessMessage({
                 messageId: singleSuccsessMessageObject!.messageId,
@@ -54,11 +56,9 @@ const successMessage = {
                 file: singleSuccsessMessageObject!.file,
               })
             )
-        )
-        .exhaustive();
-    } finally {
-      singleSuccsessMessageObject = null;
-    }
+            .finally((): null => (singleSuccsessMessageObject = null))
+      )
+      .exhaustive();
   },
   /**
    * Asynchronously handles multiple success messages and sends them based on conditions.
@@ -69,18 +69,18 @@ const successMessage = {
   multiFiles: (
     multiSuccsessMessageObject: CreateMessageTypes.SendSuccessMessage.multiFilesObject | null
   ): Promise<Message> => {
-    try {
-      const runTime: number =
-        new Date().getTime() - Number(multiSuccsessMessageObject!.startTime);
-      const editFollowupMessageFlag: boolean =
-        runTime <= Constants.EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT ||
-        multiSuccsessMessageObject!.oversize !==
-          Constants.CallbackObject.Oversize.TRUE;
-      return match(editFollowupMessageFlag)
-        .with(
-          true,
-          async (): Promise<Message> =>
-            await bot.helpers.editFollowupMessage(
+    const runTime: number =
+      new Date().getTime() - Number(multiSuccsessMessageObject!.startTime);
+    const editFollowupMessageFlag: boolean =
+      runTime <= Constants.EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT ||
+      multiSuccsessMessageObject!.oversize !==
+        Constants.CallbackObject.Oversize.TRUE;
+    return match(editFollowupMessageFlag)
+      .with(
+        true,
+        async (): Promise<Message> =>
+          await bot.helpers
+            .editFollowupMessage(
               multiSuccsessMessageObject!.token,
               multiSuccsessMessageObject!.messageId,
               Messages.createSuccessMessage({
@@ -92,11 +92,13 @@ const successMessage = {
                 filesArray: multiSuccsessMessageObject!.filesArray,
               })
             )
-        )
-        .with(
-          false,
-          async (): Promise<Message> =>
-            await bot.helpers.sendMessage(
+            .finally((): null => (multiSuccsessMessageObject = null))
+      )
+      .with(
+        false,
+        async (): Promise<Message> =>
+          await bot.helpers
+            .sendMessage(
               multiSuccsessMessageObject!.channelId,
               Messages.createSuccessMessage({
                 messageId: multiSuccsessMessageObject!.messageId,
@@ -109,11 +111,9 @@ const successMessage = {
                 filesArray: multiSuccsessMessageObject!.filesArray,
               })
             )
-        )
-        .exhaustive();
-    } finally {
-      multiSuccsessMessageObject = null;
-    }
+            .finally((): null => (multiSuccsessMessageObject = null))
+      )
+      .exhaustive();
   },
 };
 
