@@ -30,9 +30,6 @@ const pattern = {
     Pattern.nullish,
   ],
 } as const;
-const success = Functions.callbackSuccessFunctions.success;
-const failure = Functions.callbackFailureFunctions.failure;
-const progress = Functions.callbackProgressFunctions.progress;
 
 const callback: CallbackTypes.honoType<"/"> = new Hono();
 
@@ -47,30 +44,41 @@ callback.post(
     } catch (_e) {
       body = (await c.req.parseBody()) as CallbackTypes.bodyDataObject;
     }
-    try {
-      return match([body.status, body!.commandType, body!.actionType])
-        .with(
-          pattern.success.dl.single,
-          async (): Promise<Response> => await success.dl.single({ c, body })
-        )
-        .with(
-          pattern.success.dl.multi,
-          async (): Promise<Response> => await success.dl.multi({ c, body })
-        )
-        .with(
-          pattern.failure,
-          async (): Promise<Response> => await failure({ c, body })
-        )
-        .with(
-          pattern.progress,
-          async (): Promise<Response> => await progress({ c, body })
-        )
-        .otherwise(
-          (): Response => c.body(null, Constants.HttpStatus.BAD_REQUEST)
-        );
-    } finally {
-      body = null;
-    }
+    return match([body.status, body!.commandType, body!.actionType])
+      .with(
+        pattern.success.dl.single,
+        async (): Promise<Response> =>
+          await Functions.callbackSuccessFunctions.success.dl
+            .single({ c, body })
+            .finally((): null => (body = null))
+      )
+      .with(
+        pattern.success.dl.multi,
+        async (): Promise<Response> =>
+          await Functions.callbackSuccessFunctions.success.dl
+            .multi({ c, body })
+            .finally((): null => (body = null))
+      )
+      .with(
+        pattern.failure,
+        async (): Promise<Response> =>
+          await Functions.callbackFailureFunctions
+            .failure({ c, body })
+            .finally((): null => (body = null))
+      )
+      .with(
+        pattern.progress,
+        async (): Promise<Response> =>
+          await Functions.callbackProgressFunctions
+            .progress({ c, body })
+            .finally((): null => (body = null))
+      )
+      .otherwise(
+        (): Promise<Response> =>
+          Promise.resolve(
+            c.body(null, Constants.HttpStatus.BAD_REQUEST)
+          ).finally((): null => (body = null))
+      );
   }
 );
 
