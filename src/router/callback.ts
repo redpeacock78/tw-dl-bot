@@ -1,35 +1,8 @@
 import { Hono } from "hono";
-import { match, Pattern } from "ts-pattern";
-import { Constants } from "@libs";
+import { match } from "ts-pattern";
+import { Constants, Custom } from "@libs";
 import { Functions } from "@router/functions/index.ts";
 import { CallbackTypes } from "@router/types/callbackTypes.ts";
-
-const pattern = {
-  success: {
-    dl: {
-      single: [
-        Constants.CallbackObject.Status.SUCCESS,
-        Constants.CallbackObject.commandType.DL,
-        Constants.CallbackObject.actionType.SINGLE,
-      ],
-      multi: [
-        Constants.CallbackObject.Status.SUCCESS,
-        Constants.CallbackObject.commandType.DL,
-        Constants.CallbackObject.actionType.MULTI,
-      ],
-    },
-  },
-  failure: [
-    Constants.CallbackObject.Status.FAILURE,
-    Pattern.nullish,
-    Pattern.nullish,
-  ],
-  progress: [
-    Constants.CallbackObject.Status.PROGRESS,
-    Pattern.nullish,
-    Pattern.nullish,
-  ],
-} as const;
 
 const callback: CallbackTypes.honoType<"/"> = new Hono();
 
@@ -46,28 +19,28 @@ callback.post(
     }
     return match([body.status, body!.commandType, body!.actionType])
       .with(
-        pattern.success.dl.single,
+        Custom.CallbackPattern.Success.Dl.Single,
         async (): Promise<Response> =>
           await Functions.callbackSuccessFunctions.success.dl
             .single({ c, body })
             .finally((): null => (body = null))
       )
       .with(
-        pattern.success.dl.multi,
+        Custom.CallbackPattern.Success.Dl.Multi,
         async (): Promise<Response> =>
           await Functions.callbackSuccessFunctions.success.dl
             .multi({ c, body })
             .finally((): null => (body = null))
       )
       .with(
-        pattern.failure,
+        Custom.CallbackPattern.Failure,
         async (): Promise<Response> =>
           await Functions.callbackFailureFunctions
             .failure({ c, body })
             .finally((): null => (body = null))
       )
       .with(
-        pattern.progress,
+        Custom.CallbackPattern.Progress,
         async (): Promise<Response> =>
           await Functions.callbackProgressFunctions
             .progress({ c, body })
