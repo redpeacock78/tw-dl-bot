@@ -13,17 +13,17 @@ import { CreateMessageTypes } from "@router/types/createMessageTypes.ts";
 const errorMessage = (
   errorMessageObject: CreateMessageTypes.sendErrorMessageObject | null
 ): Promise<Message> => {
-  try {
-    const runTime: number =
-      new Date().getTime() - Number(errorMessageObject!.startTime);
-    const isEditFollowupMessage: boolean =
-      runTime <= Constants.EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT ||
-      errorMessageObject!.oversize !== Constants.CallbackObject.Oversize.TRUE;
-    return match(isEditFollowupMessage)
-      .with(
-        true,
-        async (): Promise<Message> =>
-          await bot.helpers.editFollowupMessage(
+  const runTime: number =
+    new Date().getTime() - Number(errorMessageObject!.startTime);
+  const isEditFollowupMessage: boolean =
+    runTime <= Constants.EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT ||
+    errorMessageObject!.oversize !== Constants.CallbackObject.Oversize.TRUE;
+  return match(isEditFollowupMessage)
+    .with(
+      true,
+      async (): Promise<Message> =>
+        await bot.helpers
+          .editFollowupMessage(
             errorMessageObject!.token,
             errorMessageObject!.message,
             Messages.createErrorMessage({
@@ -32,11 +32,13 @@ const errorMessage = (
               link: errorMessageObject!.link,
             })
           )
-      )
-      .with(
-        false,
-        async (): Promise<Message> =>
-          await bot.helpers.sendMessage(
+          .finally((): null => (errorMessageObject = null))
+    )
+    .with(
+      false,
+      async (): Promise<Message> =>
+        await bot.helpers
+          .sendMessage(
             errorMessageObject!.channel,
             Messages.createErrorMessage({
               messageId: errorMessageObject!.message,
@@ -46,11 +48,9 @@ const errorMessage = (
               link: errorMessageObject!.link,
             })
           )
-      )
-      .exhaustive();
-  } finally {
-    errorMessageObject = null;
-  }
+          .finally((): null => (errorMessageObject = null))
+    )
+    .exhaustive();
 };
 
 export default errorMessage;
