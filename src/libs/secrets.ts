@@ -1,7 +1,19 @@
-import "dotenv";
+import Unienv from "unienv";
+
+const discordToken = Unienv.get("DISCORD_TOKEN");
+const dispatchUrl = Unienv.get("DISPATCH_URL");
+const githubToken = Unienv.get("GITHUB_TOKEN");
+
+if (discordToken.isNg()) throw new Error(discordToken.error.message);
+if (dispatchUrl.isNg()) throw new Error(dispatchUrl.error.message);
+if (githubToken.isNg()) throw new Error(githubToken.error.message);
+
+if (!discordToken.value) throw new Error("DISCORD_TOKEN is not set.");
+if (!dispatchUrl.value) throw new Error("DISPATCH_URL is not set.");
+if (!githubToken.value) throw new Error("GITHUB_TOKEN is not set.");
 
 export const Secrets = {
-  DISCORD_TOKEN: Deno.env.get("DISCORD_TOKEN")!,
-  DISPATCH_URL: Deno.env.get("DISPATCH_URL")!,
-  GITHUB_TOKEN: Deno.env.get("GITHUB_TOKEN")!,
+  DISCORD_TOKEN: discordToken.value,
+  DISPATCH_URL: dispatchUrl.value,
+  GITHUB_TOKEN: githubToken.value,
 };
