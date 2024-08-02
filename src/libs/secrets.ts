@@ -1,8 +1,8 @@
-import Unienv from "unienv";
+import unienv from "unienv";
 
-const discordToken = Unienv.get("DISCORD_TOKEN");
-const dispatchUrl = Unienv.get("DISPATCH_URL");
-const githubToken = Unienv.get("GITHUB_TOKEN");
+const discordToken = unienv.get("DISCORD_TOKEN");
+const dispatchUrl = unienv.get("DISPATCH_URL");
+const githubToken = unienv.get("GITHUB_TOKEN");
 
 if (discordToken.isNg()) throw new Error(discordToken.error.message);
 if (dispatchUrl.isNg()) throw new Error(dispatchUrl.error.message);
