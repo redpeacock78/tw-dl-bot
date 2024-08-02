@@ -3,19 +3,19 @@ import { match } from "ts-pattern";
 import { Constants, Messages } from "@libs";
 import { CallbackTypes } from "@router/types/callbackTypes.ts";
 
-const noContent: number = Constants.HttpStatus.NO_CONTENT;
-const internalServerError: number = Constants.HttpStatus.INTERNAL_SERVER_ERROR;
+type InfoObject<T extends string> = CallbackTypes.infoObjectType<T>;
+
+const noContent = Constants.HttpStatus.NO_CONTENT;
+const internalServerError = Constants.HttpStatus.INTERNAL_SERVER_ERROR;
 
 const callbackFailureFunctions: CallbackTypes.Functions.callbackFailure = {
   /**
    * Handles the failure callback for the given infoObject.
    *
-   * @param {CallbackTypes.infoObjectType<T>} infoObject - The info object containing the necessary data for the callback.
+   * @param {InfoObject<T>} infoObject - The info object containing the necessary data for the callback.
    * @return {Promise<Response>} A promise that resolves to the response of the callback.
    */
-  failure: <T extends string>(
-    infoObject: CallbackTypes.infoObjectType<T>
-  ): Promise<Response> => {
+  failure: <T extends string>(infoObject: InfoObject<T>): Promise<Response> => {
     const runTime: number =
       new Date().getTime() - Number(infoObject.body!.startTime);
     const isEditFollowupMessage: boolean =
@@ -35,8 +35,13 @@ const callbackFailureFunctions: CallbackTypes.Functions.callbackFailure = {
                 content: infoObject.body!.content!,
               })
             )
-            .then((): Response => infoObject.c.body(null, noContent))
-            .catch((): Response => infoObject.c.body(null, internalServerError))
+            .then(
+              (): Response => infoObject.c.body(null, { status: noContent })
+            )
+            .catch(
+              (): Response =>
+                infoObject.c.body(null, { status: internalServerError })
+            )
             .finally((): null => (infoObject.body = null))
       )
       .with(
@@ -54,8 +59,13 @@ const callbackFailureFunctions: CallbackTypes.Functions.callbackFailure = {
                 content: infoObject.body!.content!,
               })
             )
-            .then((): Response => infoObject.c.body(null, noContent))
-            .catch((): Response => infoObject.c.body(null, internalServerError))
+            .then(
+              (): Response => infoObject.c.body(null, { status: noContent })
+            )
+            .catch(
+              (): Response =>
+                infoObject.c.body(null, { status: internalServerError })
+            )
             .finally((): null => (infoObject.body = null))
       )
       .exhaustive();
