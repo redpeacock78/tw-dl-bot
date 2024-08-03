@@ -55,7 +55,6 @@ callback.post(
           )
       )
       .exhaustive();
-    if (!body) return c.body(null, badRequst);
     const patternArray = [body.status, body.commandType, body.actionType];
     return await Pattern.match(patternArray)
       .with(
