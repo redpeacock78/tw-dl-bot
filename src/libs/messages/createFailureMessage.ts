@@ -3,14 +3,16 @@ import { millisecondChangeFormat } from "@utils";
 import { CreateMessage, InteractionCallbackData } from "discordeno";
 import { CreateMessageTypes } from "@router/types/createMessageTypes.ts";
 
+type FailureMessageInfo = CreateMessageTypes.failureMessageInfo | null;
+
 /**
  * Creates a failure message with information about the run number, total time, tweet URL, and content.
  *
- * @param {CreateMessageTypes.failureMessageInfo | null} info - The information for the failure message.
+ * @param {FailureMessageInfo} info - The information for the failure message.
  * @return {CreateMessage | InteractionCallbackData} The failure message with embeds and content.
  */
 const createFailureMessage = (
-  info: CreateMessageTypes.failureMessageInfo | null
+  info: FailureMessageInfo
 ): CreateMessage | InteractionCallbackData => {
   try {
     return {

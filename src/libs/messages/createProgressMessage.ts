@@ -3,14 +3,16 @@ import { millisecondChangeFormat } from "@utils";
 import { CreateMessage, InteractionCallbackData } from "discordeno";
 import { CreateMessageTypes } from "@router/types/createMessageTypes.ts";
 
+type ProgressMessageInfo = CreateMessageTypes.progressMessageInfo | null;
+
 /**
  * Creates a progress message with information about the run number, elapsed time, and tweet URL.
  *
- * @param {CreateMessageTypes.progressMessageInfo | null} info - The information for the progress message.
+ * @param {ProgressMessageInfo} info - The information for the progress message.
  * @return {CreateMessage | InteractionCallbackData} The progress message with embeds.
  */
 const createProgressMessage = (
-  info: CreateMessageTypes.progressMessageInfo | null
+  info: ProgressMessageInfo
 ): CreateMessage | InteractionCallbackData => {
   try {
     return {
