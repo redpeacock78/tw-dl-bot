@@ -1,5 +1,5 @@
 import bot from "@bot/bot.ts";
-import { Pattern } from "functional";
+import { Match } from "functional";
 import { Message } from "discordeno";
 import { Messages, Constants } from "@libs";
 import { CreateMessageTypes } from "@router/types/createMessageTypes.ts";
@@ -27,7 +27,7 @@ const successMessage = {
     const isEditFollowupMessage: boolean =
       runTime <= editFollowupMessageTimeLimit ||
       singleSuccsessMessageObject!.oversize !== trueOversize;
-    return Pattern.match(isEditFollowupMessage)
+    return Match(isEditFollowupMessage)
       .with(
         true,
         async (): Promise<Message> =>
@@ -81,7 +81,7 @@ const successMessage = {
     const editFollowupMessageFlag: boolean =
       runTime <= editFollowupMessageTimeLimit ||
       multiSuccsessMessageObject!.oversize !== trueOversize;
-    return Pattern.match(editFollowupMessageFlag)
+    return Match(editFollowupMessageFlag)
       .with(
         true,
         async (): Promise<Message> =>

@@ -1,5 +1,5 @@
 import bot from "@bot/bot.ts";
-import { Pattern } from "functional";
+import { Match } from "functional";
 import { Message } from "discordeno";
 import { Messages, Constants } from "@libs";
 import { CreateMessageTypes } from "@router/types/createMessageTypes.ts";
@@ -23,7 +23,7 @@ const errorMessage = (
   const isEditFollowupMessage: boolean =
     runTime <= editFollowupMessageTimeLimit ||
     errorMessageObject!.oversize !== trueOversize;
-  return Pattern.match(isEditFollowupMessage)
+  return Match(isEditFollowupMessage)
     .with(
       true,
       async (): Promise<Message> =>
