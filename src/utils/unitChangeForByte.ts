@@ -2,10 +2,10 @@
  * Converts a size in bytes to a human-readable format with the specified number of decimal places.
  *
  * @param {string} size - The size in bytes to be converted.
- * @param {number} [decimal=2] - The number of decimal places to round the converted size to. Defaults to 2.
+ * @param [decimal=2] - The number of decimal places to round the converted size to. Defaults to 2.
  * @return {string} - The converted size in a human-readable format.
  */
-const unitChangeForByte = (size: string, decimal: number = 2): string => {
+const unitChangeForByte = (size: string, decimal = 2): string => {
   /**
    * Returns the target number and unit for converting a size in bytes to a human-readable format.
    *
