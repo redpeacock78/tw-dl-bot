@@ -3,7 +3,7 @@ import { Hono, Context, Env } from "hono";
 
 export namespace CallbackTypes {
   export type bodyDataObject = {
-    status: "success" | "failure" | "progress";
+    status: "success" | "failure" | "progress" | null;
     number: string;
     commandType?: "dl";
     actionType?: "single" | "multi";
@@ -38,8 +38,8 @@ export namespace CallbackTypes {
     Record<string | number | symbol, never>
   >;
   export type infoObjectType<T extends string> = {
-    c: CallbackTypes.contextType<T>;
-    body: CallbackTypes.bodyDataObject | null;
+    c: contextType<T>;
+    body: bodyDataObject | null;
   };
   export namespace Functions {
     export type callbackSuccess = {
