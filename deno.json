@@ -6,7 +6,7 @@
     "lint": "deno lint && deno run --allow-env --allow-read --allow-sys tools/textlint.ts *",
     "lint:watch": "denon lint",
     "run": "deno run -A --no-check --import-map import_map.json src/main.ts",
-    "build": "deno compile -A --import-map import_map.json -o build/main src/main.ts && chmod +x ./build/main",
+    "build": "deno task lint && deno compile -A --import-map import_map.json -o build/main src/main.ts && chmod +x ./build/main",
     "start": "./build/main"
   }
 }
