@@ -1,26 +1,33 @@
 import bot from "@bot/bot.ts";
-import { match } from "ts-pattern";
+import { Pattern } from "functional";
 import { Message } from "discordeno";
 import { Messages, Constants } from "@libs";
 import { CreateMessageTypes } from "@router/types/createMessageTypes.ts";
+
+type SingleSuccsessMessageObject =
+  CreateMessageTypes.SendSuccessMessage.singleFileObject | null;
+type MultiSuccsessMessageObject =
+  CreateMessageTypes.SendSuccessMessage.multiFilesObject | null;
+
+const trueOversize = Constants.CallbackObject.Oversize.TRUE;
+const editFollowupMessageTimeLimit = Constants.EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT;
 
 const successMessage = {
   /**
    * Asynchronously handles a single success message and sends it based on conditions.
    *
-   * @param {CreateMessageTypes.SendSuccessMessage.singleFileObject | null} singleSuccsessMessageObject - The object containing the single success message details.
+   * @param {SingleSuccsessMessageObject} singleSuccsessMessageObject - The object containing the single success message details.
    * @return {Promise<Message>} A promise that resolves to a message response.
    */
   singleFile: (
-    singleSuccsessMessageObject: CreateMessageTypes.SendSuccessMessage.singleFileObject | null
+    singleSuccsessMessageObject: SingleSuccsessMessageObject
   ): Promise<Message> => {
     const runTime: number =
       new Date().getTime() - Number(singleSuccsessMessageObject!.startTime);
     const isEditFollowupMessage: boolean =
-      runTime <= Constants.EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT ||
-      singleSuccsessMessageObject!.oversize !==
-        Constants.CallbackObject.Oversize.TRUE;
-    return match(isEditFollowupMessage)
+      runTime <= editFollowupMessageTimeLimit ||
+      singleSuccsessMessageObject!.oversize !== trueOversize;
+    return Pattern.match(isEditFollowupMessage)
       .with(
         true,
         async (): Promise<Message> =>
@@ -63,19 +70,18 @@ const successMessage = {
   /**
    * Asynchronously handles multiple success messages and sends them based on conditions.
    *
-   * @param {CreateMessageTypes.SendSuccessMessage.multiFilesObject | null} multiSuccsessMessageObject - The object containing the multiple success message details.
+   * @param {MultiSuccsessMessageObject} multiSuccsessMessageObject - The object containing the multiple success message details.
    * @return {Promise<Message>} A promise that resolves to a message response.
    */
   multiFiles: (
-    multiSuccsessMessageObject: CreateMessageTypes.SendSuccessMessage.multiFilesObject | null
+    multiSuccsessMessageObject: MultiSuccsessMessageObject
   ): Promise<Message> => {
     const runTime: number =
       new Date().getTime() - Number(multiSuccsessMessageObject!.startTime);
     const editFollowupMessageFlag: boolean =
-      runTime <= Constants.EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT ||
-      multiSuccsessMessageObject!.oversize !==
-        Constants.CallbackObject.Oversize.TRUE;
-    return match(editFollowupMessageFlag)
+      runTime <= editFollowupMessageTimeLimit ||
+      multiSuccsessMessageObject!.oversize !== trueOversize;
+    return Pattern.match(editFollowupMessageFlag)
       .with(
         true,
         async (): Promise<Message> =>

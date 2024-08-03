@@ -1,24 +1,29 @@
 import bot from "@bot/bot.ts";
-import { match } from "ts-pattern";
+import { Pattern } from "functional";
 import { Message } from "discordeno";
 import { Messages, Constants } from "@libs";
 import { CreateMessageTypes } from "@router/types/createMessageTypes.ts";
 
+type SendErrorMessageObject = CreateMessageTypes.sendErrorMessageObject | null;
+
+const trueOversize = Constants.CallbackObject.Oversize.TRUE;
+const editFollowupMessageTimeLimit = Constants.EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT;
+
 /**
  * Asynchronously handles error messages and sends them based on the conditions.
  *
- * @param {CreateMessageTypes.sendErrorMessageObject | null} errorMessageObject - The error message object to be processed.
+ * @param {SendErrorMessageObject} errorMessageObject - The error message object to be processed.
  * @return {Promise<Message>} A promise that resolves to a message response.
  */
 const errorMessage = (
-  errorMessageObject: CreateMessageTypes.sendErrorMessageObject | null
+  errorMessageObject: SendErrorMessageObject
 ): Promise<Message> => {
   const runTime: number =
     new Date().getTime() - Number(errorMessageObject!.startTime);
   const isEditFollowupMessage: boolean =
-    runTime <= Constants.EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT ||
-    errorMessageObject!.oversize !== Constants.CallbackObject.Oversize.TRUE;
-  return match(isEditFollowupMessage)
+    runTime <= editFollowupMessageTimeLimit ||
+    errorMessageObject!.oversize !== trueOversize;
+  return Pattern.match(isEditFollowupMessage)
     .with(
       true,
       async (): Promise<Message> =>
