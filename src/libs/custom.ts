@@ -1,5 +1,5 @@
+import { P } from "functional";
 import { Constants } from "@libs";
-import { Pattern } from "ts-pattern";
 
 export const Custom = {
   CallbackPattern: {
@@ -17,15 +17,8 @@ export const Custom = {
         ],
       },
     },
-    Failure: [
-      Constants.CallbackObject.Status.FAILURE,
-      Pattern.nullish,
-      Pattern.nullish,
-    ],
-    Progress: [
-      Constants.CallbackObject.Status.PROGRESS,
-      Pattern.nullish,
-      Pattern.nullish,
-    ],
+    Failure: [Constants.CallbackObject.Status.FAILURE, P.nullish, P.nullish],
+    Progress: [Constants.CallbackObject.Status.PROGRESS, P.nullish, P.nullish],
+    InvalidPost: [P.nullish, P.nullish, P.nullish],
   },
 } as const;
