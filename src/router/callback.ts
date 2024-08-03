@@ -1,57 +1,91 @@
 import { Hono } from "hono";
-import { match } from "ts-pattern";
-import { Constants, Custom } from "@libs";
+import { Function, Either, Option, TaskEither, Pattern } from "functional";
 import { Functions } from "@router/functions/index.ts";
 import { CallbackTypes } from "@router/types/callbackTypes.ts";
+import { Constants, Custom } from "@libs";
 
-const callback: CallbackTypes.honoType<"/"> = new Hono();
+type O<A> = Option.Option<A>;
+type E<E, A> = Either.Either<E, A>;
+type BodyDataObject = CallbackTypes.bodyDataObject;
+type BodyDataObjectUnitNull = BodyDataObject | null;
+type RootPath = typeof Constants.ROOT_PATH;
+type CallbackPath = typeof Constants.CALLBACK_PATH;
+type HonoType<T extends string> = CallbackTypes.honoType<T>;
+type ContentType<T extends string> = CallbackTypes.contextType<T>;
+
+const badRequst = Constants.HttpStatus.BAD_REQUEST;
+const serverError = Constants.HttpStatus.INTERNAL_SERVER_ERROR;
+
+const callbackPath = Constants.CALLBACK_PATH;
+const callbackPattern = Custom.CallbackPattern;
+
+const callback: HonoType<RootPath> = new Hono();
 
 callback.post(
-  Constants.CALLBACK_PATH,
-  async (
-    c: CallbackTypes.contextType<typeof Constants.CALLBACK_PATH>
-  ): Promise<Response> => {
-    let body: CallbackTypes.bodyDataObject | null = null;
-    try {
-      body = (await c.req.raw.clone().json()) as CallbackTypes.bodyDataObject;
-    } catch (_e) {
-      body = (await c.req.parseBody()) as CallbackTypes.bodyDataObject;
-    }
-    return match([body.status, body!.commandType, body!.actionType])
+  callbackPath,
+  async (c: ContentType<CallbackPath>): Promise<Response> => {
+    const data: E<
+      Promise<BodyDataObject>,
+      BodyDataObject
+    > = await TaskEither.tryCatch(
+      async (): Promise<BodyDataObject> =>
+        (await c.req.raw.clone().json()) as BodyDataObject,
+      async (): Promise<BodyDataObject> =>
+        (await c.req.parseBody()) as BodyDataObject
+    )();
+    let body: BodyDataObjectUnitNull = await Pattern.match(Either.isRight(data))
       .with(
-        Custom.CallbackPattern.Success.Dl.Single,
-        async (): Promise<Response> =>
-          await Functions.callbackSuccessFunctions.success.dl
-            .single({ c, body })
-            .finally((): null => (body = null))
+        true,
+        (): BodyDataObjectUnitNull =>
+          Function.pipe(
+            Option.getRight(data),
+            (rightValue: O<BodyDataObject>): BodyDataObjectUnitNull =>
+              Option.isSome(rightValue) ? rightValue.value : null
+          )
       )
       .with(
-        Custom.CallbackPattern.Success.Dl.Multi,
-        async (): Promise<Response> =>
-          await Functions.callbackSuccessFunctions.success.dl
-            .multi({ c, body })
-            .finally((): null => (body = null))
+        false,
+        (): Promise<BodyDataObjectUnitNull> =>
+          Function.pipe(
+            Option.getLeft(data),
+            async (
+              leftValue: O<Promise<BodyDataObject>>
+            ): Promise<BodyDataObjectUnitNull> =>
+              Option.isSome(leftValue) ? await leftValue.value : null
+          )
+      )
+      .exhaustive();
+    if (!body) return c.body(null, badRequst);
+    const patternArray = [body.status, body.commandType, body.actionType];
+    return await Pattern.match(patternArray)
+      .with(
+        callbackPattern.Success.Dl.Single,
+        (): Promise<Response> =>
+          Functions.callbackSuccessFunctions.success.dl.single({ c, body })
       )
       .with(
-        Custom.CallbackPattern.Failure,
-        async (): Promise<Response> =>
-          await Functions.callbackFailureFunctions
-            .failure({ c, body })
-            .finally((): null => (body = null))
+        callbackPattern.Success.Dl.Multi,
+        (): Promise<Response> =>
+          Functions.callbackSuccessFunctions.success.dl.multi({ c, body })
       )
       .with(
-        Custom.CallbackPattern.Progress,
-        async (): Promise<Response> =>
-          await Functions.callbackProgressFunctions
-            .progress({ c, body })
-            .finally((): null => (body = null))
+        callbackPattern.Progress,
+        (): Promise<Response> =>
+          Functions.callbackProgressFunctions.progress({ c, body })
+      )
+      .with(
+        callbackPattern.Failure,
+        (): Promise<Response> =>
+          Functions.callbackFailureFunctions.failure({ c, body })
+      )
+      .with(
+        callbackPattern.InvalidPost,
+        (): Promise<Response> => Promise.resolve(c.body(null, badRequst))
       )
       .otherwise(
-        (): Promise<Response> =>
-          Promise.resolve(
-            c.body(null, Constants.HttpStatus.BAD_REQUEST)
-          ).finally((): null => (body = null))
-      );
+        (): Promise<Response> => Promise.resolve(c.body(null, serverError))
+      )
+      .finally((): null => (body = null));
   }
 );
 
