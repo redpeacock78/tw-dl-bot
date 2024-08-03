@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { Function, Either, Option, TaskEither, Pattern } from "functional";
+import { Function, Either, Option, TaskEither, Match } from "functional";
 import { Functions } from "@router/functions/index.ts";
 import { CallbackTypes } from "@router/types/callbackTypes.ts";
 import { Constants, Custom } from "@libs";
@@ -33,7 +33,7 @@ callback.post(
       async (): Promise<BodyDataObject> =>
         (await c.req.parseBody()) as BodyDataObject
     )();
-    let body: BodyDataObjectUnitNull = await Pattern.match(Either.isRight(data))
+    let body: BodyDataObjectUnitNull = await Match(Either.isRight(data))
       .with(
         true,
         (): BodyDataObjectUnitNull =>
@@ -56,7 +56,7 @@ callback.post(
       )
       .exhaustive();
     const patternArray = [body!.status, body!.commandType, body!.actionType];
-    return await Pattern.match(patternArray)
+    return await Match(patternArray)
       .with(
         callbackPattern.Success.Dl.Single,
         (): Promise<Response> =>
