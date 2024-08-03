@@ -55,7 +55,7 @@ callback.post(
           )
       )
       .exhaustive();
-    const patternArray = [body.status, body.commandType, body.actionType];
+    const patternArray = [body!.status, body!.commandType, body!.actionType];
     return await Pattern.match(patternArray)
       .with(
         callbackPattern.Success.Dl.Single,
