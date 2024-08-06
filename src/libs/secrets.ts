@@ -16,4 +16,4 @@ export const Secrets = {
   DISPATCH_URL: dispatchUrl.value,
   GITHUB_TOKEN: githubToken.value,
   DISCORD_TOKEN: discordToken.value,
-};
+} as const satisfies Record<string, string>;
