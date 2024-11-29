@@ -14,34 +14,34 @@ type FailureMessageInfo = CreateMessageTypes.failureMessageInfo | null;
 const createFailureMessage = (
   info: FailureMessageInfo
 ): CreateMessage | InteractionCallbackData => {
+  if (!info) return {};
   try {
     return {
       content: "**❌Failure!**",
       embeds: [
         {
           fields: [
-            { name: "#️⃣ Run Number", value: `> \`#${info!.runNumber}\`` },
+            { name: "#️⃣ Run Number", value: `> \`#${info.runNumber}\`` },
             {
               name: "🕑 Total Time",
-              value: `> \`${millisecondChangeFormat(info!.runTime)}\``,
+              value: `> \`${millisecondChangeFormat(info.runTime)}\``,
             },
-            { name: "🔗 Tweet URL", value: `> ${info!.link}` },
+            { name: "🔗 Tweet URL", value: `> ${info.link}` },
           ],
-          description: `**${info!.content}**`,
+          description: `**${info.content}**`,
           color: Constants.Message.Color.FAILURE,
           timestamp: new Date().getTime(),
         },
       ],
-      ...(typeof info!.messageId === "undefined" &&
-      typeof info!.channelId === "undefined"
-        ? {}
-        : {
+      ...(info.messageId && info.channelId
+        ? {
             messageReference: {
-              messageId: `${info!.messageId}`,
-              channelId: `${info!.channelId}`,
+              messageId: `${info.messageId}`,
+              channelId: `${info.channelId}`,
               failIfNotExists: true,
             },
-          }),
+          }
+        : {}),
     };
   } finally {
     info = null;

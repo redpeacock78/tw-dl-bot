@@ -14,53 +14,53 @@ type SuccessMessageInfo = CreateMessageTypes.successMessageInfo | null;
 const createSuccessMessage = (
   info: SuccessMessageInfo
 ): CreateMessage | InteractionCallbackData => {
+  if (!info) return {};
   try {
     return {
       content: "**✅Done!**",
       embeds: [
         {
           fields: [
-            { name: "#️⃣ Run Number", value: `> \`#${info!.runNumber}\`` },
+            { name: "#️⃣ Run Number", value: `> \`#${info.runNumber}\`` },
             {
               name: "🕑 Total Time",
-              value: `> \`${millisecondChangeFormat(info!.runTime)}\``,
+              value: `> \`${millisecondChangeFormat(info.runTime)}\``,
             },
             {
               name: "🎞 Video Name",
               value: info!.fileName
-                ? `> \`${info!.fileName}\``
-                : info!
+                ? `> \`${info.fileName}\``
+                : info
                     .fileNamesArray!.map((i: string): string => `> \`${i}\``)
                     .join("\n"),
               inline: true,
             },
             {
-              name: info!.file ? "📂 File Size" : "📂 Total File Size",
-              value: `> \`${unitChangeForByte(info!.totalSize)}\``,
+              name: info.file ? "📂 File Size" : "📂 Total File Size",
+              value: `> \`${unitChangeForByte(info.totalSize)}\``,
               inline: true,
             },
-            { name: "🔗 Tweet URL", value: `> ${info!.link}` },
+            { name: "🔗 Tweet URL", value: `> ${info.link}` },
           ],
           color: Constants.Message.Color.SUCCESS,
           timestamp: new Date().getTime(),
         },
       ],
-      file: info!.file
+      file: info.file
         ? {
-            blob: info!.file,
-            name: `${info!.fileName}`,
+            blob: info.file,
+            name: `${info.fileName}`,
           }
-        : info!.filesArray!,
-      ...(typeof info!.messageId === "undefined" &&
-      typeof info!.channelId === "undefined"
-        ? {}
-        : {
+        : info.filesArray!,
+      ...(info.messageId && info.channelId
+        ? {
             messageReference: {
-              messageId: `${info!.messageId}`,
-              channelId: `${info!.channelId}`,
+              messageId: `${info.messageId}`,
+              channelId: `${info.channelId}`,
               failIfNotExists: true,
             },
-          }),
+          }
+        : {}),
     };
   } finally {
     info = null;

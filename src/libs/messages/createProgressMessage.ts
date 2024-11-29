@@ -14,10 +14,11 @@ type ProgressMessageInfo = CreateMessageTypes.progressMessageInfo | null;
 const createProgressMessage = (
   info: ProgressMessageInfo
 ): CreateMessage | InteractionCallbackData => {
+  if (!info) return {};
   try {
     return {
-      content: info!
-        .content!.split("\n")
+      content: info.content
+        .split("\n")
         .map((i: string, n: number): string =>
           n === 0 ? `**${i}**` : `\`${i}\``
         )
@@ -25,18 +26,18 @@ const createProgressMessage = (
       embeds: [
         {
           fields: [
-            ...(typeof info!.runNumber !== "undefined"
-              ? [{ name: "#️⃣ Run Number", value: `> \`#${info!.runNumber}\`` }]
+            ...(typeof info.runNumber !== "undefined"
+              ? [{ name: "#️⃣ Run Number", value: `> \`#${info.runNumber}\`` }]
               : []),
-            ...(typeof info!.runTime !== "undefined"
+            ...(typeof info.runTime !== "undefined"
               ? [
                   {
                     name: "🕑 Elapsed Times",
-                    value: `> \`${millisecondChangeFormat(info!.runTime)}\``,
+                    value: `> \`${millisecondChangeFormat(info.runTime)}\``,
                   },
                 ]
               : []),
-            { name: "🔗 Tweet URL", value: `> ${info!.link}` },
+            { name: "🔗 Tweet URL", value: `> ${info.link}` },
           ],
           color: Constants.Message.Color.PROGRESS,
           timestamp: new Date().getTime(),

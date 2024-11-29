@@ -13,44 +13,44 @@ type ErrorMessageInfo = CreateMessageTypes.errorMessageInfo | null;
 const createErrorMessage = (
   info: ErrorMessageInfo
 ): CreateMessage | InteractionCallbackData => {
+  if (!info) return {};
   try {
     return {
       content: `**⚠️Error!**`,
       embeds: [
         {
-          ...(typeof info!.link !== "undefined"
+          ...(info.link
             ? {
                 fields: [
-                  ...(typeof info!.runNumber !== "undefined"
+                  ...(info.runNumber
                     ? [
                         {
                           name: "#️⃣ Run Number",
-                          value: `> \`#${info!.runNumber}\``,
+                          value: `> \`#${info.runNumber}\``,
                         },
                       ]
                     : []),
                   {
                     name: "🔗 Tweet URL",
-                    value: `> ${info!.link}`,
+                    value: `> ${info.link}`,
                   },
                 ],
               }
             : {}),
-          description: `**${info!.description}**`,
+          description: `**${info.description}**`,
           color: Constants.Message.Color.ERROR,
           timestamp: new Date().getTime(),
         },
       ],
-      ...(typeof info!.messageId === "undefined" &&
-      typeof info!.channelId === "undefined"
-        ? {}
-        : {
+      ...(info.messageId && info.channelId
+        ? {
             messageReference: {
-              messageId: `${info!.messageId}`,
-              channelId: `${info!.channelId}`,
+              messageId: `${info.messageId}`,
+              channelId: `${info.channelId}`,
               failIfNotExists: true,
             },
-          }),
+          }
+        : {}),
     };
   } finally {
     info = null;
