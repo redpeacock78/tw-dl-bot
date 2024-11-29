@@ -14,7 +14,7 @@
     "fp-ts/TaskEither": "https://deno.land/x/fp_ts@v2.11.4/TaskEither.ts",
     "ts-pattern": "https://cdn.skypack.dev/ts-pattern@5.1.1?dts",
     "discordeno": "https://deno.land/x/discordeno@18.0.0/mod.ts",
-    "unienv": "npm:@redpeacock78/unienv@0.0.13",
+    "unienv": "npm:@redpeacock78/unienv@0.0.19",
     "hono": "https://deno.land/x/hono@v4.3.10/mod.ts",
     "hono-utils-body": "https://deno.land/x/hono@v3.3.0/utils/body.ts",
     "ky": "https://cdn.skypack.dev/ky@v1.2.0?dts",
