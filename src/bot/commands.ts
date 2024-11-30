@@ -1,3 +1,4 @@
+import { Constants } from "@libs";
 import { CreateSlashApplicationCommand } from "discordeno";
 
 type CommandsType = {
@@ -7,7 +8,7 @@ type CommandsType = {
 
 export const Commands: CommandsType = {
   dlCommand: {
-    name: "dl",
+    name: Constants.Webhook.Json.ClientPayload.CommandType.DOWNLOAD,
     description: "Download tweet video",
     type: 1,
     options: [
@@ -20,7 +21,7 @@ export const Commands: CommandsType = {
     ],
   },
   threadDlCommand: {
-    name: "threaddl",
+    name: Constants.Webhook.Json.ClientPayload.CommandType.THREAD_DOWNLOAD,
     description: "DL multiple Tweets into a thread",
     type: 1,
     options: [
