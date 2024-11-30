@@ -1,5 +1,5 @@
 import unienv from "unienv";
-import { Constants } from "@libs/constants.ts";
+import { Constants } from "@libs";
 
 const envs = Constants.SECTRETS.reduce(
   (acc, i) => {
