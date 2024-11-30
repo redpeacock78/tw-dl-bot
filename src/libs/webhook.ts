@@ -8,6 +8,7 @@ import ky, { KyResponse } from "ky";
  * @return {Promise<KyResponse>} A promise that resolves with the response from the webhook request.
  */
 export const webhook = async (message: {
+  commandType: string;
   content: string;
   channelId: bigint;
   id: bigint;
@@ -17,7 +18,7 @@ export const webhook = async (message: {
     json: {
       event_type: Constants.Webhook.Json.EVENT_TYPE,
       client_payload: {
-        commandType: Constants.Webhook.Json.ClientPayload.COMMAND_TYPE,
+        commandType: message.commandType,
         link: message.content,
         channel: `${message.channelId}`,
         message: `${message.id}`,
