@@ -17,7 +17,10 @@ export const Constants = {
     Json: {
       EVENT_TYPE: "download",
       ClientPayload: {
-        COMMAND_TYPE: "dl",
+        CommandType: {
+          DOWNLOAD: "dl",
+          THREAD_DOWNLOAD: "threaddl",
+        },
       },
     },
     Headers: {
