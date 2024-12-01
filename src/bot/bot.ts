@@ -27,11 +27,20 @@ bot.events.interactionCreate = async (
   b: Bot,
   interaction: Interaction
 ): Promise<void> => {
-  await Match(interaction.data?.name)
+  if (!interaction.data) return;
+  const props = {
+    b,
+    data: interaction.data,
+    interaction,
+    commandType: "",
+  };
+  await Match(props.data.name)
     .with(
       Commands.dlCommand.name,
-      (): Promise<void> =>
-        interactionCreate(b, interaction, Commands.dlCommand.name)
+      async (commandType: string): Promise<void> => {
+        props.commandType = commandType;
+        await interactionCreate(props);
+      }
     )
     .otherwise((): void => {});
 };
