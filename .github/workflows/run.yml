@@ -90,9 +90,11 @@ jobs:
             retry=0 && \
             flag=false && \
             until "${flag}" || (( "${retry}" == 1000 )); do
-              echo "Retry count: ${retry}"
-              echo "Flag status: ${flag}"
-              sudo yt-dlp --update-to nightly && \
+              echo "Retry count: ${retry}" && \
+              echo "Flag status: ${flag}" && \
+              url="https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/latest" && \
+              version="$(curl -sI -m 18000 --retry 100 --retry-all-errors "${url}" | grep 'location: ' | awk -F '/' '{print $8}')" && \
+              sudo yt-dlp --update-to "nightly@${version}" && \
               {
                 flag=true
               } || \
