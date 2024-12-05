@@ -81,19 +81,20 @@ jobs:
           } || :
           type yt-dlp > /dev/null 2>&1 || \
           {
-            sudo curl -sL \
-              --retry 100 \
-              --retry-all-errors \
-              -o /usr/local/bin/yt-dlp \
-              https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp && \
-            sudo chmod a+rx /usr/local/bin/yt-dlp && \
             retry=0 && \
             flag=false && \
             until "${flag}" || (( "${retry}" == 1000 )); do
               echo "Retry count: ${retry}" && \
               echo "Flag status: ${flag}" && \
-              url="https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/latest" && \
-              version="$(curl -sI -m 18000 --retry 100 --retry-all-errors "${url}" | grep 'location: ' | awk -F '/' '{print $8}')" && \
+              stable_url="https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp" && \
+              nightly_url="https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/latest/download/yt-dlp" && \
+              sudo curl -sL \
+                --retry 100 \
+                --retry-all-errors \
+                -o /usr/local/bin/yt-dlp \
+                "${stable_url}" && \
+              sudo chmod a+rx /usr/local/bin/yt-dlp && \
+              version="$(curl -sI -m 18000 --retry 100 --retry-all-errors "${nightly_url}" | grep 'location: ' | awk -F '/' '{print $8}')" && \
               sudo yt-dlp --update-to "nightly@${version}" && \
               {
                 flag=true
