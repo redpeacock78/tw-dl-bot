@@ -12,11 +12,11 @@ const millisecondChangeFormat = (millisecond: number): string => {
 
   let resultFormat = "";
   if (days > 0) resultFormat += `${days}d`;
-  if (hours > 0) resultFormat += `${hours}h`;
-  if (mins > 0) resultFormat += `${mins}m`;
-  if (secs > 0) resultFormat += `${secs}s`;
+  if (hours > 0) resultFormat += `${hours.toString().padStart(2, "0")}h`;
+  if (mins > 0) resultFormat += `${mins.toString().padStart(2, "0")}m`;
+  if (secs > 0) resultFormat += `${secs.toString().padStart(2, "0")}s`;
   if (!resultFormat) resultFormat += `${millisecond}ms`;
-  return resultFormat;
+  return resultFormat.endsWith("m") ? `${resultFormat}00s` : resultFormat;
 };
 
 export default millisecondChangeFormat;
