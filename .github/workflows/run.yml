@@ -153,7 +153,7 @@ jobs:
             Prog=array1[1]*3600+array1[2]*60+array1[3]
             Ratio=int(Prog/Dura*100)
             if ( Ratio != Old ) {
-              if ( Ratio % 5 == 0 ) {
+              if ( Ratio % 1 == 0 ) {
                 Current=systime()
                 px=Current-Start
                 Remain=""
