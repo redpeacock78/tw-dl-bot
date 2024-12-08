@@ -187,16 +187,22 @@ jobs:
             sleep "${interval}"
             current="$(openssl sha256 -r ${1} | awk '{print $1}')"
             if [[ "${last}" != "{current}" ]]; then
-              progress="$(cat ${1} | tail -n1)"
-              echo '{"status": "progress", "number": "'"${run_number}"'", "startTime": "'"${start_time}"'", "channel": "'"${channel}"'", "message": "'"${message}"'", "token": "'"${token}"'", "link": "'"${link}"'", "content": "'"🔁Converting...(${2} / ${3})\n${progress}"'"}' | \
-              curl -s -X POST \
-                ${{ secrets.ENDPOINT_URL }} \
-                -H "Accept: application/json" \
-                -H "Content-type: application/json" \
-                -m 18000 \
-                --retry 100 \
-                --retry-all-errors \
-                -d @- > /dev/null 2>&1 || :
+              retry=0
+              flag=false
+              until "${flag}" || (( "${retry}" == 1000 )); do
+                echo "Retry count: ${retry}"
+                echo "Flag status: ${flag}"
+                progress="$(cat ${1} | tail -n1)"
+                echo '{"status": "progress", "number": "'"${run_number}"'", "startTime": "'"${start_time}"'", "channel": "'"${channel}"'", "message": "'"${message}"'", "token": "'"${token}"'", "link": "'"${link}"'", "content": "'"🔁Converting...(${2} / ${3})\n${progress}"'"}' | \
+                curl -s -X POST \
+                  ${{ secrets.ENDPOINT_URL }} \
+                  -H "Accept: application/json" \
+                  -H "Content-type: application/json" \
+                  -m 18000 \
+                  --retry 100 \
+                  --retry-all-errors \
+                  -d @- > /dev/null 2>&1
+              done
               last="${current}"
             fi
           done
