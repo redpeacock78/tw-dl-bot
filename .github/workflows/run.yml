@@ -193,7 +193,7 @@ jobs:
                 if ((  "${retry}" > 0 )); then
                   echo "Retry count: ${retry}"
                   echo "Flag status: ${flag}"
-                then
+                fi
                 progress="$(cat ${1} | tail -n1)"
                 echo '{"status": "progress", "number": "'"${run_number}"'", "startTime": "'"${start_time}"'", "channel": "'"${channel}"'", "message": "'"${message}"'", "token": "'"${token}"'", "link": "'"${link}"'", "content": "'"🔁Converting...(${2} / ${3})\n${progress}"'"}' | \
                 curl -s -X POST \
