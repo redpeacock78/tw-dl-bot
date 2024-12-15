@@ -4,6 +4,7 @@ export const Constants = {
   PING_PATH: "/ping",
   CALLBACK_PATH: "/callback",
   EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT: 900000,
+  UPDATE_BOT_STATUS_INTERVAL: 10000,
   SECTRETS: ["DISPATCH_URL", "GITHUB_TOKEN", "DISCORD_TOKEN"],
   Message: {
     Color: {
