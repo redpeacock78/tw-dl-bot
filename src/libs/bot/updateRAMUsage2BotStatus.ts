@@ -8,13 +8,8 @@ import { Bot, editBotStatus, ActivityTypes } from "discordeno";
  */
 const updateRAMUsage2BotStatus = (bot: Bot): void => {
   setInterval((): void => {
-    const freeMemory =
-      Deno.systemMemoryInfo().free +
-      Deno.systemMemoryInfo().buffers +
-      Deno.systemMemoryInfo().cached +
-      Deno.systemMemoryInfo().available;
+    const usageMemory = Deno.memoryUsage().rss + Deno.memoryUsage().external;
     const totalMemory = Deno.systemMemoryInfo().total;
-    const usageMemory = totalMemory - freeMemory;
     const memoryPercent = Number.parseFloat(
       `${(usageMemory / totalMemory) * 100}`
     ).toFixed(2);
