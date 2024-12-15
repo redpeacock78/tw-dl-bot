@@ -6,3 +6,4 @@ export { Constants } from "@libs/constants.ts";
 export { Secrets } from "@libs/secrets.ts";
 export { Custom } from "@libs/custom.ts";
 export { Messages } from "@libs/messages/index.ts";
+export { Bot } from "@libs/bot/index.ts";
