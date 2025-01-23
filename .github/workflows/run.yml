@@ -104,13 +104,13 @@ jobs:
               }
             done
           }
-      - name: Setup and cache dependency
-        if: ${{ success() }}
-        uses: awalsh128/cache-apt-pkgs-action@latest
-        with:
-          packages: ffmpeg gawk
-          version: 1.0
-          execute_install_scripts: true
+      # - name: Setup and cache dependency
+      #   if: ${{ success() }}
+      #   uses: awalsh128/cache-apt-pkgs-action@latest
+      #   with:
+      #     packages: ffmpeg gawk
+      #     version: 1.0
+      #     execute_install_scripts: true
       - name: When dependency is not found in the cache
         if: ${{ success() }}
         shell: bash
@@ -310,7 +310,7 @@ jobs:
               --cookies "${cookie_path}/cookie.txt" \
               --downloader "$(type ffmpeg | awk '{print $3}')" \
               -o "%(id)s_%(autonumber)s.%(ext)s" \
-              "${url}" 2>&1 | tee "${yt_result}" && \
+              "${url}" > "${yt_result}" 2>&1 && \
               {
                 yt_status="0"
                 true
