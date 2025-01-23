@@ -304,9 +304,8 @@ jobs:
             echo "Retry count: ${retry}"
             echo "Flag status: ${flag}"
             yt_result="$(mktemp)"
-            yt-dlp -q \
+            yt-dlp \
               -R 1000 \
-              --format mp4 \
               --force-overwrites \
               --cookies "${cookie_path}/cookie.txt" \
               --downloader "$(type ffmpeg | awk '{print $3}')" \
