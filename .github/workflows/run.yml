@@ -353,6 +353,7 @@ jobs:
             echo "status=${status}" >> "${GITHUB_OUTPUT}" && \
             exit 2
           fi
+          cat "${yt_result}"
       - name: Check and Convert Files
         if: ${{ success() }}
         shell: bash
