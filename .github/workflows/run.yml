@@ -105,11 +105,14 @@ jobs:
         uses: actions/checkout@v4
       - name: Setup and cache dependency
         if: ${{ success() }}
-        uses: awalsh128/cache-apt-pkgs-action@latest
+        uses: tecolicom/actions-use-apt-tools@v1
         with:
-          packages: ffmpeg gawk
-          version: 1.0
-          execute_install_scripts: true
+          tools: ffmpeg gawk
+        # uses: awalsh128/cache-apt-pkgs-action@latest
+        # with:
+        #   packages: ffmpeg gawk
+        #   version: 1.0
+        #   execute_install_scripts: true
       - name: When dependency is not found in the cache
         if: ${{ success() }}
         shell: bash
