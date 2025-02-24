@@ -108,7 +108,7 @@ jobs:
         uses: tecolicom/actions-use-apt-tools@v1
         with:
           tools: ffmpeg gawk
-          method: timestamp
+          # method: timestamp
           path: "/etc /usr /var /opt /lib"
         # uses: awalsh128/cache-apt-pkgs-action@latest
         # with:
