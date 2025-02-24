@@ -103,18 +103,18 @@ jobs:
       # - name: Setup Cache
       #   if: ${{ success() }}
       #   uses: actions/checkout@v4
-      - name: Setup and cache dependency
-        if: ${{ success() }}
-        uses: tecolicom/actions-use-apt-tools@v1
-        with:
-          tools: ffmpeg gawk
-          method: timestamp
-          path: /etc /usr /var /opt /lib /sbin /bin /opt
-        # uses: awalsh128/cache-apt-pkgs-action@latest
-        # with:
-        #   packages: ffmpeg gawk
-        #   version: 1.0
-        #   execute_install_scripts: true
+      # - name: Setup and cache dependency
+      #   if: ${{ success() }}
+      #   uses: tecolicom/actions-use-apt-tools@v1
+      #   with:
+      #     tools: ffmpeg gawk
+      #     method: timestamp
+      #     path: /etc /usr /var /opt /lib /sbin /bin /opt
+      #   # uses: awalsh128/cache-apt-pkgs-action@latest
+      #   # with:
+      #   #   packages: ffmpeg gawk
+      #   #   version: 1.0
+      #   #   execute_install_scripts: true
       - name: When dependency is not found in the cache
         if: ${{ success() }}
         shell: bash
