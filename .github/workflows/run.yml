@@ -100,9 +100,9 @@ jobs:
               }
             done
           }
-      - name: Setup Cache
-        if: ${{ success() }}
-        uses: actions/checkout@v4
+      # - name: Setup Cache
+      #   if: ${{ success() }}
+      #   uses: actions/checkout@v4
       - name: Setup and cache dependency
         if: ${{ success() }}
         uses: tecolicom/actions-use-apt-tools@v1
