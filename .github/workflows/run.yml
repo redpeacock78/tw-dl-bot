@@ -49,10 +49,6 @@ jobs:
             }
           EOF
           } || :
-      - name: Create directory
-        shell: bash
-        run: |
-          mkdir -p download
       - name: Setup latest yt-dlp
         if: ${{ success() }}
         shell: bash
@@ -301,6 +297,7 @@ jobs:
           cookie_path=$(pwd) && \
           url="$(echo ${{ toJSON(github.event.client_payload.link) }} | awk -F '/' '{OFS="/";sub(/^x.com$/,"twitter.com",$3);print $0}')" && \
           echo "${{ secrets.TWITTER_COOKIES }}" >> cookie.txt && \
+          mkdir -p download && \
           cd download && \
           IFS=$'\n' && \
           until "${flag}" || (( "${retry}" == 1000 )); do
