@@ -109,7 +109,7 @@ jobs:
         with:
           tools: ffmpeg gawk
           method: timestamp
-          path: "/etc /usr /var /opt /lib"
+          path: /etc /usr /var /opt /lib /sbin /bin /opt
         # uses: awalsh128/cache-apt-pkgs-action@latest
         # with:
         #   packages: ffmpeg gawk
