@@ -662,6 +662,10 @@ jobs:
           }}
         shell: bash
         run: |
+          cd download && \
+          original_size=$(echo "$(ls -trlh | awk 'NR>1{print $5}')"B) && \
+          cd conv && \
+          converted_size=$(echo "$(ls -trlh | awk 'NR>1{print $5}')"B) && \
           curl -s -X POST \
             ${{ secrets.ENDPOINT_URL }} \
             -H "Accept: application/json" \
@@ -679,7 +683,7 @@ jobs:
             "message": ${{ toJSON(github.event.client_payload.message) }},
             "token": ${{ toJSON(github.event.client_payload.token) }},
             "link": ${{ toJSON(github.event.client_payload.link) }},
-            "content": "Sorry, The file could not be uploaded because its size exceeds 10MB!"
+            "content": "Sorry, The file could not be uploaded because its size exceeds 10MB!\nFile Size: `${original_size} -> ${converted_size}`"
           }
           EOF
       - name: Download timed out
