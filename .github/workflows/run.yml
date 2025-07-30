@@ -662,9 +662,10 @@ jobs:
           }}
         shell: bash
         run: |
+          dir=$(pwd) && \
           cd download && \
           original_size=$(echo "$(ls -trlh | awk 'NR>1{print $5}')"B) && \
-          cd conv && \
+          cd ${dir}/conv && \
           converted_size=$(echo "$(ls -trlh | awk 'NR>1{print $5}')"B) && \
           curl -s -X POST \
             ${{ secrets.ENDPOINT_URL }} \
