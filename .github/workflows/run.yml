@@ -5,9 +5,14 @@ on:
       - download
 
 jobs:
-  run:
+  run-with-container:
     runs-on: ubuntu-latest
-    name: Run
+    # name: Run
+    container:
+      image: ghcr.io/${{ github.repository_owner }}/tw-dl-runner:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -82,16 +87,16 @@ jobs:
             until "${flag}" || (( "${retry}" == 1000 )); do
               echo "Retry count: ${retry}" && \
               echo "Flag status: ${flag}" && \
-              stable_url="https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp" && \
+              # stable_url="https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp" && \
               nightly_url="https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/latest/download/yt-dlp" && \
-              sudo curl -sL \
-                --retry 100 \
-                --retry-all-errors \
-                -o /usr/local/bin/yt-dlp \
-                "${stable_url}" && \
-              sudo chmod a+rx /usr/local/bin/yt-dlp && \
+              # sudo curl -sL \
+              #   --retry 100 \
+              #   --retry-all-errors \
+              #   -o /usr/local/bin/yt-dlp \
+              #   "${stable_url}" && \
+              # sudo chmod a+rx /usr/local/bin/yt-dlp && \
               version="$(curl -sI -m 18000 --retry 100 --retry-all-errors "${nightly_url}" | grep 'location: ' | awk -F '/' '{print $8}')" && \
-              sudo yt-dlp --update-to "nightly@${version}" && \
+              yt-dlp --update-to "nightly@${version}" && \
               {
                 flag=true
               } || \
@@ -115,27 +120,27 @@ jobs:
       #   #   packages: ffmpeg gawk
       #   #   version: 1.0
       #   #   execute_install_scripts: true
-      - name: When dependency is not found in the cache
-        if: ${{ success() }}
-        shell: bash
-        run: |
-          retry=0
-          flag=false
-          until "${flag}" || (( "${retry}" == 1000 )); do
-            echo "Retry count: ${retry}"
-            echo "Flag status: ${flag}"
-            if type ffmpeg > /dev/null 2>&1 && type ffprobe > /dev/null 2>&1 && type gawk > /dev/null 2>&1; then
-              flag=true
-            else
-              sudo apt-get update
-              sudo apt-get install -y ffmpeg gawk
-              if type ffmpeg > /dev/null 2>&1 && type ffprobe > /dev/null 2>&1 && type gawk > /dev/null 2>&1; then
-                flag=true
-              else
-                ((retry++)) || true
-              fi
-            fi
-          done
+      # - name: When dependency is not found in the cache
+      #   if: ${{ success() }}
+      #   shell: bash
+      #   run: |
+      #     retry=0
+      #     flag=false
+      #     until "${flag}" || (( "${retry}" == 1000 )); do
+      #       echo "Retry count: ${retry}"
+      #       echo "Flag status: ${flag}"
+      #       if type ffmpeg > /dev/null 2>&1 && type ffprobe > /dev/null 2>&1 && type gawk > /dev/null 2>&1; then
+      #         flag=true
+      #       else
+      #         sudo apt-get update
+      #         sudo apt-get install -y ffmpeg gawk
+      #         if type ffmpeg > /dev/null 2>&1 && type ffprobe > /dev/null 2>&1 && type gawk > /dev/null 2>&1; then
+      #           flag=true
+      #         else
+      #           ((retry++)) || true
+      #         fi
+      #       fi
+      #     done
       - name: Setup awk script
         if: ${{ success() }}
         shell: bash
