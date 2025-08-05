@@ -425,8 +425,8 @@ jobs:
                   # ffmpeg -i "${file_name}" -c:v libvpx -r 25 -crf 20 -b:v 0 -fs $(( 25 / "${files_num}" ))MB "${dir}/conv/${file_name%.*}.webm" 2>&1 | \
                   # ffmpeg -i "${file_name}" -c:v libvpx -r 25 -crf 20 -b:v 0 -fs $(( 10 / "${files_num}" ))MB "${dir}/conv/${file_name%.*}.webm" 2>&1 | \
                   ffmpeg -i "${file_name}" \
-                    -c:v libx264 -preset slow -crf 28 \
-                    -c:a aac -b:a 96k \
+                    -c:v libx264 -preset slow -crf 30 \
+                    -c:a aac -b:a 64k \
                     -r 25 -movflags +faststart \
                     -fs $(( 10 / "${files_num}" ))MB \
                     "${dir}/conv/${file_name%.*}.mp4" 2>&1 | \
