@@ -424,19 +424,12 @@ jobs:
                 {
                   # ffmpeg -i "${file_name}" -c:v libvpx -r 25 -crf 20 -b:v 0 -fs $(( 25 / "${files_num}" ))MB "${dir}/conv/${file_name%.*}.webm" 2>&1 | \
                   # ffmpeg -i "${file_name}" -c:v libvpx -r 25 -crf 20 -b:v 0 -fs $(( 10 / "${files_num}" ))MB "${dir}/conv/${file_name%.*}.webm" 2>&1 | \
-                  max_size_mb=$(( 10 / "${files_num}" ))
-                  audio_bitrate=48000
-                  duration="$(ffprobe -v error -select_streams v:0 -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${file_name}")"
-                  max_sixe_bytes=$(("${max_size_mb}" * 1024 * 1024))
-                  target_bitrate="$(echo "scale=0; (${max_sixe_bytes} * 8) / ${duration}" | bc)"
-                  target_bitrate_kbps=$(("${target_bitrate}" / 1000))
-                  audio_bitrate_kbps=$(("${audio_bitrate}" / 1000))
-                  video_bitrate_kbps=$(("${target_bitrate_kbps}" - "${audio_bitrate_kbps}"))
                   threads="$(nproc)"
                   ffmpeg -i "${file_name}" \
-                    -c:v libx264 -b:v "${video_bitrate_kbps}k" -preset slow -threads "${threads}" \
-                    -c:a aac -b:a "${audio_bitrate_kbps}k" \
+                    -c:v libx264 -crf 32 -preset slow -threads "${threads}" \
+                    -c:a aac -b:a 48k \
                     -r 25 -movflags +faststart \
+                    -fs $(( 10 / "${files_num}" ))MB \
                     "${dir}/conv/${file_name%.*}.mp4" 2>&1 | \
                   awk -f "${dir}/progress.awk" >> "${progress}"
                 }
