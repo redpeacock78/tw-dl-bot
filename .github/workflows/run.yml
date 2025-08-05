@@ -499,7 +499,7 @@ jobs:
             options+=(-F 'link=${{ toJSON(github.event.client_payload.link) }}')
             options+=(-F 'startTime=${{ toJSON(github.event.client_payload.startTime) }}')
             # if (( "$(echo $(ls -l | awk 'NR>1{print $5}' | tr \\n +)0 | bc)" <= 26214400 )); then
-            if (( "$(echo $(ls -l | awk 'NR>1{print $5}' | tr \\n +)0 | bc)" <= 10485760 )); then
+            if (( "$(echo $(ls -l | awk 'NR>1{print $5}' | tr \\n +)0 | bc)" <= $(( 10485760 * "${files_num}" )) )); then
               options+=(-F "convert=false")
             else
               options+=(-F "convert=true")
