@@ -431,7 +431,7 @@ jobs:
                   target_bitrate="$(echo "scale=0; (${max_sixe_bytes} * 8) / ${duration}" | bc)"
                   target_bitrate_kbps=$(("${target_bitrate}" / 1000))
                   audio_bitrate_kbps=$(("${audio_bitrate}" / 1000))
-                  video_bitrate=$(("${target_bitrate_kbps}" - "${audio_bitrate_kbps}"))
+                  video_bitrate_kbps=$(("${target_bitrate_kbps}" - "${audio_bitrate_kbps}"))
                   threads="$(nproc)"
                   ffmpeg -i "${file_name}" \
                     -c:v libx264 -b:v "${video_bitrate_kbps}k" -preset slow -threads "${threads}" \
