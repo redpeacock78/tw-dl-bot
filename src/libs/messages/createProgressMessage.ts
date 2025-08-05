@@ -19,8 +19,8 @@ const createProgressMessage = (
     return {
       content: info.content
         .split("\n")
-        .map((i: string, n: number): string =>
-          n === 0 ? `**${i}**` : `\`${i}\``
+        .flatMap((i: string, n: number): string[] =>
+          !i ? [] : n === 0 ? [`**${i}**`] : [`\`${i}\``]
         )
         .join("\n"),
       embeds: [
