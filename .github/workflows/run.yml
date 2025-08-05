@@ -429,7 +429,7 @@ jobs:
                     -c:v libx264 -crf 32 -preset slow -threads "${threads}" \
                     -c:a aac -b:a 48k \
                     -r 25 -movflags +faststart \
-                    -fs $(( 10 / "${files_num}" ))MB \
+                    -fs 10MB \
                     "${dir}/conv/${file_name%.*}.mp4" 2>&1 | \
                   awk -f "${dir}/progress.awk" >> "${progress}"
                 }
