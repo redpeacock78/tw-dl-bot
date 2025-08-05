@@ -429,7 +429,7 @@ jobs:
                     -c:a acc -b:a 96k \
                     -r 25 -movflags +faststart \
                     -fs $(( 10 / "${files_num}" ))MB \
-                    "${dir}/conv/${file_name%.*}.webm" 2>&1 | \
+                    "${dir}/conv/${file_name%.*}.mp4" 2>&1 | \
                   awk -f "${dir}/progress.awk" >> "${progress}"
                 }
                 if [[ ${num} != ${#file_list[@]} ]]; then
