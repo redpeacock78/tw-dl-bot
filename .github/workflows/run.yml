@@ -477,7 +477,8 @@ jobs:
               if (( "$(wc -c < "${file_name}")" <= 10485760 )); then
                 :
               # elif (( "$(wc -c < "${dir}/conv/${file_name%.*}.webm")" <= 26214400 )); then
-              elif (( "$(wc -c < "${dir}/conv/${file_name%.*}.webm")" <= 10485760 )); then
+              # elif (( "$(wc -c < "${dir}/conv/${file_name%.*}.webm")" <= 10485760 )); then
+              elif (( "$(wc -c < "${dir}/conv/${file_name%.*}.mp4")" <= 10485760 )); then
                 :
               else
                 status="sizeover" && \
@@ -517,9 +518,12 @@ jobs:
                   options+=(-F "file${num}=@${file_name}")
                   list+=("${file_name}")
                 else
-                  options+=(-F "name${num}=${file_name%.*}.webm")
-                  options+=(-F "file${num}=@${dir}/conv/${file_name%.*}.webm")
-                  list+=("${dir}/conv/${file_name%.*}.webm")
+                  # options+=(-F "name${num}=${file_name%.*}.webm")
+                  options+=(-F "name${num}=${file_name%.*}.mp4")
+                  # options+=(-F "file${num}=@${dir}/conv/${file_name%.*}.webm")
+                  options+=(-F "file${num}=@${dir}/conv/${file_name%.*}.mp4")
+                  # list+=("${dir}/conv/${file_name%.*}.webm")
+                  list+=("${dir}/conv/${file_name%.*}.mp4")
                 fi
               fi
             done
@@ -567,7 +571,8 @@ jobs:
                 -F "file1=@${file_name}" \
                 ${{ secrets.ENDPOINT_URL }}
             else
-              total_size=$(wc -c < "${dir}/conv/${file_name%.*}.webm")
+              # total_size=$(wc -c < "${dir}/conv/${file_name%.*}.webm")
+              total_size=$(wc -c < "${dir}/conv/${file_name%.*}.mp4")
               echo "Total size: ${total_size}"
               # if (( "${total_size}" <= 26214400 )); then
               if (( "${total_size}" <= 10485760 )); then
@@ -589,8 +594,10 @@ jobs:
                   -F 'message=${{ toJSON(github.event.client_payload.message) }}' \
                   -F 'token=${{ toJSON(github.event.client_payload.token) }}' \
                   -F 'link=${{ toJSON(github.event.client_payload.link) }}' \
-                  -F "name1=${file_name%.*}.webm" \
-                  -F "file1=@${dir}/conv/${file_name%.*}.webm" \
+                  # -F "name1=${file_name%.*}.webm" \
+                  # -F "file1=@${dir}/conv/${file_name%.*}.webm" \
+                  -F "name1=${file_name%.*}.mp4" \
+                  -F "file1=@${dir}/conv/${file_name%.*}.mp4" \
                   ${{ secrets.ENDPOINT_URL }}
               else
                 status="sizeover" && \
