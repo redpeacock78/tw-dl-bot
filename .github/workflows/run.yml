@@ -381,7 +381,7 @@ jobs:
             IFS=$'\n' && \
             for file_name in $(ls -tr); do
               # if (( "$(wc -c < "${file_name}")" <= $(( 26214400 / "${files_num}" )) )); then
-              if (( "$(wc -c < "${file_name}")" <= $(( 10485760 / "${files_num}" )) )); then
+              if (( "$(wc -c < "${file_name}")" <= 10485760 )); then
                 :
               else
                 file_list+=("${files_num}")
@@ -390,7 +390,7 @@ jobs:
             count=1
             for file_name in $(ls -tr); do
               # if (( "$(wc -c < "${file_name}")" <= $(( 26214400 / "${files_num}" )) )); then
-              if (( "$(wc -c < "${file_name}")" <= $(( 10485760 / "${files_num}" )) )); then
+              if (( "$(wc -c < "${file_name}")" <= 10485760 )); then
                 :
               else
                 num=$((count++))
