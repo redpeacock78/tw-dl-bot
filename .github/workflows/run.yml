@@ -429,11 +429,13 @@ jobs:
                   duration="$(ffprobe -v error -select_streams v:0 -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${file_name}")"
                   max_sixe_bytes=$(("${max_size_mb}" * 1024 * 1024))
                   target_bitrate="$(echo "scale=0; (${max_sixe_bytes} * 8) / ${duration}" | bc)"
-                  video_bitrate=$(("${target_bitrate}" / 1000 - "${audio_bitrate}" / 1000))
+                  target_bitrate_kbps=$(("${target_bitrate}" / 1000))
+                  audio_bitrate_kbps=$(("${audio_bitrate}" / 1000))
+                  video_bitrate=$(("${target_bitrate_kbps}" - "${audio_bitrate_kbps}"))
                   threads="$(nproc)"
                   ffmpeg -i "${file_name}" \
-                    -c:v libx265 -b:v "${video_bitrate}k" -preset slow -threads "${threads}" \
-                    -c:a aac -b:a 48k \
+                    -c:v libx264 -b:v "${video_bitrate_kbps}k" -preset slow -threads "${threads}" \
+                    -c:a aac -b:a "${audio_bitrate_kbps}k" \
                     -r 25 -movflags +faststart \
                     "${dir}/conv/${file_name%.*}.mp4" 2>&1 | \
                   awk -f "${dir}/progress.awk" >> "${progress}"
