@@ -594,8 +594,6 @@ jobs:
                   -F 'message=${{ toJSON(github.event.client_payload.message) }}' \
                   -F 'token=${{ toJSON(github.event.client_payload.token) }}' \
                   -F 'link=${{ toJSON(github.event.client_payload.link) }}' \
-                  # -F "name1=${file_name%.*}.webm" \
-                  # -F "file1=@${dir}/conv/${file_name%.*}.webm" \
                   -F "name1=${file_name%.*}.mp4" \
                   -F "file1=@${dir}/conv/${file_name%.*}.mp4" \
                   ${{ secrets.ENDPOINT_URL }}
