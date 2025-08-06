@@ -739,3 +739,14 @@ jobs:
             "content": "Sorry! Processing time exceeded 10 minits and timed out."
           }
           EOF
+      - name: Cleanup temp files
+        if: ${{ always() && !cancelled() }}
+        shell: bash
+        run: |
+          echo "🧹 Cleaning up temporary files..."
+          rm -rf ./download
+          rm -rf ./conv
+          rm -f ./cookie.txt
+          rm -f ./secrets.txt
+          rm -f ./progress.awk
+          rm -f /usr/local/bin/conv_progress.sh
