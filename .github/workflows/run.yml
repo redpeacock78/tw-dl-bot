@@ -196,8 +196,8 @@ jobs:
             sleep "${interval}"
             current="$(openssl sha256 -r ${1} | awk '{print $1}')"
             if [[ "${last}" != "{current}" ]]; then
-              retry=0
-              flag=false
+              retry=0 && \
+              flag=false && \
               until "${flag}" || (( "${retry}" == 1000 )); do
                 if ((  "${retry}" > 0 )); then
                   echo "Retry count: ${retry}"
@@ -253,10 +253,34 @@ jobs:
               }
           EOF
             } || :
-            retry=0
-            flag=false
-            status=""
+            retry=0 && \
+            flag=false && \
+            status="" && \
             until "${flag}" || (( "${retry}" == 1000 )); do
+              if (( "${retry}" > 0 )); then
+                {
+                  curl -s -X POST \
+                    ${{ secrets.ENDPOINT_URL }} \
+                    -H "Accept: application/json" \
+                    -H "Content-type: application/json" \
+                    -m 18000 \
+                    --retry 100 \
+                    --retry-all-errors \
+                    -o /dev/null \
+                    -d @- <<EOF
+                  {
+                    "status": "progress",
+                    "number": ${{ github.run_number }},
+                    "startTime": ${{ toJSON(github.event.client_payload.startTime) }},
+                    "channel": ${{ toJSON(github.event.client_payload.channel) }},
+                    "message": ${{ toJSON(github.event.client_payload.message) }},
+                    "token": ${{ toJSON(github.event.client_payload.token) }},
+                    "link": ${{ toJSON(github.event.client_payload.link) }},
+                    "content": "🔍Checking link status...(Retry ${retry} / 1000)"
+                  }
+          EOF
+                } || :
+              fi
               echo "Retry count: ${retry}"
               echo "Flag status: ${flag}"
               status="$(curl -siL -m 18000 --retry 100 --retry-all-errors ${{ toJSON(github.event.client_payload.link) }} -o /dev/null -w '%{http_code}\n';:)"
@@ -301,9 +325,9 @@ jobs:
             }
           EOF
           } || :
-          retry=0
-          flag=false
-          not_video=false
+          retry=0 && \
+          flag=false && \
+          not_video=false && \
           cookie_path=$(pwd) && \
           url="$(echo ${{ toJSON(github.event.client_payload.link) }} | awk -F '/' '{OFS="/";sub(/^x.com$/,"twitter.com",$3);print $0}')" && \
           echo "${{ secrets.TWITTER_COOKIES }}" >> cookie.txt && \
