@@ -457,6 +457,7 @@ jobs:
                     -movflags +faststart \
                     -map_metadata -1 \
                     -map_chapters -1 \
+                    -dn \
                     -fs 10MB \
                     "${dir}/conv/${file_name%.*}.mp4" 2>&1 | \
                   awk -f "${dir}/progress.awk" >> "${progress}"
