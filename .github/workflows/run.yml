@@ -453,7 +453,7 @@ jobs:
                     -threads "${threads}" \
                     -preset medium -crf 36 -r 25 -pix_fmt yuv420p \
                     -c:v libx265 -tag:v hvc1 \
-                    -c:a libopus -b:a 48k -vbr on -application audio \
+                    -c:a libopus -b:a 48k -vbr on -compression_level 10 -application audio \
                     -movflags +faststart \
                     -map_metadata -1 \
                     -map_chapters -1 \
