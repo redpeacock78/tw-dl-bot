@@ -452,7 +452,7 @@ jobs:
                   ffmpeg -i "${file_name}" \
                     -threads "${threads}" \
                     -preset medium -crf 36 -r 25 \
-                    -c:v libx265 -x265-params "slices=$(( ${threads} / 2 ))" -tag:v hvc1 \
+                    -c:v libx265 -tag:v hvc1 \
                     -c:a libopus -b:a 48k -vbr on -application audio \
                     -movflags +faststart \
                     -fs 10MB \
