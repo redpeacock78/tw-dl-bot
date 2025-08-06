@@ -450,9 +450,11 @@ jobs:
                   # ffmpeg -i "${file_name}" -c:v libvpx -r 25 -crf 20 -b:v 0 -fs $(( 10 / "${files_num}" ))MB "${dir}/conv/${file_name%.*}.webm" 2>&1 | \
                   threads="$(nproc)"
                   ffmpeg -i "${file_name}" \
-                    -c:v libx264 -crf 32 -preset slow -threads "${threads}" \
+                    -threads "${threads}" \
+                    -preset slow -crf 32 -r 25 \
+                    -c:v libx265 -tag:v hvc1 \
                     -c:a libopus -b:a 64k -vbr on -application audio \
-                    -r 25 -movflags +faststart \
+                    -movflags +faststart \
                     -fs 10MB \
                     "${dir}/conv/${file_name%.*}.mp4" 2>&1 | \
                   awk -f "${dir}/progress.awk" >> "${progress}"
