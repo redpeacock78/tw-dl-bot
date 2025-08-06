@@ -451,7 +451,7 @@ jobs:
                   threads="$(nproc)"
                   ffmpeg -i "${file_name}" \
                     -threads "${threads}" \
-                    -preset slow -crf 35 -r 25 \
+                    -preset medium -crf 35 -r 25 \
                     -c:v libx265 -tag:v hvc1 \
                     -c:a libopus -b:a 48k -vbr on -application audio \
                     -movflags +faststart \
