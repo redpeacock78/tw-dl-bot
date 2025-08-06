@@ -451,7 +451,7 @@ jobs:
                   threads="$(nproc)"
                   ffmpeg -i "${file_name}" \
                     -c:v libx264 -crf 32 -preset slow -threads "${threads}" \
-                    -c:a aac -b:a 64k -ar 44100 \
+                    -c:a libopus -b:a 64k -vbr on -application audio \
                     -r 25 -movflags +faststart \
                     -fs 10MB \
                     "${dir}/conv/${file_name%.*}.mp4" 2>&1 | \
