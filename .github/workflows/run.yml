@@ -455,6 +455,8 @@ jobs:
                     -c:v libx265 -tag:v hvc1 \
                     -c:a libopus -b:a 48k -vbr on -application audio \
                     -movflags +faststart \
+                    -map_metadata -1 \
+                    -map_chapters -1 \
                     -fs 10MB \
                     "${dir}/conv/${file_name%.*}.mp4" 2>&1 | \
                   awk -f "${dir}/progress.awk" >> "${progress}"
