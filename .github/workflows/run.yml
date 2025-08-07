@@ -195,7 +195,7 @@ jobs:
           while true; do
             sleep "${interval}"
             current="$(openssl sha256 -r ${1} | awk '{print $1}')"
-            if [[ "${last}" != "{current}" ]]; then
+            if [[ "${last}" != "${current}" ]]; then
               retry=0 && \
               flag=false && \
               until "${flag}" || (( "${retry}" == 1000 )); do
