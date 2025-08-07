@@ -370,7 +370,16 @@ jobs:
                 flag=true
                 not_video=true
               else
-                :
+                if (( "$(ls -tr | wc -l )" > 9 )); then
+                  for file_name in $(ls -tr); do
+                    if ffprobe -v error -f lavfi movie="${file_name}" > /dev/null 2>&1; then
+                      flag=true
+                    else
+                      :
+                    fi
+                  done
+                else
+                  :
               fi
             else
               not_video=true
