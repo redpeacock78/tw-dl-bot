@@ -369,8 +369,8 @@ jobs:
               if [[ "$(cat ${yt_result} | tail -n1 | grep 'No video')" != "" ]]; then
                 flag=true
                 not_video=true
-              else
-                if (( "$(ls -tr | wc -l )" > 9 )); then
+              elif [[ "$(cat ${yt_result} | tail -n1 | grep 'Finished downloading playlist')" != "" ]]; then
+                if (( "$(ls -tr | wc -l )" > 0 )); then
                   for file_name in $(ls -tr); do
                     if ffprobe -v error -f lavfi movie="${file_name}" > /dev/null 2>&1; then
                       flag=true
@@ -379,7 +379,10 @@ jobs:
                     fi
                   done
                 else
-                  :
+                  not_video=true
+                fi
+              else
+                :
               fi
             else
               not_video=true
