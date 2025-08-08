@@ -23,7 +23,7 @@ const createProgressMessage = (
           !i
             ? []
             : n === 0
-            ? [`**${i}**${Constants.AppEmoji.LOADING_SPINNER}`]
+            ? [`${Constants.AppEmoji.LOADING_SPINNER}**${i}**`]
             : [`\`${i}\``]
         )
         .join("\n"),
