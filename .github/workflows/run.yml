@@ -430,28 +430,6 @@ jobs:
                 :
               else
                 num=$((count++))
-                {
-                  curl -s -X POST \
-                    ${{ secrets.ENDPOINT_URL }} \
-                    -H "Accept: application/json" \
-                    -H "Content-type: application/json" \
-                    -m 18000 \
-                    --retry 100 \
-                    --retry-all-errors \
-                    -o /dev/null \
-                    -d @- <<EOF
-                  {
-                    "status": "progress",
-                    "number": ${{ github.run_number }},
-                    "startTime": ${{ toJSON(github.event.client_payload.startTime) }},
-                    "channel": ${{ toJSON(github.event.client_payload.channel) }},
-                    "message": ${{ toJSON(github.event.client_payload.message) }},
-                    "token": ${{ toJSON(github.event.client_payload.token) }},
-                    "link": ${{ toJSON(github.event.client_payload.link) }},
-                    "content": "🔁Converting...(${num} / ${#file_list[@]})"
-                  }
-          EOF
-                } || :
                 threads="$(nproc)"
                 target_bytes=$((10 * 1024 * 1024))
                 aud_kbps=48
@@ -468,8 +446,7 @@ jobs:
                   ffmpeg -y \
                     -i "${file_name}" \
                     -threads "${threads}" \
-                    -c:v libx265 -preset medium -b:v "${Bv}" -maxrate "${Bv}" -bufsize $(("${Bv}" * 2)) \
-                    -pix_fmt yuv420p -tag:v hvc1 \
+                    -c:v libx265 -preset ultrafast -b:v "${Bv}" -maxrate "${Bv}" -bufsize $(("${Bv}" * 2)) \
                     -an \
                     -pass 1 -passlogfile "${dir}/analyze/${file_name%.*}.log" \
                     -f mp4 /dev/null 2>&1 | \
