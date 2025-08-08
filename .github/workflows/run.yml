@@ -579,46 +579,34 @@ jobs:
             else
               options+=(-F "oversize=true")
             fi
-            curl -s -X POST \
-              -H "Content-type: multipart/form-data" \
-              -m 18000 \
-              --retry 100 \
-              --retry-all-errors \
-              -o /dev/null \
-              "${options[@]}" \
-              ${{ secrets.ENDPOINT_URL }}
-          else
-            file_name="$(ls)" && \
-            # if (( "$(wc -c < "${file_name}")" <= 26214400 )); then
-            if (( "$(wc -c < "${file_name}")" <= 10485760 )); then
-              echo "Total size: $(wc -c < "${file_name}")"
+            retry=0 && \
+            flag=false && \
+            until "${flag}" || (( "${retry}" == 1000 )); do
+              echo "Retry count: ${retry}"
+              echo "Flag status: ${flag}"
               curl -s -X POST \
                 -H "Content-type: multipart/form-data" \
                 -m 18000 \
                 --retry 100 \
                 --retry-all-errors \
                 -o /dev/null \
-                -F "status=success" \
-                -F 'number=${{ github.run_number }}' \
-                -F "commandType=dl" \
-                -F "actionType=single" \
-                -F "convert=false" \
-                -F "oversize=false" \
-                -F "size=$(wc -c < "${file_name}")" \
-                -F 'startTime=${{ toJSON(github.event.client_payload.startTime) }}' \
-                -F 'channel=${{ toJSON(github.event.client_payload.channel) }}' \
-                -F 'message=${{ toJSON(github.event.client_payload.message) }}' \
-                -F 'token=${{ toJSON(github.event.client_payload.token) }}' \
-                -F 'link=${{ toJSON(github.event.client_payload.link) }}' \
-                -F "name1=${file_name}" \
-                -F "file1=@${file_name}" \
-                ${{ secrets.ENDPOINT_URL }}
-            else
-              # total_size=$(wc -c < "${dir}/conv/${file_name%.*}.webm")
-              total_size=$(wc -c < "${dir}/conv/${file_name%.*}.mp4")
-              echo "Total size: ${total_size}"
-              # if (( "${total_size}" <= 26214400 )); then
-              if (( "${total_size}" <= 10485760 )); then
+                "${options[@]}" \
+                ${{ secrets.ENDPOINT_URL }} && \
+              flag=true || \
+              {
+                ((retry++)) || true
+              }
+            done
+          else
+            file_name="$(ls)" && \
+            # if (( "$(wc -c < "${file_name}")" <= 26214400 )); then
+            if (( "$(wc -c < "${file_name}")" <= 10485760 )); then
+              echo "Total size: $(wc -c < "${file_name}")"
+              retry=0 && \
+              flag=false && \
+              until "${flag}" || (( "${retry}" == 1000 )); do
+                echo "Retry count: ${retry}"
+                echo "Flag status: ${flag}"
                 curl -s -X POST \
                   -H "Content-type: multipart/form-data" \
                   -m 18000 \
@@ -629,17 +617,59 @@ jobs:
                   -F 'number=${{ github.run_number }}' \
                   -F "commandType=dl" \
                   -F "actionType=single" \
-                  -F "convert=true" \
+                  -F "convert=false" \
                   -F "oversize=false" \
-                  -F "size=${total_size}" \
+                  -F "size=$(wc -c < "${file_name}")" \
                   -F 'startTime=${{ toJSON(github.event.client_payload.startTime) }}' \
                   -F 'channel=${{ toJSON(github.event.client_payload.channel) }}' \
                   -F 'message=${{ toJSON(github.event.client_payload.message) }}' \
                   -F 'token=${{ toJSON(github.event.client_payload.token) }}' \
                   -F 'link=${{ toJSON(github.event.client_payload.link) }}' \
-                  -F "name1=${file_name%.*}.mp4" \
-                  -F "file1=@${dir}/conv/${file_name%.*}.mp4" \
-                  ${{ secrets.ENDPOINT_URL }}
+                  -F "name1=${file_name}" \
+                  -F "file1=@${file_name}" \
+                  ${{ secrets.ENDPOINT_URL }} && \
+                flag=true || \
+                {
+                  ((retry++)) || true
+                }
+              done
+            else
+              # total_size=$(wc -c < "${dir}/conv/${file_name%.*}.webm")
+              total_size=$(wc -c < "${dir}/conv/${file_name%.*}.mp4")
+              echo "Total size: ${total_size}"
+              # if (( "${total_size}" <= 26214400 )); then
+              if (( "${total_size}" <= 10485760 )); then
+                retry=0 && \
+                flag=false && \
+                until "${flag}" || (( "${retry}" == 1000 )); do
+                  echo "Retry count: ${retry}"
+                  echo "Flag status: ${flag}"
+                  curl -s -X POST \
+                    -H "Content-type: multipart/form-data" \
+                    -m 18000 \
+                    --retry 100 \
+                    --retry-all-errors \
+                    -o /dev/null \
+                    -F "status=success" \
+                    -F 'number=${{ github.run_number }}' \
+                    -F "commandType=dl" \
+                    -F "actionType=single" \
+                    -F "convert=true" \
+                    -F "oversize=false" \
+                    -F "size=${total_size}" \
+                    -F 'startTime=${{ toJSON(github.event.client_payload.startTime) }}' \
+                    -F 'channel=${{ toJSON(github.event.client_payload.channel) }}' \
+                    -F 'message=${{ toJSON(github.event.client_payload.message) }}' \
+                    -F 'token=${{ toJSON(github.event.client_payload.token) }}' \
+                    -F 'link=${{ toJSON(github.event.client_payload.link) }}' \
+                    -F "name1=${file_name%.*}.mp4" \
+                    -F "file1=@${dir}/conv/${file_name%.*}.mp4" \
+                    ${{ secrets.ENDPOINT_URL }} && \
+                  flag=true || \
+                  {
+                    ((retry++)) || true
+                  }
+                done
               else
                 status="sizeover" && \
                 echo "status=${status}" >> "${GITHUB_OUTPUT}" && \
