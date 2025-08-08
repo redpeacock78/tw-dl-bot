@@ -204,7 +204,7 @@ jobs:
                   echo "Flag status: ${flag}"
                 fi
                 progress="$(cat ${1} | tail -n1)"
-                echo '{"status": "progress", "number": "'"${run_number}"'", "startTime": "'"${start_time}"'", "channel": "'"${channel}"'", "message": "'"${message}"'", "token": "'"${token}"'", "link": "'"${link}"'", "content": "'"🔁Converting...(${2} / ${3})\n${progress}"'"}' | \
+                echo '{"status": "progress", "number": "'"${run_number}"'", "startTime": "'"${start_time}"'", "channel": "'"${channel}"'", "message": "'"${message}"'", "token": "'"${token}"'", "link": "'"${link}"'", "content": "'"${4}(${2} / ${3})\n${progress}"'"}' | \
                 curl -s -X POST \
                   ${{ secrets.ENDPOINT_URL }} \
                   -H "Accept: application/json" \
@@ -452,34 +452,68 @@ jobs:
                   }
           EOF
                 } || :
-                progress="$(mktemp)"
-                pid="$(mktemp)"
-                nohup conv_progress.sh "${progress}" ${num} ${#file_list[@]} &
-                echo $! > "${pid}" && \
+                threads="$(nproc)"
+                target_bytes=$((10 * 1024 * 1024))
+                aud_kbps=48
+                overhead=0.04
+                dur="$(ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 "${file_name}")"
+                dur_s=${dur%.*};(( dur_s > 0 )) || dur_s=1
+                Bv="$(awk -v t="${target_bytes}" -v oh="${overhead}" -v a="${aud_kbps}" -v d="${dur_s}" 'BEGIN{tb=t*8;ab=a*1000*d;usable=(tb*(1.0-oh))-ab;if(usable<12000*d)usable=12000*d;printf("%d\n", usable/d)}')"
+                progress_an="$(mktemp)"
+                pid_an="$(mktemp)"
+                nohup conv_progress.sh "${progress_an}" ${num} ${#file_list[@]} "🧪Analyzing..." &
+                echo $! > "${pid_an}" && \
+                mkdir -p "${dir}/analyze" && \
+                {
+                  ffmpeg -y \
+                    -i "${file_name}" \
+                    -threads "${threads}" \
+                    -c:v libx265 -preset medium -b:v "${Bv}" -maxrate "${Bv}" -bufsize $(("${Bv}" * 2)) \
+                    -pix_fmt yuv420p -tag:v hvc1 \
+                    -an \
+                    -pass 1 -passlogfile "${dir}/analyze/${file_name%.*}.log" \
+                    -f mp4 /dev/null 2>&1 | \
+                  awk -f "${dir}/progress.awk" >> "${progress_an}"
+                }
+                cat "${pid_an}" | xargs kill -term 2>/dev/null || :
+                progress_cv="$(mktemp)"
+                pid_cv="$(mktemp)"
+                nohup conv_progress.sh "${progress_cv}" ${num} ${#file_list[@]} "🔁Converting..." &
+                echo $! > "${pid_cv}" && \
                 mkdir -p "${dir}/conv" && \
                 {
                   # ffmpeg -i "${file_name}" -c:v libvpx -r 25 -crf 20 -b:v 0 -fs $(( 25 / "${files_num}" ))MB "${dir}/conv/${file_name%.*}.webm" 2>&1 | \
                   # ffmpeg -i "${file_name}" -c:v libvpx -r 25 -crf 20 -b:v 0 -fs $(( 10 / "${files_num}" ))MB "${dir}/conv/${file_name%.*}.webm" 2>&1 | \
-                  threads="$(nproc)"
+                  # ffmpeg -i "${file_name}" \
+                  #   -threads "${threads}" \
+                  #   -preset medium -crf 36 -r 25 -pix_fmt yuv420p \
+                  #   -c:v libx265 -tag:v hvc1 \
+                  #   -c:a libopus -b:a 48k -vbr on -compression_level 10 -application audio \
+                  #   -movflags +faststart \
+                  #   -map_metadata -1 \
+                  #   -map_chapters -1 \
+                  #   -dn \
+                  #   -fs 10MB \
+                  #   "${dir}/conv/${file_name%.*}.mp4" 2>&1 | \
                   ffmpeg -i "${file_name}" \
                     -threads "${threads}" \
-                    -preset medium -crf 36 -r 25 -pix_fmt yuv420p \
-                    -c:v libx265 -tag:v hvc1 \
-                    -c:a libopus -b:a 48k -vbr on -compression_level 10 -application audio \
+                    -c:v libx265 -preset medium -b:v "${Bv}" -maxrate "${Bv}" -bufsize $(("${Bv}" * 2)) \
+                    -pix_fmt yuv420p -tag:v hvc1 \
+                    -c:a libopus -b:a "${aud_kbps}k" -vbr on -compression_level 10 -application audio \
                     -movflags +faststart \
                     -map_metadata -1 \
                     -map_chapters -1 \
                     -dn \
-                    -fs 10MB \
+                    -pass 2 -passlogfile "${dir}/analyze/${file_name%.*}.log" \
                     "${dir}/conv/${file_name%.*}.mp4" 2>&1 | \
-                  awk -f "${dir}/progress.awk" >> "${progress}"
+                  awk -f "${dir}/progress.awk" >> "${progress_cv}"
                 }
                 if [[ ${num} != ${#file_list[@]} ]]; then
                   sleep 2
                 else
                   sleep 4
                 fi
-                cat "${pid}" | xargs kill -term
+                cat "${pid_cv}" | xargs kill -term 2>/dev/null || :
               fi
             done
           fi
