@@ -20,7 +20,11 @@ const createProgressMessage = (
       content: info.content
         .split("\n")
         .flatMap((i: string, n: number): string[] =>
-          !i ? [] : n === 0 ? [`**${i}**`] : [`\`${i}\``]
+          !i
+            ? []
+            : n === 0
+            ? [`**${i}**${Constants.AppEmoji.LOADING_SPINNER}`]
+            : [`\`${i}\``]
         )
         .join("\n"),
       embeds: [
