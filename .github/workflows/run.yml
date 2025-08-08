@@ -167,7 +167,12 @@ jobs:
                   echo "Retry count: ${retry}"
                   echo "Flag status: ${flag}"
                 fi
-                progress="$(cat ${1} | tail -n1 | grep -v -e '^/' || :)"
+                progress="$(cat ${1} | tail -n1)"
+                if grep -e '^/' <<< "${progress}" > /dev/null; then
+                  progress="00:00:00${progress}"
+                else
+                  :
+                fi
                 echo '{"status": "progress", "number": "'"${run_number}"'", "startTime": "'"${start_time}"'", "channel": "'"${channel}"'", "message": "'"${message}"'", "token": "'"${token}"'", "link": "'"${link}"'", "content": "'"${4}(${2} / ${3})\n${progress}"'"}' | \
                 curl -s -X POST \
                   ${{ secrets.ENDPOINT_URL }} \
