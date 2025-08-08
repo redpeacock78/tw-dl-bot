@@ -23,17 +23,18 @@ const createProgressMessage = (
           !i
             ? []
             : n === 0
-            ? [`**${i}**`].flatMap((ii) =>
-                ii
+            ? [
+                `**${i}**`
                   .split("(")
-                  .map((iii, n, a) =>
+                  .map((ii, n, a) =>
                     a.length > 1
                       ? n === 0
-                        ? iii
-                        : `${Constants.AppEmoji.LOADING_SPINNER}(${iii}`
-                      : `${Constants.AppEmoji.LOADING_SPINNER}${iii}`
+                        ? ii
+                        : `${Constants.AppEmoji.LOADING_SPINNER}(${ii}`
+                      : `${ii}${Constants.AppEmoji.LOADING_SPINNER}`
                   )
-              )
+                  .join(""),
+              ]
             : [`\`${i}\``]
         )
         .join("\n"),
