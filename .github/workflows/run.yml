@@ -448,6 +448,8 @@ jobs:
                   mux_ov_pct="$(awk '/muxing overhead:/ {val=$NF;gsub(/%/,"",val);print val}' "${probe_log}")"
                   if [[ -n "${mux_ov_pct}" ]]; then
                     overhead="$(awk -v m="${mux_ov_pct:-0}" 'BEGIN{printf("%.4f", (m/100) + 0.005)}')"
+                  else
+                    overhead=0.04
                   fi
                   cat "${pid_pb}" | xargs kill -term 2>/dev/null || :
                 }
