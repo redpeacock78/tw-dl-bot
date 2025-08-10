@@ -453,7 +453,7 @@ jobs:
                   fi
                   cat "${pid_pb}" | xargs kill -term 2>/dev/null || :
                 }
-                Bv="$(awk -v t="${target_bytes}" -v oh="${overhead}" -v a="${aud_kbps}" -v d="${dur_s}" 'BEGIN{tb=t*8;ab=a*1000*d;usable=(tb*(1.0-oh))-ab;if(usable<120000*d)usable=120000*d;printf("%d\n", usable/d)}')"
+                Bv="$(awk -v t="${target_bytes}" -v oh="${overhead}" -v a="${aud_kbps}" -v d="${dur_s}" 'BEGIN{tb=t*8;ab=a*1000*d;usable=(tb*(1.0-oh))-ab;if(usable<12000*d)usable=12000*d;printf("%d\n", usable/d)}')"
                 {
                   progress_an="$(mktemp)"
                   pid_an="$(mktemp)"
