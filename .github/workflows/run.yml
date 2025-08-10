@@ -434,7 +434,7 @@ jobs:
                   echo $! > "${pid_pb}" && \
                   probe_log="$(mktemp)" && \
                   mid_ss="$(awk -v d="$(ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 "${file_name}")" 'BEGIN{printf("%d\n", (int(d)>2? int(d/2) : 0))}')"
-                  ffmpeg -y -v error \
+                  ffmpeg -y -v info \
                     -ss "${mid_ss}" -t 0.5 -i "${file_name}" \
                     -c:v libx265 -preset ultrafast -b:v 500k -maxrate 500k -bufsize 1M \
                     -c:a libopus -b:a "${aud_kbps}k" -vbr on -compression_level 10 -application audio \
@@ -481,10 +481,7 @@ jobs:
                       -c:v libx265 -preset medium -b:v "${Bv}" -maxrate "${Bv}" -bufsize $(("${Bv}" * 2)) \
                       -pix_fmt yuv420p -tag:v hvc1 \
                       -c:a libopus -b:a "${aud_kbps}k" -vbr on -compression_level 10 -application audio \
-                      -movflags +faststart \
-                      -map_metadata -1 \
-                      -map_chapters -1 \
-                      -dn \
+                      -movflags +faststart -map_metadata -1 -map_chapters -1 -dn \
                       -pass 2 -passlogfile "${dir}/analyze/${file_name%.*}.log" \
                       "${dir}/conv/${file_name%.*}.mp4" 2>&1 | \
                     awk -f "${dir}/progress.awk" >> "${progress_cv}"
