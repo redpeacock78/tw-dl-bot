@@ -438,7 +438,7 @@ jobs:
                   t_sec="$(awk -v d="${dur:-0}" 'BEGIN{t=d*0.05;if(t<1.0)t=1.0;if(t>10.0)t=10.0;printf("%.2f\n", t)}')" && \
                   mid_ss="$(awk -v d="${dur:-0}" -v t="${t_sec:-1}" 'BEGIN{ss=d/2.0-t/2.0;if(ss<0)ss=0;printf("%.2f\n", ss)}')"
                   ffmpeg -y -v info \
-                    -ss "${mid_ss}" -t 5 -i "${file_name}" \
+                    -ss "${mid_ss}" -t "${t_sec}" -i "${file_name}" \
                     -c:v libx265 -preset ultrafast -b:v 500k -maxrate 500k -bufsize 1M \
                     -c:a libopus -b:a "${aud_kbps}k" -vbr on -compression_level 10 -application audio \
                     -movflags +faststart -map_metadata -1 -map_chapters -1 -dn \
