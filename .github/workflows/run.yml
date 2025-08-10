@@ -428,7 +428,7 @@ jobs:
                 aud_kbps=48
                 overhead=0.04
                 dur="$(ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 "${file_name}")"
-                dur_s=${dur};(( dur_s > 0 )) || dur_s=1
+                dur_s=${dur%.*};(( dur_s > 0 )) || dur_s=1
                 {
                   progress_pb="$(mktemp)"
                   pid_pb="$(mktemp)"
