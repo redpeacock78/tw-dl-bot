@@ -435,8 +435,8 @@ jobs:
                   nohup conv_progress.sh "${progress_pb}" ${num} ${#file_list[@]} "🔎Probing..." &
                   echo $! > "${pid_pb}" && \
                   probe_log="$(mktemp)" && \
-                  t_sec="$(awk -v d="${dur:-0}" 'BEGIN{t=d * 0.05;if (t < 1.0) t=1.0;if (t > 10.0) t=10.0;printf("%.2f\n", t)}')" && \
-                  mid_ss="$(awk -v d="${dur:-0}" -v t="${t_sec:-1}" 'BEGIN{ss=d/2.0 - t/2.0;if (ss < 0) ss=0;printf("%.2f\n", ss)}')"
+                  t_sec="$(awk -v d="${dur:-0}" 'BEGIN{t=d*0.05;if(t<1.0)t=1.0;if(t>10.0)t=10.0;printf("%.2f\n", t)}')" && \
+                  mid_ss="$(awk -v d="${dur:-0}" -v t="${t_sec:-1}" 'BEGIN{ss=d/2.0-t/2.0;if(ss<0)ss=0;printf("%.2f\n", ss)}')"
                   ffmpeg -y -v info \
                     -ss "${mid_ss}" -t 5 -i "${file_name}" \
                     -c:v libx265 -preset ultrafast -b:v 500k -maxrate 500k -bufsize 1M \
@@ -447,7 +447,7 @@ jobs:
                       >(cat > "${probe_log}") > /dev/null
                   mux_ov_pct="$(awk '/muxing overhead:/ {val=$NF;gsub(/%/,"",val);print val}' "${probe_log}")"
                   if [[ -n "${mux_ov_pct}" ]]; then
-                    overhead="$(awk -v m="${mux_ov_pct:-0}" 'BEGIN{printf("%.4f", (m/100) + 0.005)}')"
+                    overhead="$(awk -v m="${mux_ov_pct:-0}" 'BEGIN{printf("%.4f\n", (m/100) + 0.005)}')"
                   else
                     overhead=0.04
                   fi
