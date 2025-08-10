@@ -416,10 +416,11 @@ jobs:
                     -c:a libopus -b:a "${aud_kbps}k" -vbr on -compression_level 10 -application audio \
                     -movflags +faststart -map_metadata -1 -map_chapters -1 -dn \
                     -f mp4 /dev/null 2>&1 | \
-                  pee "awk -f ${dir}/progress.awk >> ${progress_pb}" "tee ${probe_log} > /dev/null"
-                  mux_ov_pct="$(awk '/muxing overhead:/ {gsub(/%/,"",$13);print $13}' "${probe_log}")"
+                  tee >(awk -f "${dir}/progress.awk" >> "${progress_pb}") \
+                      >(cat > "${probe_log}") > /dev/null
+                  mux_ov_pct="$(awk '/muxing overhead:/ {val=$NF;gsub(/%/,"",val);print val}' "${probe_log}")"
                   if [[ -n "${mux_ov_pct}" ]]; then
-                    overhead="$(awk -v m="${mux_ov_pct}" 'BEGIN{printf("%.4f", m + 0.01)}')"
+                    overhead="$(awk -v m="${mux_ov_pct:-0}" 'BEGIN{printf("%.4f", m + 0.01)}')"
                   fi
                   cat "${pid_pb}" | xargs kill -term 2>/dev/null || :
                 }
