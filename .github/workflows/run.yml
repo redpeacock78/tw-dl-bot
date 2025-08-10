@@ -483,6 +483,7 @@ jobs:
                       -c:a libopus -b:a "${aud_kbps}k" -vbr on -compression_level 10 -application audio \
                       -movflags +faststart -map_metadata -1 -map_chapters -1 -dn \
                       -pass 2 -passlogfile "${dir}/analyze/${file_name%.*}.log" \
+                      -fs 10MB \
                       "${dir}/conv/${file_name%.*}.mp4" 2>&1 | \
                     awk -f "${dir}/progress.awk" >> "${progress_cv}"
                   }
