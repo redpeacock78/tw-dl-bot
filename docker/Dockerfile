@@ -1,7 +1,7 @@
 FROM ubuntu:latest
 
 RUN apt-get update && \
-  apt-get install -y ffmpeg gawk curl jq bc moreutils && \
+  apt-get install -y ffmpeg gawk curl jq bc && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/* && \
   stable_url="https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp" && \
