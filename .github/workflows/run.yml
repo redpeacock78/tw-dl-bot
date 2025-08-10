@@ -325,7 +325,7 @@ jobs:
                   "message": ${{ toJSON(github.event.client_payload.message) }},
                   "token": ${{ toJSON(github.event.client_payload.token) }},
                   "link": ${{ toJSON(github.event.client_payload.link) }},
-                  "content": "⏬Downloading... (Retry ${retry} / 1000)"
+                  "content": "⏬Downloading...(Retry ${retry} / 1000)"
                 }
           EOF
               } || :
