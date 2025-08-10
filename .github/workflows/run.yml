@@ -306,6 +306,30 @@ jobs:
           until "${flag}" || (( "${retry}" == 1000 )); do
             echo "Retry count: ${retry}"
             echo "Flag status: ${flag}"
+            if (( "${retry}" > 0 )); then
+              {
+                curl -s -X POST \
+                  ${{ secrets.ENDPOINT_URL }} \
+                  -H "Accept: application/json" \
+                  -H "Content-type: application/json" \
+                  -m 18000 \
+                  --retry 100 \
+                  --retry-all-errors \
+                  -o /dev/null \
+                  -d @- <<EOF
+                {
+                  "status": "progress",
+                  "number": ${{ github.run_number }},
+                  "startTime": ${{ toJSON(github.event.client_payload.startTime) }},
+                  "channel": ${{ toJSON(github.event.client_payload.channel) }},
+                  "message": ${{ toJSON(github.event.client_payload.message) }},
+                  "token": ${{ toJSON(github.event.client_payload.token) }},
+                  "link": ${{ toJSON(github.event.client_payload.link) }},
+                  "content": "⏬Downloading... (Retry ${retry} / 1000)"
+                }
+          EOF
+              } || :
+            fi
             yt_result="$(mktemp)"
             yt-dlp \
               -R 1000 \
