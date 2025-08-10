@@ -428,7 +428,7 @@ jobs:
                 aud_kbps=48
                 overhead=0.04
                 dur="$(ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 "${file_name}")"
-                dur_s=${dur%.*};(( dur_s > 0 )) || dur_s=1
+                dur_s=${dur};(( dur_s > 0 )) || dur_s=1
                 {
                   progress_pb="$(mktemp)"
                   pid_pb="$(mktemp)"
@@ -453,7 +453,7 @@ jobs:
                   fi
                   cat "${pid_pb}" | xargs kill -term 2>/dev/null || :
                 }
-                Bv="$(awk -v t="${target_bytes}" -v oh="${overhead}" -v a="${aud_kbps}" -v d="${dur_s}" 'BEGIN{tb=t*8;ab=a*1000*d;usable=(tb*(1.0-oh))-ab;if(usable<12000*d)usable=12000*d;printf("%d\n", usable/d)}')"
+                Bv="$(awk -v t="${target_bytes}" -v oh="${overhead}" -v a="${aud_kbps}" -v d="${dur_s}" 'BEGIN{tb=t*8;ab=a*1000*d;usable=(tb*(1.0-oh))-ab;if(usable<120000*d)usable=120000*d;printf("%d\n", usable/d)}')"
                 {
                   progress_an="$(mktemp)"
                   pid_an="$(mktemp)"
