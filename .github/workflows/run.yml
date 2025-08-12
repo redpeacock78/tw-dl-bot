@@ -459,8 +459,9 @@ jobs:
                   fi
                 }
                 {
-                  IFS="x" read -r w h fps_raw <<<"$(ffprobe -v error -select_streams v:0 -show_entries stream=width,height,avg_frame_rate -of csv=s=x:p=0 "${file_name}")"
-                  fps="$(awk -v r="${fps_raw}" 'BEGIN{n=split(r,a,"/");if(n==2 && a[2]>0){printf("%.6f\n",a[1]/a[2])}else if(n==1){printf("%.6f\n",a[1]+0.0)}else{printf("0.000000\n")}}')""
+                  info="$(ffprobe -v error -select_streams v:0 -show_entries stream=width,height,avg_frame_rate -of csv=s=x:p=0 "${file_name}")"
+                  IFS="x" read -r w h fps_raw <<< "${info}"
+                  fps="$(awk -v r="${fps_raw}" 'BEGIN{n=split(r,a,"/");if(n==2 && a[2]>0){printf("%.6f\n",a[1]/a[2])}else if(n==1){printf("%.6f\n",a[1]+0.0)}else{printf("0.000000\n")}}')"
                   calc_min_vbps="$(awk -v w="${w}" -v h="${h}" -v f="${fps}" -v c="${bpp_coef}" 'BEGIN{v=w*h*f*c;printf("%d\n",v)}')"
                   if (( "${h}" >= 1080 )); then
                     fixed_min_vbps=1200000
