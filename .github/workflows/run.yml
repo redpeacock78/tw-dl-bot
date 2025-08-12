@@ -530,8 +530,33 @@ jobs:
         id: upload
         shell: bash
         run: |
+          retry_curl() {
+            local max="${1}";shift
+            local delay="${1}";shift
+            [[ "${1:-1}" == "--" ]] && shift || true
+            local attempt=1
+            local status
+            while (( attempt <= max )); do
+              status="$(curl -sS -o /dev/null -w '%{http_code}' "${@}")"
+              if [[ "${status}" =~ ^2[0-9][0-9] ]]; then
+                return 0
+              fi
+              if [[ "${status}" == "499" || "${status}" -ge 500 || "${status}" == "408" || "${status}" == "429" ]]; then
+                echo "Retry ${attempt}/${max} failed with status ${status}. Retrying in ${delay} seconds..."
+                sleep "${delay}"
+                delay=$(( delay * 2 > 60 ? 60 : delay * 2 ))
+                ((attempt++))
+                continue
+              fi
+              echo ""Non-retriable error: ${status}"" >&2
+              return 22
+            done
+            echo "Exceeded retries. Last status: ${status}" >&2
+            return 22
+          }
           {
-            curl -s -X POST \
+            retry_curl 15 2 -- \
+              -X POST \
               ${{ secrets.ENDPOINT_URL }} \
               -H "Accept: application/json" \
               -H "Content-type: application/json" \
@@ -626,7 +651,8 @@ jobs:
             until "${flag}" || (( "${retry}" == 1000 )); do
               echo "Retry count: ${retry}"
               echo "Flag status: ${flag}"
-              curl -s -X POST \
+              retry_curl 15 2 -- \
+                -X POST \
                 -H "Content-type: multipart/form-data" \
                 -m 18000 \
                 --retry 100 \
@@ -649,7 +675,8 @@ jobs:
               until "${flag}" || (( "${retry}" == 1000 )); do
                 echo "Retry count: ${retry}"
                 echo "Flag status: ${flag}"
-                curl -s -X POST \
+                retry_curl 15 2 -- \
+                  -X POST \
                   -H "Content-type: multipart/form-data" \
                   -m 18000 \
                   --retry 100 \
@@ -686,7 +713,8 @@ jobs:
                 until "${flag}" || (( "${retry}" == 1000 )); do
                   echo "Retry count: ${retry}"
                   echo "Flag status: ${flag}"
-                  curl -s -X POST \
+                  retry_curl 15 2 -- \
+                    -X POST \
                     -H "Content-type: multipart/form-data" \
                     -m 18000 \
                     --retry 100 \
