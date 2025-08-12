@@ -425,7 +425,7 @@ jobs:
                 num=$((count++))
                 threads="$(nproc)"
                 target_bytes="$((10 * 1024 * 1024))"
-                target_bytes_eff="$(awk -v t="${target_bytes}" 'BEGIN{printf("%d\n",t*0.985)}')"
+                target_bytes_eff="$(awk -v t="${target_bytes}" 'BEGIN{printf("%d\n",t*0.99)}')"
                 aud_kbps=48
                 max_overhead=0.05
                 bpp_coef=0.06
