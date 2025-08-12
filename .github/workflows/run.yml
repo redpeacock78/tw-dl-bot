@@ -404,8 +404,8 @@ jobs:
           link=${{ toJSON(github.event.client_payload.link) }} && \
           cd download && \
           files_num=$(ls -tr | wc -l) && \
-          # if (( 26214400 < $(echo $(ls -trl|awk 'NR>1{print $5}'|tr \\n +)0|bc) )); then
-          if (( 10485760 < $(echo $(ls -trl|awk 'NR>1{print $5}'|tr \\n +)0|bc) )); then
+          # if (( 26214400 < $(echo $(ls -trl | awk 'NR>1{print $5}' | tr \\n +)0 | bc) )); then
+          if (( 10485760 < $(echo $(ls -trl | awk 'NR>1{print $5}' | tr \\n +)0 | bc) )); then
             file_list=()
             IFS=$'\n' && \
             for file_name in $(ls -tr); do
@@ -433,70 +433,72 @@ jobs:
                   progress_pb="$(mktemp)"
                   pid_pb="$(mktemp)"
                   nohup conv_progress.sh "${progress_pb}" ${num} ${#file_list[@]} "🔎Probing..." &
-                  echo $! > "${pid_pb}" && \
+                  echo "${!}" > "${pid_pb}" && \
                   probe_log="$(mktemp)" && \
-                  t_sec="$(awk -v d="${dur:-0}" 'BEGIN{t=d*0.05;if(t<1.0)t=1.0;if(t>10.0)t=10.0;printf("%.2f\n", t)}')" && \
-                  mid_ss="$(awk -v d="${dur:-0}" -v t="${t_sec:-1}" 'BEGIN{ss=d/2.0-t/2.0;if(ss<0)ss=0;printf("%.2f\n", ss)}')"
-                  ffmpeg -y -v info \
-                    -ss "${mid_ss}" -t "${t_sec}" -i "${file_name}" \
-                    -c:v libx265 -preset ultrafast -b:v 500k -maxrate 500k -bufsize 1M \
-                    -c:a libopus -b:a "${aud_kbps}k" -vbr on -compression_level 10 -application audio \
-                    -movflags +faststart -map_metadata -1 -map_chapters -1 -dn \
-                    -f mp4 /dev/null 2>&1 | \
-                  tee >(awk -f "${dir}/progress.awk" >> "${progress_pb}") \
-                      >(cat > "${probe_log}") > /dev/null
-                  mux_ov_pct="$(awk '/muxing overhead:/ {val=$NF;gsub(/%/,"",val);print val}' "${probe_log}")"
+                  t_sec="$(awk -v d="${dur:-0}" 'BEGIN{t=d*0.05;if(t<1.0)t=1.0;if(t>10.0)t=10.0;printf("%.2f\n",t)}')" && \
+                  mid_ss="$(awk -v d="${dur:-0}" -v t="${t_sec:-1}" 'BEGIN{ss=d/2.0-t/2.0;if(ss<0)ss=0;printf("%.2f\n",ss)}')"
+                  {
+                    ffmpeg -y -v info \
+                      -ss "${mid_ss}" -t "${t_sec}" -i "${file_name}" \
+                      -c:v libx265 -preset ultrafast -b:v 500k -maxrate 500k -bufsize 1M \
+                      -c:a libopus -b:a "${aud_kbps}k" -vbr on -compression_level 10 -application audio \
+                      -movflags +faststart -map_metadata -1 -map_chapters -1 -dn \
+                      -f mp4 /dev/null 2>&1 | \
+                    tee >(awk -f "${dir}/progress.awk" >> "${progress_pb}") \
+                        >(cat > "${probe_log}") > /dev/null
+                  }
+                  cat "${pid_pb}" | xargs kill -term 2>/dev/null || :
+                  mux_ov_pct="$(awk '/muxing overhead:/{val=$NF;gsub(/%/,"",val);print val}' "${probe_log}")"
                   if [[ -n "${mux_ov_pct}" ]]; then
-                    overhead="$(awk -v m="${mux_ov_pct:-0}" 'BEGIN{printf("%.4f\n", (m/100) + 0.005)}')"
+                    overhead="$(awk -v m="${mux_ov_pct:-0}" 'BEGIN{printf("%.4f\n",(m/100)+0.005)}')"
                   else
                     overhead=0.04
                   fi
-                  cat "${pid_pb}" | xargs kill -term 2>/dev/null || :
-                }
-                Bv="$(awk -v t="${target_bytes}" -v oh="${overhead}" -v a="${aud_kbps}" -v d="${dur_s}" 'BEGIN{tb=t*8;ab=a*1000*d;usable=(tb*(1.0-oh))-ab;if(usable<12000*d)usable=12000*d;printf("%d\n", usable/d)}')"
-                {
-                  progress_an="$(mktemp)"
-                  pid_an="$(mktemp)"
-                  nohup conv_progress.sh "${progress_an}" ${num} ${#file_list[@]} "🧪Analyzing..." &
-                  echo $! > "${pid_an}" && \
-                  mkdir -p "${dir}/analyze" && \
-                  {
-                    ffmpeg -y \
-                      -i "${file_name}" \
-                      -threads "${threads}" \
-                      -c:v libx265 -preset ultrafast -b:v "${Bv}" -maxrate "${Bv}" -bufsize $(("${Bv}" * 2)) \
-                      -an \
-                      -pass 1 -passlogfile "${dir}/analyze/${file_name%.*}.log" \
-                      -f mp4 /dev/null 2>&1 | \
-                    awk -f "${dir}/progress.awk" >> "${progress_an}"
-                  }
-                  cat "${pid_an}" | xargs kill -term 2>/dev/null || :
                 }
                 {
-                  progress_cv="$(mktemp)"
-                  pid_cv="$(mktemp)"
-                  nohup conv_progress.sh "${progress_cv}" ${num} ${#file_list[@]} "🔁Converting..." &
-                  echo $! > "${pid_cv}" && \
-                  mkdir -p "${dir}/conv" && \
+                  Bv="$(awk -v t="${target_bytes}" -v oh="${overhead}" -v a="${aud_kbps}" -v d="${dur_s}" 'BEGIN{tb=t*8;ab=a*1000*d;usable=(tb*(1.0-oh))-ab;if(usable<12000*d)usable=12000*d;printf("%d\n",usable/d)}')"
                   {
-                    ffmpeg -i "${file_name}" \
-                      -threads "${threads}" \
-                      -c:v libx265 -preset medium -b:v "${Bv}" -maxrate "${Bv}" -bufsize $(("${Bv}" * 2)) \
-                      -pix_fmt yuv420p -tag:v hvc1 \
-                      -c:a libopus -b:a "${aud_kbps}k" -vbr on -compression_level 10 -application audio \
-                      -movflags +faststart -map_metadata -1 -map_chapters -1 -dn \
-                      -pass 2 -passlogfile "${dir}/analyze/${file_name%.*}.log" \
-                      -fs 10MB \
-                      "${dir}/conv/${file_name%.*}.mp4" 2>&1 | \
-                    awk -f "${dir}/progress.awk" >> "${progress_cv}"
+                    progress_an="$(mktemp)"
+                    pid_an="$(mktemp)"
+                    nohup conv_progress.sh "${progress_an}" ${num} ${#file_list[@]} "🧪Analyzing..." &
+                    echo "${!}" > "${pid_an}" && \
+                    mkdir -p "${dir}/analyze" && \
+                    {
+                      ffmpeg -y \
+                        -i "${file_name}" \
+                        -threads "${threads}" \
+                        -c:v libx265 -preset ultrafast -b:v "${Bv}" -maxrate "${Bv}" -bufsize $(("${Bv}" * 2)) \
+                        -an \
+                        -pass 1 -passlogfile "${dir}/analyze/${file_name%.*}.log" \
+                        -f mp4 /dev/null 2>&1 | \
+                      awk -f "${dir}/progress.awk" >> "${progress_an}"
+                    }
+                    cat "${pid_an}" | xargs kill -term 2>/dev/null || :
                   }
-                  if [[ ${num} != ${#file_list[@]} ]]; then
-                    sleep 2
-                  else
-                    sleep 4
-                  fi
-                  cat "${pid_cv}" | xargs kill -term 2>/dev/null || :
+                  {
+                    progress_cv="$(mktemp)"
+                    pid_cv="$(mktemp)"
+                    nohup conv_progress.sh "${progress_cv}" ${num} ${#file_list[@]} "🔁Converting..." &
+                    echo "${!}" > "${pid_cv}" && \
+                    mkdir -p "${dir}/conv" && \
+                    {
+                      ffmpeg -i "${file_name}" \
+                        -threads "${threads}" \
+                        -c:v libx265 -preset medium -b:v "${Bv}" -maxrate "${Bv}" -bufsize $(("${Bv}" * 2)) \
+                        -pix_fmt yuv420p -tag:v hvc1 \
+                        -c:a libopus -b:a "${aud_kbps}k" -vbr on -compression_level 10 -application audio \
+                        -movflags +faststart -map_metadata -1 -map_chapters -1 -dn \
+                        -pass 2 -passlogfile "${dir}/analyze/${file_name%.*}.log" \
+                        -fs 10MB \
+                        "${dir}/conv/${file_name%.*}.mp4" 2>&1 | \
+                      awk -f "${dir}/progress.awk" >> "${progress_cv}"
+                    }
+                    cat "${pid_cv}" | xargs kill -term 2>/dev/null || :
+                  }
                 }
+                if [[ ${num} != ${#file_list[@]} ]]; then
+                  sleep 2
+                fi
               fi
             done
           fi
