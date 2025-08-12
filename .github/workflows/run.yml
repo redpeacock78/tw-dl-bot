@@ -428,6 +428,7 @@ jobs:
                 target_bytes_eff="$(awk -v t="${target_bytes}" 'BEGIN{printf("%d\n",t*0.985)}')"
                 aud_kbps=48
                 max_overhead=0.05
+                bpp_coef=0.06
                 dur="$(ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 "${file_name}")"
                 dur_s=${dur%.*};(( dur_s > 0 )) || dur_s=1
                 {
@@ -458,7 +459,24 @@ jobs:
                   fi
                 }
                 {
-                  Bv="$(awk -v t="${target_bytes_eff}" -v oh="${overhead}" -v a="${aud_kbps}" -v d="${dur_s}" 'BEGIN{tb=t*8;ab=a*1000*d;usable=(tb*(1.0-oh))-ab;if(usable<12000*d)usable=12000*d;printf("%d\n",usable/d)}')"
+                  IFS="x" read -r w h fps_raw <<<"$(ffprobe -v error -select_streams v:0 -show_entries stream=width,height,avg_frame_rate -of csv=s=x:p=0 "${file_name}")"
+                  fps="$(awk -v r="${fps_raw}" 'BEGIN{n=split(r,a,"/");if(n==2 && a[2]>0){printf("%.6f\n",a[1]/a[2])}else if(n==1){printf("%.6f\n",a[1]+0.0)}else{printf("0.000000\n")}}')""
+                  calc_min_vbps="$(awk -v w="${w}" -v h="${h}" -v f="${fps}" -v c="${bpp_coef}" 'BEGIN{v=w*h*f*c;printf("%d\n",v)}')"
+                  if (( "${h}" >= 1080 )); then
+                    fixed_min_vbps=1200000
+                  elif (( "${h}" >= 720 )); then
+                    fixed_min_vbps=800000
+                  elif (( "${h}" >= 480 )); then
+                    fixed_min_vbps=400000
+                  else
+                    fixed_min_vbps=250000
+                  fi
+                  if (( calc_min_vbps > fixed_min_vbps )); then
+                    min_vbps="${calc_min_vbps}"
+                  else
+                    min_vbps="${fixed_min_vbps}"
+                  fi
+                  Bv="$(awk -v t="${target_bytes_eff}" -v oh="${overhead}" -v a="${aud_kbps}" -v d="${dur_s}" -v minv="${min_vbps}" 'BEGIN{tb=t*8;ab=a*1000*d;usable=(tb*(1.0-oh))-ab;vbps=useable/d;if(vbps<minv)vbps=minv;printf("%d\n",vbps)}')"
                   {
                     progress_an="$(mktemp)"
                     pid_an="$(mktemp)"
