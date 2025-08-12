@@ -479,7 +479,7 @@ jobs:
                   else
                     min_vbps="${tmp_min_vbps}"
                   fi
-                  Bv="$(awk -v t="${target_bytes_eff}" -v oh="${overhead}" -v a="${aud_kbps}" -v d="${dur_s}" -v minv="${min_vbps}" 'BEGIN{tb=t*8;ab=a*1000*d;usable=(tb*(1.0-oh))-ab;vbps=useable/d;if(vbps<minv)vbps=minv;printf("%d\n",vbps)}')"
+                  Bv="${min_vbps}"
                   {
                     progress_an="$(mktemp)"
                     pid_an="$(mktemp)"
