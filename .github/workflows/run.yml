@@ -426,7 +426,7 @@ jobs:
                 threads="$(nproc)"
                 target_bytes=$((10 * 1024 * 1024))
                 aud_kbps=48
-                max_overhead=0.04
+                max_overhead=0.05
                 dur="$(ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 "${file_name}")"
                 dur_s=${dur%.*};(( dur_s > 0 )) || dur_s=1
                 {
@@ -450,7 +450,7 @@ jobs:
                   cat "${pid_pb}" | xargs kill -term 2>/dev/null || :
                   mux_ov_pct="$(awk '/muxing overhead:/{val=$NF;gsub(/%/,"",val);print val}' "${probe_log}")"
                   if [[ -n "${mux_ov_pct}" ]]; then
-                    extra="$(awk -v d="${dur_s}" 'BEGIN{e=0.005+(60.0/d)*0.001;if(e>0.008)e=0.008;printf("%.4f\n",e)}')"
+                    extra="$(awk -v d="${dur_s}" 'BEGIN{e=0.005+(60.0/d)*0.001;if(e>0.010)e=0.010;printf("%.4f\n",e)}')"
                     overhead="$(awk -v m="${mux_ov_pct:-0}" -v ex="${extra}" -v mx="${max_overhead}" 'BEGIN{v=(m/100.0)+ex;if(v>mx)v=mx;if(v<0.0)v=0.0;printf("%.4f\n",v)}')"
                   else
                     overhead="${max_overhead}"
