@@ -15,7 +15,11 @@ startBot(bot)
       serve(app.fetch);
       Bot.updateRAMUsage2BotStatus(bot);
     } catch (e) {
-      throw new Error(e);
+      throw e as Error;
     }
   })
-  .catch((): void => console.error("Failed!"));
+  .catch((e): void => {
+    console.group("Error while starting the bot");
+    console.error("Failed!", e);
+    console.groupEnd();
+  });
