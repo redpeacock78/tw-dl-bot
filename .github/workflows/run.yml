@@ -225,14 +225,13 @@ jobs:
           if [[ ${{ toJSON(github.event.client_payload.link) }} =~ ^http.*$ ]]; then
             {
               retry_curl.sh 15 2 -- \
-                -s -X POST \
+                -X POST \
                 ${{ secrets.ENDPOINT_URL }} \
                 -H "Accept: application/json" \
                 -H "Content-type: application/json" \
                 -m 18000 \
                 --retry 100 \
                 --retry-all-errors \
-                -o /dev/null \
                 -d @- <<EOF
               {
                 "status": "progress",
@@ -253,14 +252,14 @@ jobs:
               if (( "${retry}" > 0 )); then
                 {
                   retry_curl.sh 15 2 -- \
-                    -s -X POST \
+                    -X POST \
                     ${{ secrets.ENDPOINT_URL }} \
                     -H "Accept: application/json" \
                     -H "Content-type: application/json" \
                     -m 18000 \
                     --retry 100 \
                     --retry-all-errors \
-                    -o /dev/null \
+                    
                     -d @- <<EOF
                   {
                     "status": "progress",
@@ -299,14 +298,13 @@ jobs:
         run: |
           {
             retry_curl.sh 15 2 -- \
-              -s -X POST \
+              -X POST \
               ${{ secrets.ENDPOINT_URL }} \
               -H "Accept: application/json" \
               -H "Content-type: application/json" \
               -m 18000 \
               --retry 100 \
               --retry-all-errors \
-              -o /dev/null \
               -d @- <<EOF
             {
               "status": "progress",
@@ -335,14 +333,13 @@ jobs:
             if (( "${retry}" > 0 )); then
               {
                 retry_curl.sh 15 2 -- \
-                  -s -X POST \
+                  -X POST \
                   ${{ secrets.ENDPOINT_URL }} \
                   -H "Accept: application/json" \
                   -H "Content-type: application/json" \
                   -m 18000 \
                   --retry 100 \
                   --retry-all-errors \
-                  -o /dev/null \
                   -d @- <<EOF
                 {
                   "status": "progress",
@@ -564,7 +561,6 @@ jobs:
               -m 18000 \
               --retry 100 \
               --retry-all-errors \
-              -o /dev/null \
               -d @- <<EOF
             {
               "status": "progress",
@@ -658,7 +654,6 @@ jobs:
                 -m 18000 \
                 --retry 100 \
                 --retry-all-errors \
-                -o /dev/null \
                 "${options[@]}" \
                 ${{ secrets.ENDPOINT_URL }} && \
               flag=true || \
@@ -682,7 +677,6 @@ jobs:
                   -m 18000 \
                   --retry 100 \
                   --retry-all-errors \
-                  -o /dev/null \
                   -F "status=success" \
                   -F 'number=${{ github.run_number }}' \
                   -F "commandType=dl" \
@@ -720,7 +714,6 @@ jobs:
                     -m 18000 \
                     --retry 100 \
                     --retry-all-errors \
-                    -o /dev/null \
                     -F "status=success" \
                     -F 'number=${{ github.run_number }}' \
                     -F "commandType=dl" \
@@ -759,14 +752,13 @@ jobs:
         shell: bash
         run: |
           retry_curl.sh 15 2 -- \
-            -s -X POST \
+            -X POST \
             ${{ secrets.ENDPOINT_URL }} \
             -H "Accept: application/json" \
             -H "Content-type: application/json" \
             -m 18000 \
             --retry 100 \
             --retry-all-errors \
-            -o /dev/null \
             -d @- <<EOF
           {
             "status": "failure",
@@ -790,14 +782,13 @@ jobs:
         shell: bash
         run: |
           retry_curl.sh 15 2 -- \
-            -s -X POST \
+            -X POST \
             ${{ secrets.ENDPOINT_URL }} \
             -H "Accept: application/json" \
             -H "Content-type: application/json" \
             -m 18000 \
             --retry 100 \
             --retry-all-errors \
-            -o /dev/null \
             -d @- <<EOF
           {
             "status": "failure",
@@ -834,14 +825,13 @@ jobs:
             converted_size="$(ls -trlh | awk 'NR==1{printf "%sB", $2}')"
           fi && \
           retry_curl.sh 15 2 -- \
-            -s -X POST \
+            -X POST \
             ${{ secrets.ENDPOINT_URL }} \
             -H "Accept: application/json" \
             -H "Content-type: application/json" \
             -m 18000 \
             --retry 100 \
             --retry-all-errors \
-            -o /dev/null \
             -d @- <<EOF
           {
             "status": "failure",
@@ -865,14 +855,13 @@ jobs:
         shell: bash
         run: |
           retry_curl.sh 15 2 -- \
-            -s -X POST \
+            -X POST \
             ${{ secrets.ENDPOINT_URL }} \
             -H "Accept: application/json" \
             -H "Content-type: application/json" \
             -m 18000 \
             --retry 100 \
             --retry-all-errors \
-            -o /dev/null \
             -d @- <<EOF
           {
             "status": "failure",
