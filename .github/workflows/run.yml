@@ -87,14 +87,7 @@ jobs:
             until "${flag}" || (( "${retry}" == 1000 )); do
               echo "Retry count: ${retry}" && \
               echo "Flag status: ${flag}" && \
-              # stable_url="https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp" && \
               nightly_url="https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/latest/download/yt-dlp" && \
-              # sudo curl -sL \
-              #   --retry 100 \
-              #   --retry-all-errors \
-              #   -o /usr/local/bin/yt-dlp \
-              #   "${stable_url}" && \
-              # sudo chmod a+rx /usr/local/bin/yt-dlp && \
               version="$(curl -sI -m 18000 --retry 100 --retry-all-errors "${nightly_url}" | grep 'location: ' | awk -F '/' '{print $8}')" && \
               yt-dlp --update-to "nightly@${version}" && \
               {
@@ -194,6 +187,36 @@ jobs:
           done
           EOF
           chmod +x /usr/local/bin/conv_progress.sh
+      - name: Setup wrapper curl bash script
+        if: ${{ success() }}
+        shell: bash
+        run: |
+          cat <<'EOF' > /usr/local/bin/retry_curl.sh
+          #!/usr/bin/env bash
+          local max="${1}";shift
+          local delay="${1}";shift
+          [[ "${1:-1}" == "--" ]] && shift || true
+          local attempt=1
+          local status
+          while (( attempt <= max )); do
+            status="$(curl -sS -o /dev/null -w '%{http_code}' "${@}")"
+            if [[ "${status}" =~ ^2[0-9][0-9] ]]; then
+              return 0
+            fi
+            if [[ "${status}" == "499" || "${status}" -ge 500 || "${status}" == "408" || "${status}" == "429" ]]; then
+              echo "Retry ${attempt}/${max} failed with status ${status}. Retrying in ${delay} seconds..."
+              sleep "${delay}"
+              delay=$(( delay * 2 > 60 ? 60 : delay * 2 ))
+              ((attempt++))
+              continue
+            fi
+            echo "Non-retriable error: ${status}" >&2
+            return 22
+          done
+          echo "Exceeded retries. Last status: ${status}" >&2
+          return 22
+          EOF
+          chmod +x /usr/local/bin/retry_curl.sh
       - name: Confirmation of link survival
         if: ${{ success() }}
         id: link_status
@@ -201,7 +224,8 @@ jobs:
         run: |
           if [[ ${{ toJSON(github.event.client_payload.link) }} =~ ^http.*$ ]]; then
             {
-              curl -s -X POST \
+              retry_curl.sh 15 2 -- \
+                -s -X POST \
                 ${{ secrets.ENDPOINT_URL }} \
                 -H "Accept: application/json" \
                 -H "Content-type: application/json" \
@@ -228,7 +252,8 @@ jobs:
             until "${flag}" || (( "${retry}" == 1000 )); do
               if (( "${retry}" > 0 )); then
                 {
-                  curl -s -X POST \
+                  retry_curl.sh 15 2 -- \
+                    -s -X POST \
                     ${{ secrets.ENDPOINT_URL }} \
                     -H "Accept: application/json" \
                     -H "Content-type: application/json" \
@@ -273,7 +298,8 @@ jobs:
         shell: bash
         run: |
           {
-            curl -s -X POST \
+            retry_curl.sh 15 2 -- \
+              -s -X POST \
               ${{ secrets.ENDPOINT_URL }} \
               -H "Accept: application/json" \
               -H "Content-type: application/json" \
@@ -308,7 +334,8 @@ jobs:
             echo "Flag status: ${flag}"
             if (( "${retry}" > 0 )); then
               {
-                curl -s -X POST \
+                retry_curl.sh 15 2 -- \
+                  -s -X POST \
                   ${{ secrets.ENDPOINT_URL }} \
                   -H "Accept: application/json" \
                   -H "Content-type: application/json" \
@@ -528,32 +555,8 @@ jobs:
         id: upload
         shell: bash
         run: |
-          retry_curl() {
-            local max="${1}";shift
-            local delay="${1}";shift
-            [[ "${1:-1}" == "--" ]] && shift || true
-            local attempt=1
-            local status
-            while (( attempt <= max )); do
-              status="$(curl -sS -o /dev/null -w '%{http_code}' "${@}")"
-              if [[ "${status}" =~ ^2[0-9][0-9] ]]; then
-                return 0
-              fi
-              if [[ "${status}" == "499" || "${status}" -ge 500 || "${status}" == "408" || "${status}" == "429" ]]; then
-                echo "Retry ${attempt}/${max} failed with status ${status}. Retrying in ${delay} seconds..."
-                sleep "${delay}"
-                delay=$(( delay * 2 > 60 ? 60 : delay * 2 ))
-                ((attempt++))
-                continue
-              fi
-              echo "Non-retriable error: ${status}" >&2
-              return 22
-            done
-            echo "Exceeded retries. Last status: ${status}" >&2
-            return 22
-          }
           {
-            retry_curl 15 2 -- \
+            retry_curl.sh 15 2 -- \
               -X POST \
               ${{ secrets.ENDPOINT_URL }} \
               -H "Accept: application/json" \
@@ -649,7 +652,7 @@ jobs:
             until "${flag}" || (( "${retry}" == 1000 )); do
               echo "Retry count: ${retry}"
               echo "Flag status: ${flag}"
-              retry_curl 15 2 -- \
+              retry_curl.sh 15 2 -- \
                 -X POST \
                 -H "Content-type: multipart/form-data" \
                 -m 18000 \
@@ -673,7 +676,7 @@ jobs:
               until "${flag}" || (( "${retry}" == 1000 )); do
                 echo "Retry count: ${retry}"
                 echo "Flag status: ${flag}"
-                retry_curl 15 2 -- \
+                retry_curl.sh 15 2 -- \
                   -X POST \
                   -H "Content-type: multipart/form-data" \
                   -m 18000 \
@@ -711,7 +714,7 @@ jobs:
                 until "${flag}" || (( "${retry}" == 1000 )); do
                   echo "Retry count: ${retry}"
                   echo "Flag status: ${flag}"
-                  retry_curl 15 2 -- \
+                  retry_curl.sh 15 2 -- \
                     -X POST \
                     -H "Content-type: multipart/form-data" \
                     -m 18000 \
@@ -755,7 +758,8 @@ jobs:
           }}
         shell: bash
         run: |
-          curl -s -X POST \
+          retry_curl.sh 15 2 -- \
+            -s -X POST \
             ${{ secrets.ENDPOINT_URL }} \
             -H "Accept: application/json" \
             -H "Content-type: application/json" \
@@ -785,7 +789,8 @@ jobs:
           }}
         shell: bash
         run: |
-          curl -s -X POST \
+          retry_curl.sh 15 2 -- \
+            -s -X POST \
             ${{ secrets.ENDPOINT_URL }} \
             -H "Accept: application/json" \
             -H "Content-type: application/json" \
@@ -828,7 +833,8 @@ jobs:
           else
             converted_size="$(ls -trlh | awk 'NR==1{printf "%sB", $2}')"
           fi && \
-          curl -s -X POST \
+          retry_curl.sh 15 2 -- \
+            -s -X POST \
             ${{ secrets.ENDPOINT_URL }} \
             -H "Accept: application/json" \
             -H "Content-type: application/json" \
@@ -858,7 +864,8 @@ jobs:
           }}
         shell: bash
         run: |
-          curl -s -X POST \
+          retry_curl.sh 15 2 -- \
+            -s -X POST \
             ${{ secrets.ENDPOINT_URL }} \
             -H "Accept: application/json" \
             -H "Content-type: application/json" \
