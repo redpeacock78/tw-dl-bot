@@ -25,7 +25,7 @@ const updateRAMUsage2BotStatus = (bot: Bot): void => {
         status: "online",
       });
     } catch (e) {
-      throw new Error(e);
+      throw e as Error;
     }
   }, Constants.UPDATE_BOT_STATUS_INTERVAL);
 };
