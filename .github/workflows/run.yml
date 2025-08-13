@@ -193,15 +193,15 @@ jobs:
         run: |
           cat <<'EOF' > /usr/local/bin/retry_curl.sh
           #!/usr/bin/env bash
-          local max="${1}";shift
-          local delay="${1}";shift
+          declare max="${1}";shift
+          declare delay="${1}";shift
           [[ "${1:-1}" == "--" ]] && shift || true
-          local attempt=1
-          local status
+          declare attempt=1
+          declare status
           while (( attempt <= max )); do
             status="$(curl -sS -o /dev/null -w '%{http_code}' "${@}")"
             if [[ "${status}" =~ ^2[0-9][0-9] ]]; then
-              return 0
+              exit 0
             fi
             if [[ "${status}" == "499" || "${status}" -ge 500 || "${status}" == "408" || "${status}" == "429" ]]; then
               echo "Retry ${attempt}/${max} failed with status ${status}. Retrying in ${delay} seconds..."
@@ -211,10 +211,10 @@ jobs:
               continue
             fi
             echo "Non-retriable error: ${status}" >&2
-            return 22
+            exit 22
           done
           echo "Exceeded retries. Last status: ${status}" >&2
-          return 22
+          exit 22
           EOF
           chmod +x /usr/local/bin/retry_curl.sh
       - name: Confirmation of link survival
