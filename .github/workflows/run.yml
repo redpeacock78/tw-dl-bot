@@ -548,7 +548,7 @@ jobs:
                 ((attempt++))
                 continue
               fi
-              echo ""Non-retriable error: ${status}"" >&2
+              echo "Non-retriable error: ${status}" >&2
               return 22
             done
             echo "Exceeded retries. Last status: ${status}" >&2
