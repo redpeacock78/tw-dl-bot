@@ -5,7 +5,7 @@ export const Constants = {
   CALLBACK_PATH: "/callback",
   EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT: 900000,
   UPDATE_BOT_STATUS_INTERVAL: 10000,
-  SECTRETS: ["DISPATCH_URL", "GITHUB_TOKEN", "DISCORD_TOKEN"],
+  SECRETS: ["DISPATCH_URL", "GITHUB_TOKEN", "DISCORD_TOKEN"],
   AppEmoji: {
     LOADING_SPINNER: "<a:loading_spinner:1403246468672000000>",
   },
@@ -55,4 +55,4 @@ export const Constants = {
     BAD_REQUEST: 400,
     INTERNAL_SERVER_ERROR: 500,
   },
-} as const;
+} as const satisfies Readonly<Record<string, unknown>>;
