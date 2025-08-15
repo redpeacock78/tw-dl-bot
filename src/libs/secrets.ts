@@ -2,11 +2,12 @@ import unienv from "unienv";
 import { Constants } from "@libs";
 
 type ReadonlyRecord<K extends PropertyKey, T> = Readonly<Record<K, T>>;
+type PartialRecord<K extends PropertyKey, T> = Partial<Record<K, T>>;
 type ElementOf<T extends readonly unknown[]> = T[number];
 type SecretsKeys = ElementOf<typeof Constants.SECRETS>;
 
 const isFullSecrets = (
-  values: Partial<Record<SecretsKeys, string>>
+  values: PartialRecord<SecretsKeys, string>
 ): values is Record<SecretsKeys, string> =>
   Constants.SECRETS.every((i) => values[i] !== undefined);
 
@@ -20,7 +21,7 @@ const envs = Constants.SECRETS.reduce(
       : { values: { ...acc.values, [i]: env.value }, errors: acc.errors };
   },
   {
-    values: {} as Partial<Record<SecretsKeys, string>>,
+    values: {} as PartialRecord<SecretsKeys, string>,
     errors: [] as Array<string>,
   }
 );
