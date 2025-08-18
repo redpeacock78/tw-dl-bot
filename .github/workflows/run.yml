@@ -259,7 +259,6 @@ jobs:
                     -m 18000 \
                     --retry 100 \
                     --retry-all-errors \
-                    
                     -d @- <<EOF
                   {
                     "status": "progress",
