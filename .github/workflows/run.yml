@@ -371,6 +371,7 @@ jobs:
                 yt_status="1"
                 true
               }
+            echo "yt_status=${yt_status}"
             if [[ "${yt_status}" == "0" ]]; then
               if [[ "$(cat ${yt_result} | tail -n1 | grep 'No video')" == "" ]]; then
                 for file_name in $(ls -tr); do
