@@ -31,10 +31,10 @@ const createSuccessMessage = (
             },
             {
               name: Constants.Message.Embeds.Fields.Names.VIDEO_NAME,
-              value: info!.fileName
+              value: info.fileName
                 ? `> \`${info.fileName}\``
-                : info
-                    .fileNamesArray!.map((i: string): string => `> \`${i}\``)
+                : (info.fileNamesArray ?? [])
+                    .map((i: string): string => `> \`${i}\``)
                     .join("\n"),
               inline: true,
             },
@@ -59,7 +59,7 @@ const createSuccessMessage = (
             blob: info.file,
             name: `${info.fileName}`,
           }
-        : info.filesArray!,
+        : info.filesArray ?? [],
       ...(info.messageId && info.channelId
         ? {
             messageReference: {
