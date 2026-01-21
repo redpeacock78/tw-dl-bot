@@ -16,6 +16,19 @@ export const Constants = {
       PROGRESS: 0x3498db,
       ERROR: 0xe74c3c,
     },
+    Embeds: {
+      Fields: {
+        Names: {
+          RUN_NUMBER: "#️⃣ Run Number",
+          TOTAL_TIME: "🕑 Total Time",
+          ELAPSED_TIME: "🕑 Elapsed Times",
+          VIDEO_NAME: "🎞 Video Name",
+          FILE_SIZE: "📂 File Size",
+          TOTAL_FILE_SIZE: "📂 Total File Size",
+          SOURCE_URL: "🔗 Source URL",
+        },
+      },
+    },
   },
   Webhook: {
     Json: {
