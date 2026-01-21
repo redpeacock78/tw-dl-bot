@@ -359,6 +359,7 @@ jobs:
               --force-overwrites \
               --cookies "${cookie_path}/cookie.txt" \
               --downloader "$(type ffmpeg | awk '{print $3}')" \
+              --external-downloader-args "-vcodec libx264 -pix_fmt yuv420p -profile:v main -level 3.1 -acodec aac -movflags +faststart" \
               -o "%(id)s_%(autonumber)s.%(ext)s" \
               "${url}" > "${yt_result}" 2>&1 && \
               {
