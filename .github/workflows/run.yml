@@ -360,7 +360,7 @@ jobs:
               --force-overwrites \
               --cookies "${cookie_path}/cookie.txt" \
               --downloader "$(type ffmpeg | awk '{print $3}')" \
-              --external-downloader-args "-threads ${threads} -preset ultrafast -c:a copy -c:v libx265 -crf 22 -tag:v hvc1 -movflags +faststart" \
+              --external-downloader-args "-threads ${threads} -preset ultrafast -c:a copy -c:v copy -movflags +faststart" \
               -o "%(id)s_%(autonumber)s.%(ext)s" \
               "${url}" > "${yt_result}" 2>&1 && \
               {
