@@ -353,13 +353,14 @@ jobs:
           EOF
               } || :
             fi
+            threads="$(nproc)"
             yt_result="$(mktemp)"
             yt-dlp \
               -R 1000 \
               --force-overwrites \
               --cookies "${cookie_path}/cookie.txt" \
               --downloader "$(type ffmpeg | awk '{print $3}')" \
-              --external-downloader-args "-vcodec libx265 -pix_fmt yuv420p -tag:v hvc1 -profile:v main -level 3.1 -acodec libopus -movflags +faststart" \
+              --external-downloader-args "-threads ${threads} -preset ultrafast -vcodec libx265 -pix_fmt yuv420p -tag:v hvc1 -acodec libopus -movflags +faststart" \
               -o "%(id)s_%(autonumber)s.%(ext)s" \
               "${url}" > "${yt_result}" 2>&1 && \
               {
