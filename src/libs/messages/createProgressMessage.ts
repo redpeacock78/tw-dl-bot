@@ -36,17 +36,25 @@ const createProgressMessage = (
         {
           fields: [
             ...(typeof info.runNumber !== "undefined"
-              ? [{ name: "#️⃣ Run Number", value: `> \`#${info.runNumber}\`` }]
+              ? [
+                  {
+                    name: Constants.Message.Embeds.Fields.Names.RUN_NUMBER,
+                    value: `> \`#${info.runNumber}\``,
+                  },
+                ]
               : []),
             ...(typeof info.runTime !== "undefined"
               ? [
                   {
-                    name: "🕑 Elapsed Times",
+                    name: Constants.Message.Embeds.Fields.Names.ELAPSED_TIME,
                     value: `> \`${millisecondChangeFormat(info.runTime)}\``,
                   },
                 ]
               : []),
-            { name: "🔗 Tweet URL", value: `> ${info.link}` },
+            {
+              name: Constants.Message.Embeds.Fields.Names.SOURCE_URL,
+              value: `> ${info.link}`,
+            },
           ],
           color: Constants.Message.Color.PROGRESS,
           timestamp: new Date().getTime(),

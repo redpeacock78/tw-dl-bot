@@ -21,13 +21,16 @@ const createSuccessMessage = (
       embeds: [
         {
           fields: [
-            { name: "#️⃣ Run Number", value: `> \`#${info.runNumber}\`` },
             {
-              name: "🕑 Total Time",
+              name: Constants.Message.Embeds.Fields.Names.RUN_NUMBER,
+              value: `> \`#${info.runNumber}\``,
+            },
+            {
+              name: Constants.Message.Embeds.Fields.Names.TOTAL_TIME,
               value: `> \`${millisecondChangeFormat(info.runTime)}\``,
             },
             {
-              name: "🎞 Video Name",
+              name: Constants.Message.Embeds.Fields.Names.VIDEO_NAME,
               value: info!.fileName
                 ? `> \`${info.fileName}\``
                 : info
@@ -36,11 +39,16 @@ const createSuccessMessage = (
               inline: true,
             },
             {
-              name: info.file ? "📂 File Size" : "📂 Total File Size",
+              name: info.file
+                ? Constants.Message.Embeds.Fields.Names.FILE_SIZE
+                : Constants.Message.Embeds.Fields.Names.TOTAL_FILE_SIZE,
               value: `> \`${unitChangeForByte(info.totalSize)}\``,
               inline: true,
             },
-            { name: "🔗 Tweet URL", value: `> ${info.link}` },
+            {
+              name: Constants.Message.Embeds.Fields.Names.SOURCE_URL,
+              value: `> ${info.link}`,
+            },
           ],
           color: Constants.Message.Color.SUCCESS,
           timestamp: new Date().getTime(),

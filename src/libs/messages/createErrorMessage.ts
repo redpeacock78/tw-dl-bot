@@ -25,13 +25,14 @@ const createErrorMessage = (
                   ...(info.runNumber
                     ? [
                         {
-                          name: "#️⃣ Run Number",
+                          name: Constants.Message.Embeds.Fields.Names
+                            .RUN_NUMBER,
                           value: `> \`#${info.runNumber}\``,
                         },
                       ]
                     : []),
                   {
-                    name: "🔗 Tweet URL",
+                    name: Constants.Message.Embeds.Fields.Names.SOURCE_URL,
                     value: `> ${info.link}`,
                   },
                 ],

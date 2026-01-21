@@ -21,12 +21,18 @@ const createFailureMessage = (
       embeds: [
         {
           fields: [
-            { name: "#️⃣ Run Number", value: `> \`#${info.runNumber}\`` },
             {
-              name: "🕑 Total Time",
+              name: Constants.Message.Embeds.Fields.Names.RUN_NUMBER,
+              value: `> \`#${info.runNumber}\``,
+            },
+            {
+              name: Constants.Message.Embeds.Fields.Names.TOTAL_TIME,
               value: `> \`${millisecondChangeFormat(info.runTime)}\``,
             },
-            { name: "🔗 Tweet URL", value: `> ${info.link}` },
+            {
+              name: Constants.Message.Embeds.Fields.Names.SOURCE_URL,
+              value: `> ${info.link}`,
+            },
           ],
           description: `**${info.content}**`,
           color: Constants.Message.Color.FAILURE,
