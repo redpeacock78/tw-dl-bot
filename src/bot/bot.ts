@@ -15,6 +15,7 @@ const bot: Bot = createBot({
 });
 
 await bot.helpers.createGlobalApplicationCommand(Commands.dlCommand);
+await bot.helpers.createGlobalApplicationCommand(Commands.dlSpoilerCommand);
 
 /**
  * Handles the interactionCreate event for the bot.
@@ -25,7 +26,7 @@ await bot.helpers.createGlobalApplicationCommand(Commands.dlCommand);
  */
 bot.events.interactionCreate = async (
   b: Bot,
-  interaction: Interaction
+  interaction: Interaction,
 ): Promise<void> => {
   if (!interaction.data) return;
   const props = {
@@ -40,7 +41,14 @@ bot.events.interactionCreate = async (
       async (commandType: string): Promise<void> => {
         props.commandType = commandType;
         await interactionCreate(props);
-      }
+      },
+    )
+    .with(
+      Commands.dlSpoilerCommand.name,
+      async (commandType: string): Promise<void> => {
+        props.commandType = commandType;
+        await interactionCreate(props);
+      },
     )
     .otherwise((): void => {});
 };
