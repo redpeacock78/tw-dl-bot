@@ -49,7 +49,7 @@ export namespace CreateMessageTypes {
       link: string;
       file: Blob;
       oversize: string;
-      spoiler?: boolean;
+      spoiler: boolean;
     };
     export type multiFilesObject = {
       token: string;
@@ -62,7 +62,7 @@ export namespace CreateMessageTypes {
       link: string;
       filesArray: FileContent[];
       oversize: string;
-      spoiler?: boolean;
+      spoiler: boolean;
     };
   }
   export type sendErrorMessageObject = {
