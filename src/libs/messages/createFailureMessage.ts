@@ -12,12 +12,12 @@ type FailureMessageInfo = CreateMessageTypes.failureMessageInfo | null;
  * @return {CreateMessage | InteractionCallbackData} The failure message with embeds and content.
  */
 const createFailureMessage = (
-  info: FailureMessageInfo
+  info: FailureMessageInfo,
 ): CreateMessage | InteractionCallbackData => {
   if (!info) return {};
   try {
     return {
-      content: "**❌Failure!**",
+      content: Constants.Message.Content.Status.FAILURE,
       embeds: [
         {
           fields: [
