@@ -39,6 +39,7 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
               link: infoObject.body!.link,
               file: filesObject!.blobData,
               oversize: infoObject.body!.oversize!,
+              spoiler: false,
             })
             .then(
               (): Response => infoObject.c.body(null, { status: noContent }),
@@ -92,6 +93,7 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
               link: infoObject.body!.link,
               filesArray: multiFilesObject!.filesArray,
               oversize: infoObject.body!.oversize!,
+              spoiler: false,
             })
             .then(
               (): Response => infoObject.c.body(null, { status: noContent }),
