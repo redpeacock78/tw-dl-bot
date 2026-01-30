@@ -57,12 +57,12 @@ const createSuccessMessage = (
       file: info.file
         ? {
             blob: info.file,
-            name: `${info.spoiler ? "SPOILER_" : ""}${info.fileName}`,
+            name: `${info.spoiler ? Constants.Message.File.Name.SPOILER_PREFIX : ""}${info.fileName}`,
           }
         : info.spoiler
           ? (info.filesArray ?? []).map((file) => ({
               blob: file.blob,
-              name: `SPOILER_${file.name}`,
+              name: `${Constants.Message.File.Name.SPOILER_PREFIX}${file.name}`,
             }))
           : (info.filesArray ?? []),
       ...(info.messageId && info.channelId
