@@ -31,7 +31,7 @@ callback.post(
       async (): Promise<BodyDataObject> =>
         (await c.req.raw.clone().json()) as BodyDataObject,
       async (): Promise<BodyDataObject> =>
-        (await c.req.parseBody()) as BodyDataObject
+        (await c.req.parseBody()) as BodyDataObject,
     )();
     let body: BodyDataObjectUnitNull = await Match(Either.isRight(data))
       .with(
@@ -40,8 +40,8 @@ callback.post(
           Function.pipe(
             Option.getRight(data),
             (rightValue: O<BodyDataObject>): BodyDataObjectUnitNull =>
-              Option.isSome(rightValue) ? rightValue.value : null
-          )
+              Option.isSome(rightValue) ? rightValue.value : null,
+          ),
       )
       .with(
         false,
@@ -49,10 +49,10 @@ callback.post(
           Function.pipe(
             Option.getLeft(data),
             async (
-              leftValue: O<Promise<BodyDataObject>>
+              leftValue: O<Promise<BodyDataObject>>,
             ): Promise<BodyDataObjectUnitNull> =>
-              Option.isSome(leftValue) ? await leftValue.value : null
-          )
+              Option.isSome(leftValue) ? await leftValue.value : null,
+          ),
       )
       .exhaustive();
     const patternArray = body
@@ -62,32 +62,48 @@ callback.post(
       .with(
         callbackPattern.Success.Dl.Single,
         (): Promise<Response> =>
-          Functions.callbackSuccessFunctions.success.dl.single({ c, body })
+          Functions.callbackSuccessFunctions.success.dl.single({ c, body }),
       )
       .with(
         callbackPattern.Success.Dl.Multi,
         (): Promise<Response> =>
-          Functions.callbackSuccessFunctions.success.dl.multi({ c, body })
+          Functions.callbackSuccessFunctions.success.dl.multi({ c, body }),
+      )
+      .with(
+        callbackPattern.Success.DlSpoiler.Single,
+        (): Promise<Response> =>
+          Functions.callbackSuccessFunctions.success.dlSpoiler.single({
+            c,
+            body,
+          }),
+      )
+      .with(
+        callbackPattern.Success.DlSpoiler.Multi,
+        (): Promise<Response> =>
+          Functions.callbackSuccessFunctions.success.dlSpoiler.multi({
+            c,
+            body,
+          }),
       )
       .with(
         callbackPattern.Progress,
         (): Promise<Response> =>
-          Functions.callbackProgressFunctions.progress({ c, body })
+          Functions.callbackProgressFunctions.progress({ c, body }),
       )
       .with(
         callbackPattern.Failure,
         (): Promise<Response> =>
-          Functions.callbackFailureFunctions.failure({ c, body })
+          Functions.callbackFailureFunctions.failure({ c, body }),
       )
       .with(
         callbackPattern.InvalidPost,
-        (): Promise<Response> => Promise.resolve(c.body(null, badRequst))
+        (): Promise<Response> => Promise.resolve(c.body(null, badRequst)),
       )
       .otherwise(
-        (): Promise<Response> => Promise.resolve(c.body(null, serverError))
+        (): Promise<Response> => Promise.resolve(c.body(null, serverError)),
       )
       .finally((): null => (body = null));
-  }
+  },
 );
 
 export default callback;
