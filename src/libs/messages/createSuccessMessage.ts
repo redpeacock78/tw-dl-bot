@@ -32,11 +32,9 @@ const createSuccessMessage = (
             {
               name: Constants.Message.Embeds.Fields.Names.VIDEO_NAME,
               value: info.fileName
-                ? `> \`${info.spoiler ? "SPOILER_" : ""}${info.fileName}\``
+                ? `> \`${info.fileName}\``
                 : (info.fileNamesArray ?? [])
-                    .map((i: string): string =>
-                      info?.spoiler ? `> \`SPOILER_${i}\`` : `> \`${i}\``,
-                    )
+                    .map((i: string): string => `> \`${i}\``)
                     .join("\n"),
               inline: true,
             },
