@@ -20,7 +20,7 @@ const successMessage = {
    * @return {Promise<Message>} A promise that resolves to a message response.
    */
   singleFile: (
-    singleSuccsessMessageObject: SingleSuccsessMessageObject
+    singleSuccsessMessageObject: SingleSuccsessMessageObject,
   ): Promise<Message> => {
     const runTime: number =
       new Date().getTime() - Number(singleSuccsessMessageObject!.startTime);
@@ -42,9 +42,10 @@ const successMessage = {
                 fileName: singleSuccsessMessageObject!.fileName,
                 link: singleSuccsessMessageObject!.link,
                 file: singleSuccsessMessageObject!.file,
-              })
+                spoiler: singleSuccsessMessageObject!.spoiler,
+              }),
             )
-            .finally((): null => (singleSuccsessMessageObject = null))
+            .finally((): null => (singleSuccsessMessageObject = null)),
       )
       .with(
         false,
@@ -61,9 +62,10 @@ const successMessage = {
                 fileName: singleSuccsessMessageObject!.fileName,
                 link: singleSuccsessMessageObject!.link,
                 file: singleSuccsessMessageObject!.file,
-              })
+                spoiler: singleSuccsessMessageObject!.spoiler,
+              }),
             )
-            .finally((): null => (singleSuccsessMessageObject = null))
+            .finally((): null => (singleSuccsessMessageObject = null)),
       )
       .exhaustive();
   },
@@ -74,7 +76,7 @@ const successMessage = {
    * @return {Promise<Message>} A promise that resolves to a message response.
    */
   multiFiles: (
-    multiSuccsessMessageObject: MultiSuccsessMessageObject
+    multiSuccsessMessageObject: MultiSuccsessMessageObject,
   ): Promise<Message> => {
     const runTime: number =
       new Date().getTime() - Number(multiSuccsessMessageObject!.startTime);
@@ -96,9 +98,10 @@ const successMessage = {
                 fileNamesArray: multiSuccsessMessageObject!.fileNamesArray,
                 link: multiSuccsessMessageObject!.link,
                 filesArray: multiSuccsessMessageObject!.filesArray,
-              })
+                spoiler: multiSuccsessMessageObject!.spoiler,
+              }),
             )
-            .finally((): null => (multiSuccsessMessageObject = null))
+            .finally((): null => (multiSuccsessMessageObject = null)),
       )
       .with(
         false,
@@ -115,9 +118,10 @@ const successMessage = {
                 fileNamesArray: multiSuccsessMessageObject!.fileNamesArray,
                 link: multiSuccsessMessageObject!.link,
                 filesArray: multiSuccsessMessageObject!.filesArray,
-              })
+                spoiler: multiSuccsessMessageObject!.spoiler,
+              }),
             )
-            .finally((): null => (multiSuccsessMessageObject = null))
+            .finally((): null => (multiSuccsessMessageObject = null)),
       )
       .exhaustive();
   },
