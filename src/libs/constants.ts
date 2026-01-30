@@ -36,6 +36,7 @@ export const Constants = {
       ClientPayload: {
         CommandType: {
           DOWNLOAD: "dl",
+          DOWNLOAD_SPOILER: "dl-spoiler",
           THREAD_DOWNLOAD: "threaddl",
         },
       },
@@ -52,6 +53,7 @@ export const Constants = {
     },
     commandType: {
       DL: "dl",
+      DL_SPOILER: "dl-spoiler",
     },
     actionType: {
       SINGLE: "single",
