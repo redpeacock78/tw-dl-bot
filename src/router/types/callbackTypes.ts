@@ -5,7 +5,7 @@ export namespace CallbackTypes {
   export type bodyDataObject = {
     status: "success" | "failure" | "progress" | null;
     number: string;
-    commandType?: "dl";
+    commandType?: "dl" | "dl-spoiler";
     actionType?: "single" | "multi";
     startTime: string;
     channel: string;
@@ -46,19 +46,19 @@ export namespace CallbackTypes {
       [key: string]: {
         [key: string]: {
           [key: string]: <T extends string>(
-            infoObject: infoObjectType<T>
+            infoObject: infoObjectType<T>,
           ) => Promise<Response>;
         };
       };
     };
     export type callbackFailure = {
       [key: string]: <T extends string>(
-        infoObject: infoObjectType<T>
+        infoObject: infoObjectType<T>,
       ) => Promise<Response>;
     };
     export type callbackProgress = {
       [key: string]: <T extends string>(
-        infoObject: infoObjectType<T>
+        infoObject: infoObjectType<T>,
       ) => Promise<Response>;
     };
   }
