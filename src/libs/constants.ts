@@ -29,6 +29,11 @@ export const Constants = {
         },
       },
     },
+    File: {
+      Name: {
+        SPOILER_PREFIX: "SPOILER_",
+      },
+    },
   },
   Webhook: {
     Json: {
