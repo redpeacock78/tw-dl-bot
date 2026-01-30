@@ -20,6 +20,8 @@ jobs:
         shell: bash
         run: |
           echo -n '::add-mask::' >> secrets.txt && \
+          jq -r .client_payload.commandType < "${GITHUB_EVENT_PATH}" >> secrets.txt && \
+          echo -n '::add-mask::' >> secrets.txt && \
           jq -r .client_payload.link < "${GITHUB_EVENT_PATH}" >> secrets.txt && \
           echo -n '::add-mask::' >> secrets.txt && \
           jq -r .client_payload.channel < "${GITHUB_EVENT_PATH}" >> secrets.txt && \
@@ -597,7 +599,7 @@ jobs:
             options=()
             options+=(-F 'status=success')
             options+=(-F 'number=${{ github.run_number }}')
-            options+=(-F 'commandType=dl')
+            options+=(-F 'commandType=${{ toJSON(github.event.client_payload.commandType) }}')
             options+=(-F 'actionType=multi')
             options+=(-F 'channel=${{ toJSON(github.event.client_payload.channel) }}')
             options+=(-F 'message=${{ toJSON(github.event.client_payload.message) }}')
@@ -680,7 +682,7 @@ jobs:
                   --retry-all-errors \
                   -F "status=success" \
                   -F 'number=${{ github.run_number }}' \
-                  -F "commandType=dl" \
+                  -F "commandType=${{ toJSON(github.event.client_payload.commandType) }}" \
                   -F "actionType=single" \
                   -F "convert=false" \
                   -F "oversize=false" \
@@ -717,7 +719,7 @@ jobs:
                     --retry-all-errors \
                     -F "status=success" \
                     -F 'number=${{ github.run_number }}' \
-                    -F "commandType=dl" \
+                    -F "commandType=${{ toJSON(github.event.client_payload.commandType) }}" \
                     -F "actionType=single" \
                     -F "convert=true" \
                     -F "oversize=false" \
