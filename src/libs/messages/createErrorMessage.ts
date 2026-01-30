@@ -11,12 +11,12 @@ type ErrorMessageInfo = CreateMessageTypes.errorMessageInfo | null;
  * @return {CreateMessage | InteractionCallbackData} The error message with content and embeds.
  */
 const createErrorMessage = (
-  info: ErrorMessageInfo
+  info: ErrorMessageInfo,
 ): CreateMessage | InteractionCallbackData => {
   if (!info) return {};
   try {
     return {
-      content: `**⚠️Error!**`,
+      content: Constants.Message.Content.Status.ERROR,
       embeds: [
         {
           ...(info.link
