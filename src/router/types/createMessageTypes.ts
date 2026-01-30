@@ -13,7 +13,7 @@ export namespace CreateMessageTypes {
     link: string;
     file?: Blob;
     filesArray?: FileContent[];
-    spoiler?: boolean;
+    spoiler: boolean;
   };
   export type failureMessageInfo = {
     messageId?: string;
