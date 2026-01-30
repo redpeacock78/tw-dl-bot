@@ -12,7 +12,7 @@ type SuccessMessageInfo = CreateMessageTypes.successMessageInfo | null;
  * @return {CreateMessage | InteractionCallbackData} The success message with embeds and file.
  */
 const createSuccessMessage = (
-  info: SuccessMessageInfo
+  info: SuccessMessageInfo,
 ): CreateMessage | InteractionCallbackData => {
   if (!info) return {};
   try {
@@ -57,9 +57,14 @@ const createSuccessMessage = (
       file: info.file
         ? {
             blob: info.file,
-            name: `${info.fileName}`,
+            name: `${info.spoiler ? "SPOILER_" : ""}${info.fileName}`,
           }
-        : info.filesArray ?? [],
+        : info.spoiler
+          ? (info.filesArray ?? []).map((file) => ({
+              blob: file.blob,
+              name: `SPOILER_${file.name}`,
+            }))
+          : (info.filesArray ?? []),
       ...(info.messageId && info.channelId
         ? {
             messageReference: {
