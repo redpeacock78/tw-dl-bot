@@ -16,6 +16,13 @@ export const Constants = {
       PROGRESS: 0x3498db,
       ERROR: 0xe74c3c,
     },
+    Content: {
+      Status: {
+        SUCCESS: "**✅Done!**",
+        FAILURE: "**❌Failure!**",
+        ERROR: "**⚠️Error!**",
+      },
+    },
     Embeds: {
       Fields: {
         Names: {
