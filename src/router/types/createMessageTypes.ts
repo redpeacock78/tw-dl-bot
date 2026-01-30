@@ -13,6 +13,7 @@ export namespace CreateMessageTypes {
     link: string;
     file?: Blob;
     filesArray?: FileContent[];
+    spoiler?: boolean;
   };
   export type failureMessageInfo = {
     messageId?: string;
@@ -48,6 +49,7 @@ export namespace CreateMessageTypes {
       link: string;
       file: Blob;
       oversize: string;
+      spoiler?: boolean;
     };
     export type multiFilesObject = {
       token: string;
@@ -60,6 +62,7 @@ export namespace CreateMessageTypes {
       link: string;
       filesArray: FileContent[];
       oversize: string;
+      spoiler?: boolean;
     };
   }
   export type sendErrorMessageObject = {
