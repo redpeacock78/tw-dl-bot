@@ -3,6 +3,7 @@ import { CreateSlashApplicationCommand } from "discordeno";
 
 type CommandsType = {
   dlCommand: CreateSlashApplicationCommand;
+  dlSpoilerCommand: CreateSlashApplicationCommand;
   threadDlCommand: CreateSlashApplicationCommand;
 };
 
@@ -10,6 +11,19 @@ export const Commands: CommandsType = {
   dlCommand: {
     name: Constants.Webhook.Json.ClientPayload.CommandType.DOWNLOAD,
     description: "Download tweet video",
+    type: 1,
+    options: [
+      {
+        name: "url",
+        type: 3,
+        required: true,
+        description: "Tweet URL",
+      },
+    ],
+  },
+  dlSpoilerCommand: {
+    name: Constants.Webhook.Json.ClientPayload.CommandType.DOWNLOAD_SPOILER,
+    description: "Download tweet video with spoiler",
     type: 1,
     options: [
       {
