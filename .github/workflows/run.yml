@@ -222,6 +222,7 @@ jobs:
       - name: Confirmation of link survival
         if: ${{ success() }}
         id: link_status
+        timeout-minutes: 10
         shell: bash
         run: |
           if [[ ${{ toJSON(github.event.client_payload.link) }} =~ ^http.*$ ]]; then
