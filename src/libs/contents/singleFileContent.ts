@@ -21,6 +21,8 @@ const singleFileContent = async (
       fileName: body!.name1,
       blobData: await fileToBlob(body!.file1 as File),
     };
+  } catch(e: unknown) {
+    throw e as Error;
   } finally {
     body = null;
   }
