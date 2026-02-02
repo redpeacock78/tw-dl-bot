@@ -11,13 +11,13 @@ import { CallbackTypes } from "@router/types/callbackTypes.ts";
  * @throws {Error} If the number of files given and the number of files expected are different.
  */
 const multiFilesContent = async (
-  body: CallbackTypes.bodyDataObject | null
+  body: CallbackTypes.bodyDataObject | null,
 ): Promise<ContentsTypes.multiFilesContentObject> => {
   let namesArray: string[] | null = Object.keys(body!).filter(
-    (i: string): RegExpMatchArray | null => i.match(/^name[0-9].*$/)
+    (i: string): RegExpMatchArray | null => i.match(/^name[0-9].*$/),
   );
   let filesArray: string[] | null = Object.keys(body!).filter(
-    (i: string): RegExpMatchArray | null => i.match(/^file[0-9].*$/)
+    (i: string): RegExpMatchArray | null => i.match(/^file[0-9].*$/),
   );
   const multiFilesContentErrorFlag =
     namesArray.length !== filesArray.length ||
@@ -26,12 +26,12 @@ const multiFilesContent = async (
   try {
     if (multiFilesContentErrorFlag)
       throw new Error(
-        "The number of files given and the number of files expected are different."
+        "The number of files given and the number of files expected are different.",
       );
     return {
       fileNamesArray: namesArray.map(
         (i: string): string =>
-          body![i as keyof CallbackTypes.bodyDataObject] as string
+          body![i as keyof CallbackTypes.bodyDataObject] as string,
       ),
       filesArray: await Promise.all(
         [...new Array(namesArray.length)].map(
@@ -47,13 +47,15 @@ const multiFilesContent = async (
                   (filesArray as string[])[
                     n
                   ] as keyof CallbackTypes.bodyDataObject
-                ] as File
+                ] as File,
               ),
             };
-          }
-        )
+          },
+        ),
       ),
     };
+  } catch (e: unknown) {
+    throw e as Error;
   } finally {
     body = null;
     namesArray = null;
