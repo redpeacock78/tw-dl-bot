@@ -1,12 +1,8 @@
 import { Constants, Contents } from "@libs";
 import { SendMessages } from "@router/messages/index.ts";
-import { ContentsTypes } from "@libs/types/contentsTypes.ts";
 import { CallbackTypes } from "@router/types/callbackTypes.ts";
 
 type InfoObject<T extends string> = CallbackTypes.infoObjectType<T>;
-type SingleFileContentObject = ContentsTypes.singleFileContentObject;
-type MultiFilesContentObject = ContentsTypes.multiFilesContentObject;
-type FileObject = SingleFileContentObject | MultiFilesContentObject | null;
 
 const noContent = Constants.HttpStatus.NO_CONTENT;
 const serverError = Constants.HttpStatus.INTERNAL_SERVER_ERROR;
@@ -25,10 +21,9 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
       ): Promise<Response> => {
         if (!infoObject.body)
           return infoObject.c.body(null, { status: serverError });
-        let filesObject: Exclude<FileObject, MultiFilesContentObject> =
-          await Contents.singleFileContent(infoObject.body)
-            .then((i) => i)
-            .catch(() => null);
+        let filesObject = await Contents.singleFileContent(infoObject.body)
+          .then((i) => i)
+          .catch(() => null);
         try {
           if (!filesObject)
             return infoObject.c.body(null, { status: serverError });
@@ -85,10 +80,9 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
       ): Promise<Response> => {
         if (!infoObject.body)
           return infoObject.c.body(null, { status: serverError });
-        let multiFilesObject: Exclude<FileObject, SingleFileContentObject> =
-          await Contents.multiFilesContent(infoObject.body)
-            .then((i) => i)
-            .catch(() => null);
+        let multiFilesObject = await Contents.multiFilesContent(infoObject.body)
+          .then((i) => i)
+          .catch(() => null);
         try {
           if (!multiFilesObject)
             return infoObject.c.body(null, { status: serverError });
@@ -147,10 +141,9 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
       ): Promise<Response> => {
         if (!infoObject.body)
           return infoObject.c.body(null, { status: serverError });
-        let filesObject: Exclude<FileObject, MultiFilesContentObject> =
-          await Contents.singleFileContent(infoObject.body)
-            .then((i) => i)
-            .catch(() => null);
+        let filesObject = await Contents.singleFileContent(infoObject.body)
+          .then((i) => i)
+          .catch(() => null);
         try {
           if (!filesObject)
             return infoObject.c.body(null, { status: serverError });
@@ -207,10 +200,9 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
       ): Promise<Response> => {
         if (!infoObject.body)
           return infoObject.c.body(null, { status: serverError });
-        let multiFilesObject: Exclude<FileObject, SingleFileContentObject> =
-          await Contents.multiFilesContent(infoObject.body)
-            .then((i) => i)
-            .catch(() => null);
+        let multiFilesObject = await Contents.multiFilesContent(infoObject.body)
+          .then((i) => i)
+          .catch(() => null);
         try {
           if (!multiFilesObject)
             return infoObject.c.body(null, { status: serverError });
