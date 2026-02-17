@@ -219,6 +219,24 @@ jobs:
           exit 22
           EOF
           chmod +x /usr/local/bin/retry_curl.sh
+      - name: Setup post process bash script
+        if: ${{ success() }}
+        shell: bash
+        run: |
+          cat <<'EOF' > /usr/local/bin/post_process.sh
+          #!/usr/bin/env bash
+          input="${1}"
+          ext="${input##*.}"
+          tmp="${input%.*}.tmp.${ext}"
+          vcodec="$(ffprobe -v error -select_streams v:0 -show_entries stream=codec_name -of default=nk=1:nw=1 "${input}")"
+          pix_fmt="$(ffprobe -v error -select_streams v:0 -show_entries stream=pix_fmt -of default=nk=1:nw=1 "${input}")"
+          if [[ "${vcodec}" != "h264" || "${pix_fmt}" != "yuv420p" ]]; then
+            ffmpeg -y -i "${input}" -threads "$(nproc)" -preset veryfast -c:v libx264 -pix_fmt yuv420p -c:a copy -movflags +faststart "${tmp}" \
+              && rm -f "${input}" \
+              && mv "${tmp}" "${input}"
+          fi
+          EOF
+          chmod +x /usr/local/bin/post_process.sh
       - name: Confirmation of link survival
         if: ${{ success() }}
         id: link_status
@@ -362,8 +380,9 @@ jobs:
               -R 1000 \
               --force-overwrites \
               --cookies "${cookie_path}/cookie.txt" \
-              --downloader "$(type ffmpeg | awk '{print $3}')" \
-              --external-downloader-args "-threads ${threads} -preset veryfast -c:v libx264 -pix_fmt yuv420p -c:a copy -movflags +faststart" \
+              --downloader aria2c \
+              --external-downloader-args "--listen-port=5502 --dht-listen-port=5502 -s20 -j20 -x16 -k20M --disable-ipv6=true --continue=true --seed-time=0 --max-tries=0 --retry-wait=10 --summary-interval=0 --file-allocation=none --console-log-level=error --download-result=hide" \
+              --exec "post_process:post_process.sh {}" \
               -o "%(id).150B_%(autonumber)s.%(ext)s" \
               "${url}" > "${yt_result}" 2>&1 && \
               {
