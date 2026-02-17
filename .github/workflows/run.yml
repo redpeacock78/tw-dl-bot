@@ -100,7 +100,7 @@ jobs:
               }
             done
           }
-      - name: Setup awk script
+      - name: Setup progress awk script
         if: ${{ success() }}
         shell: bash
         run: |
@@ -136,7 +136,7 @@ jobs:
             }
           }
           EOF
-      - name: Setup bash script
+      - name: Setup progress bash script
         if: ${{ success() }}
         shell: bash
         run: |
@@ -374,7 +374,6 @@ jobs:
           EOF
               } || :
             fi
-            threads="$(nproc)"
             yt_result="$(mktemp)"
             yt-dlp \
               -R 1000 \
@@ -909,3 +908,5 @@ jobs:
           rm -f ./secrets.txt
           rm -f ./progress.awk
           rm -f /usr/local/bin/conv_progress.sh
+          rm -f /usr/local/bin/retry_curl.sh
+          rm -f /usr/local/bin/post_process.sh
