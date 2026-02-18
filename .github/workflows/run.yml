@@ -375,14 +375,18 @@ jobs:
               } || :
             fi
             yt_result="$(mktemp)"
+            options=()
+            if [[  "${url}" =~ "/twitter.com/" ]]; then
+              options+=(--cookies "${cookie_path}/cookie.txt")
+            fi
             yt-dlp \
               -R 1000 \
               --force-overwrites \
-              --cookies "${cookie_path}/cookie.txt" \
               --downloader aria2c \
               --external-downloader-args "--listen-port=5502 --dht-listen-port=5502 -s20 -j20 -x16 -k20M --disable-ipv6=true --continue=true --seed-time=0 --max-tries=0 --retry-wait=10 --summary-interval=0 --file-allocation=none --console-log-level=error --download-result=hide" \
               --exec "post_process:post_process.sh {}" \
               -o "%(id).150B_%(autonumber)s.%(ext)s" \
+              "${options[@]}" \
               "${url}" > "${yt_result}" 2>&1 && \
               {
                 yt_status="0"
