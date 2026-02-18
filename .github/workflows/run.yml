@@ -376,7 +376,7 @@ jobs:
             options=()
             if [[  "${url}" =~ "/twitter.com/" ]]; then
               cookie_path=$(cd .. && pwd) && \
-              echo "${{ secrets.TWITTER_COOKIES }}" >> cookie.txt && \
+              echo "${{ secrets.TWITTER_COOKIES }}" >> "${cookie_path}/cookie.txt" && \
               options+=(--cookies "${cookie_path}/cookie.txt")
             fi
             yt-dlp \
