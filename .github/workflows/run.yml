@@ -82,7 +82,7 @@ jobs:
             }
           EOF
           } || :
-          type yt-dlp > /dev/null 2>&1 || \
+          type yt-dlp > /dev/null 2>&1 && \
           {
             retry=0 && \
             flag=false && \
@@ -231,9 +231,17 @@ jobs:
           vcodec="$(ffprobe -v error -select_streams v:0 -show_entries stream=codec_name -of default=nk=1:nw=1 "${input}")"
           pix_fmt="$(ffprobe -v error -select_streams v:0 -show_entries stream=pix_fmt -of default=nk=1:nw=1 "${input}")"
           if [[ "${vcodec}" != "h264" || "${pix_fmt}" != "yuv420p" ]]; then
-            ffmpeg -y -i "${input}" -threads "$(nproc)" -preset veryfast -c:v libx264 -pix_fmt yuv420p -c:a copy -movflags +faststart "${tmp}" \
-              && rm -f "${input}" \
-              && mv "${tmp}" "${input}"
+            ffmpeg -y \
+              -i "${input}" \
+              -threads "$(nproc)" \
+              -preset veryfast \
+              -c:v libx264 \
+              -pix_fmt yuv420p \
+              -c:a copy \
+              -movflags +faststart \
+              "${tmp}" && \
+            rm -f "${input}" && \
+            mv "${tmp}" "${input}"
           fi
           EOF
           chmod +x /usr/local/bin/post_process.sh
