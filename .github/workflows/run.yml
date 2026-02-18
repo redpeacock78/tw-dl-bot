@@ -880,7 +880,7 @@ jobs:
           }}
         shell: bash
         run: |
-          retry_curl.sh 15 2 -- \
+          retry_curl.sh 30 2 -- \
             -X POST \
             ${{ secrets.ENDPOINT_URL }} \
             -H "Accept: application/json" \
@@ -897,7 +897,7 @@ jobs:
             "message": ${{ toJSON(github.event.client_payload.message) }},
             "token": ${{ toJSON(github.event.client_payload.token) }},
             "link": ${{ toJSON(github.event.client_payload.link) }},
-            "content": "Sorry! Processing time exceeded 10 minits and timed out."
+            "content": "Sorry! Processing time exceeded 10 minutes and timed out."
           }
           EOF
       - name: Cleanup temp files
