@@ -376,7 +376,9 @@ jobs:
             yt_result="$(mktemp)"
             options=()
             if [[ "${url}" =~ "/twitter.com/" ]]; then
-              echo "${{ secrets.TWITTER_COOKIES }}" > "${cookie_path}/cookie.txt" && \
+              if [[ ! -f "${cookie_path}/cookie.txt" ]] ; then 
+                echo "${{ secrets.TWITTER_COOKIES }}" >> "${cookie_path}/cookie.txt"
+              fi
               options+=(--cookies "${cookie_path}/cookie.txt")
             fi
             yt-dlp \
@@ -880,7 +882,8 @@ jobs:
           }}
         shell: bash
         run: |
-          retry_curl.sh 30 2 -- \
+          sleep 5 && \
+          retry_curl.sh 15 2 -- \
             -X POST \
             ${{ secrets.ENDPOINT_URL }} \
             -H "Accept: application/json" \
