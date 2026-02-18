@@ -341,9 +341,10 @@ jobs:
           retry=0 && \
           flag=false && \
           not_video=false && \
+          cookie_path=$(pwd) && \
+          url="$(echo ${{ toJSON(github.event.client_payload.link) }} | awk -F '/' '{OFS="/";sub(/^x.com$/,"twitter.com",$3);print $0}')" && \
           mkdir -p download && \
           cd download && \
-          url="$(echo ${{ toJSON(github.event.client_payload.link) }} | awk -F '/' '{OFS="/";sub(/^x.com$/,"twitter.com",$3);print $0}')" && \
           IFS=$'\n' && \
           until "${flag}" || (( "${retry}" == 1000 )); do
             echo "Retry count: ${retry}"
@@ -375,7 +376,6 @@ jobs:
             yt_result="$(mktemp)"
             options=()
             if [[  "${url}" =~ "/twitter.com/" ]]; then
-              cookie_path=$(cd .. && pwd) && \
               echo "${{ secrets.TWITTER_COOKIES }}" >> "${cookie_path}/cookie.txt" && \
               options+=(--cookies "${cookie_path}/cookie.txt")
             fi
