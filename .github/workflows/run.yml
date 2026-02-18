@@ -375,7 +375,7 @@ jobs:
             fi
             yt_result="$(mktemp)"
             options=()
-            if [[  "${url}" =~ "/twitter.com/" ]]; then
+            if [[ "${url}" =~ "/twitter.com/" ]]; then
               echo "${{ secrets.TWITTER_COOKIES }}" >> "${cookie_path}/cookie.txt" && \
               options+=(--cookies "${cookie_path}/cookie.txt")
             fi
