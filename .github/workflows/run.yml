@@ -235,7 +235,7 @@ jobs:
             ext="mp4"
           fi
           tmp="${input%.*}.tmp.${ext}"
-          if [[ "${vcodec}" != "h264" || "${pix_fmt}" != "yuv420p" ]]; then
+          if [[ ${vformat} != "mov,mp4,m4a,3gp,3g2,mj2" || "${vcodec}" != "h264" || "${pix_fmt}" != "yuv420p" ]]; then
             ffmpeg -y \
               -i "${input}" \
               -threads "$(nproc)" \
@@ -249,7 +249,7 @@ jobs:
             if [[ "${vformat}" == "mov,mp4,m4a,3gp,3g2,mj2" ]]; then
               mv "${tmp}" "${input}"
             else
-              mv "${tmp}" "${input%.*}.mp4"
+              mv "${tmp}" "${input%.*}.${ext}"
             fi
           fi
           EOF
