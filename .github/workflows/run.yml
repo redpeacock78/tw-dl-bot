@@ -226,10 +226,15 @@ jobs:
           cat <<'EOF' > /usr/local/bin/post_process.sh
           #!/usr/bin/env bash
           input="${1}"
-          ext="${input##*.}"
-          tmp="${input%.*}.tmp.${ext}"
+          vformat="$(ffprobe -v error -select_streams v:0 -show_entries format=format_name -of default=nk=1:nw=1 "${input}")"
           vcodec="$(ffprobe -v error -select_streams v:0 -show_entries stream=codec_name -of default=nk=1:nw=1 "${input}")"
           pix_fmt="$(ffprobe -v error -select_streams v:0 -show_entries stream=pix_fmt -of default=nk=1:nw=1 "${input}")"
+          if [[ "${vformat}" == "mov,mp4,m4a,3gp,3g2,mj2" ]]; then
+            ext="${input##*.}"
+          else
+            ext="mp4"
+          fi
+          tmp="${input%.*}.tmp.${ext}"
           if [[ "${vcodec}" != "h264" || "${pix_fmt}" != "yuv420p" ]]; then
             ffmpeg -y \
               -i "${input}" \
@@ -241,7 +246,11 @@ jobs:
               -movflags +faststart \
               "${tmp}" && \
             rm -f "${input}" && \
-            mv "${tmp}" "${input}"
+            if [[ "${vformat}" == "mov,mp4,m4a,3gp,3g2,mj2" ]]; then
+              mv "${tmp}" "${input}"
+            else
+              mv "${tmp}" "${input%.*}.mp4"
+            fi
           fi
           EOF
           chmod +x /usr/local/bin/post_process.sh
