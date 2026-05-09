@@ -96,4 +96,30 @@ Deno.test("Commands", async (t) => {
       assertEquals(spoiler, normal);
     },
   );
+
+  await t.step(
+    "threadDlCommand: dmPermission=false (guild-only, hidden from DM autocomplete)",
+    () => {
+      // dmPermission: false tells Discord not to surface this command in DMs.
+      // Thread creation requires a guild text channel — DMs have no valid
+      // use-case for this command.
+      assertEquals(Commands.threadDlCommand.dmPermission, false);
+    },
+  );
+
+  await t.step(
+    "threadDlSpoilerCommand: dmPermission=false (guild-only, hidden from DM autocomplete)",
+    () => {
+      assertEquals(Commands.threadDlSpoilerCommand.dmPermission, false);
+    },
+  );
+
+  await t.step(
+    "dlCommand + dlSpoilerCommand: dmPermission not set (DM usable)",
+    () => {
+      // /dl and /dl-spoiler work in DMs — only the thread variants require a guild.
+      assertEquals(Commands.dlCommand.dmPermission, undefined);
+      assertEquals(Commands.dlSpoilerCommand.dmPermission, undefined);
+    },
+  );
 });

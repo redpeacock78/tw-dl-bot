@@ -41,10 +41,18 @@ export const Commands: CommandsType = {
   // many URLs without worrying about quoting/escaping.
   // The slash command itself only takes `name` (the thread title), and the
   // bot opens the Modal as the immediate interaction response.
+  //
+  // `dmPermission: false` hides both commands from DM autocomplete. Thread
+  // creation requires a guild text channel — there is no valid DM use-case.
+  // discordeno v18 exposes `dmPermission` from the Discord API v10
+  // `CreateSlashApplicationCommand` shape. The newer `contexts` field (Discord
+  // API v10 addition) is not yet present in this version's type; `dmPermission`
+  // achieves the same result and is still honoured by all current clients.
   threadDlCommand: {
     name: Constants.Webhook.Json.ClientPayload.CommandType.THREAD_DOWNLOAD,
     description: "DL multiple Tweets into a thread",
     type: 1,
+    dmPermission: false,
     options: [
       {
         name: "name",
@@ -59,6 +67,7 @@ export const Commands: CommandsType = {
       Constants.Webhook.Json.ClientPayload.CommandType.THREAD_DOWNLOAD_SPOILER,
     description: "DL multiple Tweets into a thread with spoiler",
     type: 1,
+    dmPermission: false,
     options: [
       {
         name: "name",
