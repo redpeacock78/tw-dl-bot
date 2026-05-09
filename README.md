@@ -22,6 +22,7 @@ Using Slash Commands (like `/dl`), you can send Tweet URLs to the bot, and it wi
 - [Deno](https://deno.land/) + TypeScript
 - [discordeno](https://deno.land/x/discordeno)  
 - [Hono](https://hono.dev/) for lightweight web routing
+- [Deno test](https://docs.deno.com/runtime/fundamentals/testing/) + [`@std/assert`](https://jsr.io/@std/assert) for the test suite
 - GitHub Actions + Docker for background jobs
 - yt-dlp for video downloading
 
@@ -57,8 +58,10 @@ deno task build
   Downloads one or more Tweet videos (space-separated URLs supported)
 * `/dl-spoiler url:<Tweet URL>`
   Same as `/dl`, but the resulting file is uploaded as a Discord spoiler attachment
-* `/threaddl name:<Thread Name> url:<Tweet URL>` *(in development)*
-  Will create a thread with the given name and post each download result inside it. Currently registered as a command definition; runtime wiring is being implemented in a separate stream.
+* `/threaddl name:<Thread Name>`
+  Opens a Modal where you paste any number of Tweet URLs (one per line, or any combination of newlines / spaces / commas / semicolons), creates a thread with the given name, and posts each download result inside it; URLs are processed in parallel by a GitHub Actions matrix workflow
+* `/threaddl-spoiler name:<Thread Name>`
+  Same as `/threaddl`, but every resulting file is uploaded with the `SPOILER_` prefix
 
 See [`docs/commands.md`](./docs/commands.md) for the full command reference.
 
@@ -79,8 +82,10 @@ See [`docs/commands.md`](./docs/commands.md) for the full command reference.
   Run code and text linting
 * `deno task run`
   Start the bot locally
+* `deno task test` / `deno task test:coverage`
+  Run the Deno test suite (with optional coverage report) under `tests/`
 * `docker/Dockerfile`
-  Defines the video processing runner image
+  Defines the video processing runner image, shared by `run.yml` and `run-thread.yml`
 
 ---
 

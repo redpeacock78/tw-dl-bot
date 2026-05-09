@@ -12,13 +12,14 @@
 
 ```text
 .
-├── deno.json               # tasks (dev, lint, build, run, start, cache)
+├── deno.json               # tasks (dev, lint, build, run, start, cache, test*)
 ├── scripts.json            # denon config used by `deno task dev`
 ├── import_map.json         # import map for std + third-party deps
 ├── src/                    # bot + router + libs + utils + main entry
+├── tests/                  # Deno test suite, mirrors the src/ tree
 ├── tools/textlint.ts       # custom textlint runner used by `deno task lint`
 ├── docker/Dockerfile       # runner image (Ubuntu + ffmpeg + yt-dlp)
-└── .github/workflows/      # build.yml (image) and run.yml (download job)
+└── .github/workflows/      # build.yml (image), run.yml + run-thread.yml (downloads), test.yml (CI)
 ```
 
 ## Environment variables
@@ -44,7 +45,7 @@ The runner workflow itself uses the built-in `GITHUB_TOKEN` (with `packages: wri
 
 ## Common tasks
 
-All tasks below are defined in `deno.json` (and mirrored in `scripts.json` for denon).
+All tasks below are defined in `deno.json` (and `dev` / `lint` are also mirrored in `scripts.json` for denon).
 
 ```bash
 # Watch-and-reload development server
@@ -64,12 +65,25 @@ deno task build
 
 # Run the compiled binary
 deno task start
+
+# Run the Deno test suite under tests/
+deno task test
+
+# Run tests with file-watching reloads
+deno task test:watch
+
+# Run tests with coverage; prints a `deno coverage` summary
+deno task test:coverage
 ```
 
 `deno task lint` runs:
 
-1. `deno lint` over all TypeScript sources, and
+1. `deno lint` over all TypeScript sources. The `tools/` directory is excluded via the `lint.exclude` field in `deno.json` (the textlint runner intentionally pulls in unversioned `npm:` specifiers).
 2. `deno run --allow-env --allow-read --allow-sys tools/textlint.ts *` — a custom runner that loads `.textlintrc` and lints the files passed as arguments. The shell glob `*` expands to top-level files only.
+
+### Tests
+
+The Deno test suite lives under `tests/` and mirrors the `src/` tree (e.g. `src/bot/registerCommands.ts` ↔ `tests/bot/registerCommands.test.ts`). All three `test*` tasks pre-set placeholder values for `DISCORD_TOKEN`, `DISPATCH_URL`, and `GITHUB_TOKEN` so that importing modules which transitively load `Secrets` does not fail on missing env vars; tests stub `bot.helpers.*` and `ky` per file rather than making real network calls.
 
 ### Coverage
 
@@ -95,12 +109,13 @@ The dashboard is at <https://app.codecov.io/gh/redpeacock78/tw-dl-bot>; the badg
 
 ### What runs at startup
 
-`src/main.ts` imports `bot` from `src/bot/bot.ts`. As a side effect of that import, `bot.ts` runs two top-level `await bot.helpers.createGlobalApplicationCommand(...)` calls that register the `dl` and `dl-spoiler` global slash commands. Then `main.ts`:
+`src/main.ts`:
 
-1. Loads `Secrets` (fails fast on missing env vars).
-2. Calls `startBot(bot)` to open the Discord gateway connection.
-3. Mounts the Hono app at `/api` and serves it via the `serve` helper from `std/http/server`.
-4. Starts a periodic RAM-usage update on the bot status (`Bot.updateRAMUsage2BotStatus`, every 10 seconds).
+1. Loads `Secrets` (fails fast on missing env vars; this happens implicitly via the `import` chain, since `bot.ts` reads `Secrets.DISCORD_TOKEN` when constructing the discordeno client).
+2. Calls `await registerCommands(bot)` (`src/bot/registerCommands.ts`) to register `dl`, `dl-spoiler`, and `threaddl` as global slash commands. This was previously a top-level `await` inside `bot.ts`; it was extracted so that importing `bot.ts` is side-effect-free for unit tests.
+3. Calls `startBot(bot)` to open the Discord gateway connection.
+4. Mounts the Hono app at `/api` and serves it via the `serve` helper from `std/http/server`.
+5. Starts a periodic RAM-usage update on the bot status (`Bot.updateRAMUsage2BotStatus`, every 10 seconds).
 
 The HTTP server listens on `0.0.0.0:8000` by default (the `serve` from `https://deno.land/std@0.193.0/http/server.ts` is the one actually used — not `Deno.serve`). When developing locally, expose this port to the public internet (e.g. with [ngrok](https://ngrok.com/) or [Cloudflare Tunnel](https://www.cloudflare.com/products/tunnel/)) and set `ENDPOINT_URL` in your GitHub Actions secrets to the public URL of `/api/callback`.
 
@@ -108,6 +123,7 @@ The HTTP server listens on `0.0.0.0:8000` by default (the `serve` from `https://
 
 - **`Not all secrets are set.`** — One of `DISCORD_TOKEN`, `DISPATCH_URL`, `GITHUB_TOKEN` is missing or empty.
 - **No interactions received** — Ensure the bot has the `applications.commands` and `bot` scopes when invited to the guild.
-- **`repository_dispatch` returns 404** — The `DISPATCH_URL` is wrong, the PAT lacks scope, or the workflow file does not declare `on.repository_dispatch.types: [download]`.
+- **`repository_dispatch` returns 404** — The `DISPATCH_URL` is wrong, the PAT lacks scope, or the workflow file does not declare a matching `on.repository_dispatch.types` (`download` for `/dl` & `/dl-spoiler`, `thread-download` for `/threaddl`).
+- **`/threaddl` replies "This command must be used in a guild text channel."** — The interaction came from a DM. Threads can only be created in a guild text/announcement/forum channel; the bot enforces this by checking `interaction.guildId` before calling `startThreadWithoutMessage`.
 - **Callbacks never reach the bot** — `ENDPOINT_URL` (a GH Actions secret) does not point at a publicly reachable `/api/callback`. Check tunnel logs.
-- **Follow-up edits stop after 15 minutes** — Discord rate-limits follow-up message edits past the original interaction's lifetime; the bot enforces this via `Constants.EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT`.
+- **`/dl` follow-up edits stop after 15 minutes** — Discord rate-limits follow-up message edits past the original interaction's lifetime; the bot enforces this via `Constants.EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT`. `/threaddl` is unaffected because thread placeholders are edited via `editMessage`, which is not bound by that window.

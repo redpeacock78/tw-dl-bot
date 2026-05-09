@@ -3,7 +3,7 @@
 The deployable surface of this project has two pieces:
 
 1. The **bot service** (`src/main.ts`) — a long-running Deno process that must reach Discord and accept inbound HTTP from GitHub Actions.
-2. The **runner image** (`docker/Dockerfile`) — a Docker image consumed by `.github/workflows/run.yml`. It is rebuilt automatically by `.github/workflows/build.yml`.
+2. The **runner image** (`docker/Dockerfile`) — a Docker image consumed by both `.github/workflows/run.yml` (single-URL) and `.github/workflows/run-thread.yml` (matrix fan-out for `/threaddl`). It is rebuilt automatically by `.github/workflows/build.yml`.
 
 ## 1. Runner image
 
@@ -27,7 +27,7 @@ echo "${CR_PAT}" | docker login ghcr.io -u "<your-username>" --password-stdin
 docker push "${IMAGE}"
 ```
 
-The runner workflow always pulls `:latest`, so a successful push is enough to roll out a new runner — no application redeploy is required.
+Both runner workflows always pull `:latest`, so a successful push is enough to roll out a new runner — no application redeploy is required.
 
 ## 2. Bot service
 
@@ -78,7 +78,20 @@ Set `ENDPOINT_URL` in the **target repository's** Actions secrets to the public 
 ENDPOINT_URL = https://bot.example.com/api/callback
 ```
 
-The runner workflow uses this when posting progress / success / failure updates.
+Both `run.yml` and `run-thread.yml` use this when posting progress / success / failure updates.
+
+### Bot permissions in Discord
+
+For `/dl` and `/dl-spoiler` the bot needs the standard message-send and attachment scopes.
+
+For `/threaddl` and `/threaddl-spoiler` the bot needs **two distinct** permissions in the source guild text channel. They fail in **different** ways and produce **different** user-visible symptoms — operators must verify both, not just check that no error embed appeared:
+
+| Missing permission | Failure path | What the user sees |
+| --- | --- | --- |
+| **Create Public Threads** | `bot.helpers.startThreadWithoutMessage(...)` rejects at the REST layer; `runThreadFlow`'s `.catch` posts an error embed and stops. | A `Failed to create thread: <reason>` error embed in the source channel. The thread is never created; nothing is dispatched. |
+| **Send Messages in Threads** | The thread *is* created (the two permissions are independent), but every per-URL `bot.helpers.sendMessage(thread.id, ...)` placeholder rejects. The bot swallows each rejection silently (`.catch((): null => null)`) and short-circuits on `links.length === 0`. | A `🧵 Created thread <#thread-id> for N URL(s).` follow-up appears in the source channel and an empty thread is created — but **no error embed**, and the bot never dispatches the runner workflow. |
+
+> **Operator note.** If `/threaddl` (or `/threaddl-spoiler`) looks like it "ran without error" but nothing ever appears in the new thread, suspect the second row first.
 
 ## Health check
 
@@ -94,11 +107,13 @@ Use this for uptime checks or load-balancer health probes.
 | --- | --- |
 | TypeScript source under `src/` | Bot service. |
 | `docker/Dockerfile` | Runner image (push to `master` triggers `build.yml`). No bot redeploy needed. |
-| `.github/workflows/run.yml` | Nothing — the workflow is read from the default branch on each dispatch. |
-| Slash command additions / removals | Bot service. `createGlobalApplicationCommand` is called at startup. Global commands can take up to an hour to propagate. |
+| `.github/workflows/run.yml` or `run-thread.yml` | Nothing — the workflows are read from the default branch on each dispatch. |
+| `.github/workflows/test.yml` | Nothing — runs on `pull_request` and on `push` to `master`. |
+| Slash command additions / removals | Bot service. `createGlobalApplicationCommand` is called by `registerCommands` at startup. Global commands can take up to an hour to propagate. |
 
 ## Operational notes
 
 - The bot updates its presence with current RAM usage every 10 seconds (`UPDATE_BOT_STATUS_INTERVAL`).
-- Discord follow-up messages can only be edited for 15 minutes after the original interaction (`EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT`); long-running downloads will stop receiving progress edits past that window even though the workflow keeps running.
+- For `/dl` / `/dl-spoiler`: Discord follow-up messages can only be edited for 15 minutes after the original interaction (`EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT`); long-running downloads will stop receiving progress edits past that window even though the workflow keeps running. `/threaddl` placeholders are edited via `editMessage` (a regular channel message edit) and are not affected by this 15-minute window.
 - The runner image is intentionally rebuilt nightly so that `yt-dlp` and its dependencies stay current with site changes.
+- `run-thread.yml` runs at most 16 shards in parallel (`strategy.max-parallel: 16`, `fail-fast: false`). Failed shards still let other URLs complete.
