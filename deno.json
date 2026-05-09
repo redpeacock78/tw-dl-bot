@@ -11,8 +11,8 @@
     "run": "deno run -A --no-check --import-map import_map.json src/main.ts",
     "build": "deno compile -A --import-map import_map.json -o build/main src/main.ts && chmod +x ./build/main",
     "start": "./build/main",
-    "test": "DISCORD_TOKEN=test-discord-token DISPATCH_URL=https://example.invalid/dispatch GITHUB_TOKEN=test-github-token deno test --allow-env --allow-read --allow-import=deno.land:443,jsr.io:443,cdn.skypack.dev:443,esm.sh:443,unpkg.com:443 --import-map import_map.json tests/",
-    "test:watch": "DISCORD_TOKEN=test-discord-token DISPATCH_URL=https://example.invalid/dispatch GITHUB_TOKEN=test-github-token deno test --watch --allow-env --allow-read --allow-import=deno.land:443,jsr.io:443,cdn.skypack.dev:443,esm.sh:443,unpkg.com:443 --import-map import_map.json tests/",
-    "test:coverage": "DISCORD_TOKEN=test-discord-token DISPATCH_URL=https://example.invalid/dispatch GITHUB_TOKEN=test-github-token deno test --coverage=coverage --allow-env --allow-read --allow-import=deno.land:443,jsr.io:443,cdn.skypack.dev:443,esm.sh:443,unpkg.com:443 --import-map import_map.json tests/ && deno coverage coverage && deno coverage coverage --lcov > coverage/lcov.info && deno coverage coverage --html"
+    "test": "DISCORD_TOKEN=dGVzdA.dGVzdA.dGVzdA DISPATCH_URL=https://example.invalid/dispatch GITHUB_TOKEN=test-github-token deno test --allow-env --allow-read --allow-import=deno.land:443,jsr.io:443,cdn.skypack.dev:443,esm.sh:443,unpkg.com:443 --import-map import_map.json tests/",
+    "test:watch": "DISCORD_TOKEN=dGVzdA.dGVzdA.dGVzdA DISPATCH_URL=https://example.invalid/dispatch GITHUB_TOKEN=test-github-token deno test --watch --allow-env --allow-read --allow-import=deno.land:443,jsr.io:443,cdn.skypack.dev:443,esm.sh:443,unpkg.com:443 --import-map import_map.json tests/",
+    "test:coverage": "DISCORD_TOKEN=dGVzdA.dGVzdA.dGVzdA DISPATCH_URL=https://example.invalid/dispatch GITHUB_TOKEN=test-github-token deno test --coverage=coverage --allow-env --allow-read --allow-import=deno.land:443,jsr.io:443,cdn.skypack.dev:443,esm.sh:443,unpkg.com:443 --import-map import_map.json tests/ && deno coverage coverage && deno coverage coverage --lcov > coverage/lcov.info && deno coverage coverage --html"
   }
 }
