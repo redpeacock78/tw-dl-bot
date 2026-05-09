@@ -16,7 +16,7 @@
 
 ## End-to-end flow（`/dl`、`/dl-spoiler`）
 
-\`\`\`mermaid
+```mermaid
 sequenceDiagram
     participant U as User (Discord)
     participant D as Discord API
@@ -36,13 +36,13 @@ sequenceDiagram
     R->>R: yt-dlp download + ffmpeg convert
     R-->>B: POST /api/callback (status: success, multipart file)
     B->>D: editFollowupMessage (success embed + attachment)
-\`\`\`
+```
 
 ## End-to-end flow（`/threaddl`、`/threaddl-spoiler`）
 
 両方の thread コマンドは Discord **Modal** を通じて URL を収集するため、ユーザーは quote なしで多くのリンクを貼り付けることができます。スラッシュコマンドの最初の応答は Modal 自体です。実際の作業は follow-up `ModalSubmit` interaction で実行されます。URL が抽出されると、Bot は thread を作成し、URL ごとに 1 つの placeholder を投稿し、すべての URL を運ぶ単一の `thread-download` event をディスパッチします。runner workflow は URL ごとに 1 つの matrix shard をファンアウトします。各 shard は `editMessage` 経由で独自の placeholder を編集します（これは 15 分の interaction-token window に bounded されません）。2 つのコマンドは同じ handler（`runThreadFlow`）と同じ workflow（`run-thread.yml`）を共有します。唯一の違いは pipeline を通じて運ばれる `commandType`（`threaddl` vs `threaddl-spoiler`）です。これは Bot の callback router が成功時に `SPOILER_` filename prefix を適用するかどうかを決定するために使用されます。
 
-\`\`\`mermaid
+```mermaid
 sequenceDiagram
     participant U as User (Discord)
     participant D as Discord API
@@ -71,11 +71,11 @@ sequenceDiagram
         R-->>B: POST /api/callback
         B->>D: editMessage (thread 内)
     end
-\`\`\`
+```
 
 ## Component map
 
-\`\`\`mermaid
+```mermaid
 flowchart LR
     subgraph Discord
         U[User]
@@ -109,7 +109,7 @@ flowchart LR
     ROUTER --> LIBS
     ROUTER --> UTILS
     LIBS -- "discordeno REST" --> U
-\`\`\`
+```
 
 ## Module layout
 
@@ -160,9 +160,9 @@ runner は 3 つの status の 1 つを `/api/callback` に push：
 
 Modal ベースの thread コマンドは Modal `customId` に依存して、2 つの interaction handshake を介して context を運びます。Discord は `customId` を 100 文字でキャップするため、Bot は意図的な budget を使用します：
 
-\`\`\`text
+```text
 <commandType>|<threadName-truncated-to-MAX_NAME_IN_CUSTOM_ID>
-\`\`\`
+```
 
 | Slot | Limit | Reason |
 | --- | --- | --- |

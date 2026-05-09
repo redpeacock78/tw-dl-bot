@@ -36,10 +36,10 @@
 
 ### Examples
 
-\`\`\`text
+```text
 /dl url:https://twitter.com/<user>/status/<id>
 /dl url:https://x.com/<user>/status/<id1> https://x.com/<user>/status/<id2>
-\`\`\`
+```
 
 ## `/dl-spoiler`
 
@@ -65,9 +65,9 @@ interaction handler は `/dl` と共有されます（`src/bot/interactionCreate
 
 ### Example
 
-\`\`\`text
+```text
 /dl-spoiler url:https://twitter.com/<user>/status/<id>
-\`\`\`
+```
 
 ## `/threaddl`
 
@@ -134,18 +134,18 @@ URL 抽出は delimiter-agnostic です。送信されたテキストは regex *
 2. Discord は `Add URLs to "weekly-faves"` というタイトルの Modal を表示し、複数行テキストボックスを表示。
 3. ユーザーが URL を貼り付けます（以下のレイアウトはすべて identically parse されます）：
 
-   \`\`\`text
+   ```text
    https://twitter.com/<user>/status/<id1>
    https://x.com/<user>/status/<id2>
-   \`\`\`
+   ```
 
-   \`\`\`text
+   ```text
    https://twitter.com/<user>/status/<id1>, https://x.com/<user>/status/<id2>; https://x.com/<user>/status/<id3>
-   \`\`\`
+   ```
 
-   \`\`\`text
+   ```text
    https://twitter.com/<user>/status/<id1> https://x.com/<user>/status/<id2>
-   \`\`\`
+   ```
 
 4. ユーザーが**Submit**をクリック。
 5. Bot は `weekly-faves` thread を作成し、その内部の各 URL ごとに 1 つの `🕑Queuing...` placeholder を投稿し、単一の matrix workflow をディスパッチします。
