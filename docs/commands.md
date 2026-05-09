@@ -1,6 +1,6 @@
 # Slash Command Reference
 
-All command **definitions** live in `src/bot/commands.ts`; their names come from `Constants.Webhook.Json.ClientPayload.CommandType` in `src/libs/constants.ts`. At runtime, `src/bot/bot.ts` only registers `dl` and `dl-spoiler` as **global** application commands and only dispatches those two in `interactionCreate`. The `threaddl` definition is present but not yet wired up (see [`/threaddl` (in development)](#threaddl-in-development) below).
+All command definitions live in `src/bot/commands.ts`; their names come from `Constants.Webhook.Json.ClientPayload.CommandType` in `src/libs/constants.ts`. Registration with Discord is performed by `src/bot/registerCommands.ts`, which is invoked once from `src/main.ts` before `startBot`. All three commands — `dl`, `dl-spoiler`, and `threaddl` — are registered as **global** application commands and dispatched by name in `src/bot/bot.ts`'s `interactionCreate` handler.
 
 ## `/dl`
 
@@ -64,11 +64,9 @@ The interaction handler is shared with `/dl` (see `src/bot/interactionCreate.ts`
 /dl-spoiler url:https://twitter.com/<user>/status/<id>
 ```
 
-## `/threaddl` (in development)
+## `/threaddl`
 
-> **Status:** declared in `src/bot/commands.ts` but not yet wired into the runtime dispatcher in `src/bot/bot.ts`. Implementation is being developed in a separate stream (see task #2). The notes below describe the intended shape; details may change.
-
-Download multiple Tweets into a Discord **thread** named by the user.
+Download multiple Tweets into a Discord **thread** named by the user. Each URL is processed in parallel by a dedicated GitHub Actions matrix shard, and each shard's result lands inside the thread next to the matching placeholder message.
 
 | Field | Value |
 | --- | --- |
@@ -76,16 +74,32 @@ Download multiple Tweets into a Discord **thread** named by the user.
 | Description | `DL multiple Tweets into a thread` |
 | Type | `1` |
 
-### Options (planned)
+### Options
 
 | Option | Type | Required | Discord description (literal) | Purpose |
 | --- | --- | --- | --- | --- |
 | `name` | `STRING` (3) | yes | `Thread Name` | Thread name to create. |
-| `url` | `STRING` (3) | yes | `Tweet URL` | Tweet URL. Space-separated for multiple. |
+| `url` | `STRING` (3) | yes | `Tweet URL` | Tweet URL. Multiple URLs may be passed by separating them with a single space (the bot splits on space, drops empty tokens, and validates each remaining token client-side). |
 
-### Intended behaviour
+> **Note (forward-looking):** task #6 is exploring a Modal-based UI for `/threaddl` so the user can paste multiple URLs into a multi-line text input instead of a single space-separated string. Until that lands, the surface above is the current spec.
 
-The bot will create a thread with the given `name` and post each download result inside that thread, in parallel, using the same dispatch / callback pipeline as `/dl`. The `commandType` carried in the dispatch payload will be `threaddl`, and the runner workflow will fan out across the supplied URLs.
+### Behaviour
+
+1. The bot defers the interaction (`DeferredChannelMessageWithSource`).
+2. The `name` and `url` options are read from the interaction. `url` is split on spaces (empty tokens dropped); the request is rejected unless `name` is non-empty, every URL token passes `isUrl`, and at least one URL was supplied. The rejection error embed lists the supplied tokens (or the raw input if the split produced none).
+3. **Guild-only guard.** Discord interactions in DMs still carry a `channelId` (the DM channel), but threads can only be created inside a guild text/announcement/forum channel. `threadInteractionCreate` therefore also requires `interaction.guildId`; if it is missing, the bot replies with an error embed reading "This command must be used in a guild text channel." and stops.
+4. The bot calls `startThreadWithoutMessage(channelId, { name, autoArchiveDuration: 1440, type: 11 })` to create a public thread. If the call fails, the bot replies with a `Failed to create thread: <reason>` error embed and stops. (`1440` minutes = 24-hour auto-archive; `type: 11` = public thread.)
+5. The bot posts a follow-up to the original interaction announcing the thread (`🧵 Created thread <#thread-id> for N URL(s).`).
+6. Inside the new thread, the bot posts one `🕑Queuing...` placeholder per URL via `sendMessage`. Failed `sendMessage` calls are dropped silently. If every placeholder failed (zero left), the bot stops.
+7. The bot fires **a single** `repository_dispatch` of type `thread-download` carrying `{ commandType: "threaddl", channel: <thread-id>, token, startTime, links: [{ link, message }, ...] }`. If the dispatch itself rejects, every placeholder is edited to an error embed describing the failure.
+8. The runner workflow (`.github/workflows/run-thread.yml`) builds a matrix from `links` and runs one job per URL in parallel (`max-parallel: 16`, `fail-fast: false`). Each shard posts progress, success, and failure callbacks to `/api/callback` with `commandType: "threaddl"` and `actionType: "thread-single"` or `"thread-multi"`.
+9. **`useThread` short-circuit.** Because the placeholder lives in a thread (not as an interaction follow-up), every callback handler — `progress`, `failure`, and the `successMessage.singleFile` / `multiFiles` builders — checks `commandType === "threaddl"` (or the `useThread` flag) and edits the placeholder via `bot.helpers.editMessage(channelId, messageId, ...)` instead of `editFollowupMessage`. This bypass means the 15-minute interaction-token window does not apply, and the oversize fallback that would otherwise post a fresh message in non-thread mode is also short-circuited so the message stays in-place inside the thread.
+
+### Example
+
+```text
+/threaddl name:my-thread url:https://twitter.com/<user>/status/<id1> https://x.com/<user>/status/<id2>
+```
 
 ## Command type tokens
 
@@ -102,5 +116,6 @@ The string values used in dispatch payloads and callbacks are defined once and r
 | Surface | Cause |
 | --- | --- |
 | `❌Failure!` embed | The runner workflow finished with the `failure` status (download timeout, link expired, no video file found, oversized file, etc.). The runner posts which step failed via the embed description. |
-| `⚠️Error!` embed (immediate) | One or more of the supplied tokens did not parse as a URL. |
+| `⚠️Error!` embed (immediate) | For `/dl` / `/dl-spoiler`: one or more of the supplied tokens did not parse as a URL. For `/threaddl`: same, plus an empty `name`, an empty `url`, or use outside a guild. |
+| `Failed to create thread: <reason>` (`/threaddl` only) | `startThreadWithoutMessage` rejected — usually because the bot lacks the **Create Public Threads** permission in the source channel, or the channel type does not support threads. |
 | Nothing happens | The bot process is offline, or the `repository_dispatch` POST failed (check `DISPATCH_URL` and `GITHUB_TOKEN`). |

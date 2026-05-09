@@ -4,11 +4,11 @@ This directory contains the developer-facing documentation for **tw-dl-bot**, a 
 
 ## Contents
 
-- [Architecture](./architecture.md) — High-level system overview and data flow between Discord, the bot, GitHub Actions, and yt-dlp.
+- [Architecture](./architecture.md) — High-level system overview and data flow between Discord, the bot, GitHub Actions (`run.yml` + `run-thread.yml`), and yt-dlp.
 - [Commands](./commands.md) — Reference for the `/dl`, `/dl-spoiler`, and `/threaddl` slash commands.
-- [Development](./development.md) — Local development setup, environment variables, and required GitHub token scopes.
+- [Development](./development.md) — Local development setup, environment variables, GitHub token scopes, and the Deno test suite.
 - [Deployment](./deployment.md) — Deployment workflow, runner image build/publish, and runtime environment.
-- [GitHub Actions](./github-actions.md) — `repository_dispatch` payload schema, callback API, and required secrets.
+- [GitHub Actions](./github-actions.md) — `repository_dispatch` payload schemas (`download` and `thread-download`), callback API, status routing (including thread mode), and required secrets.
 
 ## See also
 
