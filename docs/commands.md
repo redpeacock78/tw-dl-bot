@@ -1,6 +1,6 @@
 # Slash Command Reference
 
-All commands are registered as **global** application commands by `src/bot/bot.ts`. Definitions live in `src/bot/commands.ts`; the names come from `Constants.Webhook.Json.ClientPayload.CommandType` in `src/libs/constants.ts`.
+All command **definitions** live in `src/bot/commands.ts`; their names come from `Constants.Webhook.Json.ClientPayload.CommandType` in `src/libs/constants.ts`. At runtime, `src/bot/bot.ts` only registers `dl` and `dl-spoiler` as **global** application commands and only dispatches those two in `interactionCreate`. The `threaddl` definition is present but not yet wired up (see [`/threaddl` (in development)](#threaddl-in-development) below).
 
 ## `/dl`
 
@@ -14,15 +14,15 @@ Download one or more Tweet videos and post them to the channel.
 
 ### Options
 
-| Option | Type | Required | Description |
-| --- | --- | --- | --- |
-| `url` | `STRING` (3) | yes | Tweet URL. Multiple URLs may be passed by separating them with a single space. |
+| Option | Type | Required | Discord description (literal) | Purpose |
+| --- | --- | --- | --- | --- |
+| `url` | `STRING` (3) | yes | `Tweet URL` | Tweet URL. Multiple URLs may be passed by separating them with a single space (the bot splits on space and validates each token client-side). |
 
 ### Behaviour
 
 1. The bot defers the interaction (`DeferredChannelMessageWithSource`).
 2. The `url` value is split on spaces. Each token is validated with `isUrl`.
-3. If any token is not a URL, the bot replies with an error embed listing the rejected input(s) and stops.
+3. If any token fails URL validation, the bot replies with a single error embed whose description lists **all** supplied tokens (newline-separated), not only the invalid ones, and then stops.
 4. For each URL, the bot:
    - posts a `🕑Queuing...` follow-up,
    - fires a `repository_dispatch` event of type `download` with `commandType: "dl"`,
@@ -31,7 +31,7 @@ Download one or more Tweet videos and post them to the channel.
 
 ### Examples
 
-```
+```text
 /dl url:https://twitter.com/<user>/status/<id>
 /dl url:https://x.com/<user>/status/<id1> https://x.com/<user>/status/<id2>
 ```
@@ -50,9 +50,9 @@ Identical to `/dl`, except the resulting file is uploaded with the `SPOILER_` pr
 
 Same as `/dl`:
 
-| Option | Type | Required | Description |
-| --- | --- | --- | --- |
-| `url` | `STRING` (3) | yes | Tweet URL (space-separated for multiple). |
+| Option | Type | Required | Discord description (literal) | Purpose |
+| --- | --- | --- | --- | --- |
+| `url` | `STRING` (3) | yes | `Tweet URL` | Tweet URL (space-separated for multiple). |
 
 ### Behaviour
 
@@ -60,7 +60,7 @@ The interaction handler is shared with `/dl` (see `src/bot/interactionCreate.ts`
 
 ### Example
 
-```
+```text
 /dl-spoiler url:https://twitter.com/<user>/status/<id>
 ```
 
@@ -78,10 +78,10 @@ Download multiple Tweets into a Discord **thread** named by the user.
 
 ### Options (planned)
 
-| Option | Type | Required | Description |
-| --- | --- | --- | --- |
-| `name` | `STRING` (3) | yes | Thread name to create. |
-| `url` | `STRING` (3) | yes | Tweet URL. Space-separated for multiple. |
+| Option | Type | Required | Discord description (literal) | Purpose |
+| --- | --- | --- | --- | --- |
+| `name` | `STRING` (3) | yes | `Thread Name` | Thread name to create. |
+| `url` | `STRING` (3) | yes | `Tweet URL` | Tweet URL. Space-separated for multiple. |
 
 ### Intended behaviour
 

@@ -41,7 +41,7 @@ The runner posts to the URL in the `ENDPOINT_URL` Actions secret (which should r
 | Field | Type | Notes |
 | --- | --- | --- |
 | `status` | `"success" \| "failure" \| "progress" \| null` | Drives which handler runs. |
-| `number` | `string` | `${{ github.run_number }}`, displayed in success / failure embeds. |
+| `number` | `string` (per `CallbackTypes.bodyDataObject`) | `${{ github.run_number }}`, displayed in success / failure embeds. The producer is inconsistent: `run.yml` injects the value unquoted into JSON callbacks (so it arrives as a JSON number) and as a plain `multipart/form-data` field on success (string). The router does not coerce it, so `body.number` may be either at runtime even though the type declares `string`. |
 | `commandType` | `"dl" \| "dl-spoiler"` (optional) | Required for `success`; selects single vs. spoiler handler. |
 | `actionType` | `"single" \| "multi"` (optional) | Required for `success`; selects single-file vs. multi-file handler. |
 | `startTime` | `string` | Echo of the bot-supplied `startTime`; used to compute elapsed time. |
@@ -68,19 +68,21 @@ The router uses `Custom.CallbackPattern` (`src/libs/custom.ts`) to pick a handle
 | `["success", "dl", "multi"]` | `success.dl.multi` — sends multiple attached files. |
 | `["success", "dl-spoiler", "single"]` | `success.dlSpoiler.single` — same as above, with `SPOILER_` prefix. |
 | `["success", "dl-spoiler", "multi"]` | `success.dlSpoiler.multi` — multi-file spoiler. |
-| `["progress", null, null]` | `progress` — edits the existing follow-up message (within the 15-minute edit window). |
-| `["failure", null, null]` | `failure` — replies with a failure embed. |
-| `[null, null, null]` | Returns `400 Bad Request`. |
+| `["progress", <nullish>, <nullish>]` | `progress` — edits the existing follow-up message (within the 15-minute edit window). The `commandType` and `actionType` fields are omitted by `run.yml` for progress callbacks, so the matcher uses `P.nullish`. |
+| `["failure", <nullish>, <nullish>]` | `failure` — replies with a failure embed. Same `P.nullish` matching as `progress`. |
+| `[<nullish>, <nullish>, <nullish>]` | `InvalidPost` — body parsed, but `status`, `commandType`, and `actionType` are all missing. Returns `400 Bad Request`. |
 
 Anything else returns `500 Internal Server Error`.
 
 ### Response codes
 
-| Outcome | Code |
+These are decided by `src/router/callback.ts` after the body is parsed and the `[status, commandType, actionType]` triplet is matched against `Custom.CallbackPattern`:
+
+| Code | When |
 | --- | --- |
-| Successfully edited / posted to Discord | `204 No Content` |
-| Body could not be parsed or required fields are missing | `400 Bad Request` |
-| Discord API call failed (network or 4xx/5xx) | `500 Internal Server Error` |
+| `204 No Content` | A handler ran and the Discord API call succeeded. |
+| `400 Bad Request` | Body parsed (JSON or multipart), but `status`, `commandType`, and `actionType` are all missing — the `InvalidPost` pattern. |
+| `500 Internal Server Error` | Falls through to `.otherwise` — used for body-parse failures and for any other `[status, commandType, actionType]` combination not enumerated above. Discord API errors inside a handler are also reported as `500` by the per-handler `.catch`. |
 
 ## Secrets
 
@@ -98,7 +100,7 @@ Anything else returns `500 Internal Server Error`.
 
 1. **Masking Secrets** — masks `commandType`, `link`, `channel`, `message`, `token` with `::add-mask::` so they never appear in logs.
 2. **Start Steps / Setup** — posts `progress` callbacks with `⏳Starting...`, `🛠Setup...`, etc., while it ensures `yt-dlp` is on the latest nightly.
-3. **Confirmation of link survival** — issues a `HEAD` to the supplied URL to bail out early on dead links.
+3. **Confirmation of link survival** — issues a `GET` (`curl -siL`, headers + follow redirects, body discarded) to the supplied URL to bail out early on dead links.
 4. **Start Download** — runs `yt-dlp` with the streaming progress hooks defined in the bash/awk scripts that earlier steps wrote out.
 5. **Check and Convert Files** — re-encodes via `ffmpeg` when needed.
 6. **Upload files** — sends a `success` callback to `/api/callback` with the resulting file(s) attached as multipart parts.

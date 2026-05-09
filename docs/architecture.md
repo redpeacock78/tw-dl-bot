@@ -55,7 +55,7 @@ flowchart LR
         IMG["GHCR: tw-dl-runner image"]
     end
 
-    U -- "/dl, /dl-spoiler, /threaddl" --> BOT
+    U -- "/dl, /dl-spoiler, /threaddl (in dev)" --> BOT
     BOT --> LIBS
     LIBS -- "ky.post(DISPATCH_URL)" --> DISPATCH
     DISPATCH --> ACT

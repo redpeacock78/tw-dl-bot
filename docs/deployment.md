@@ -60,7 +60,7 @@ Or, without compiling:
 deno task run
 ```
 
-The Hono server listens on the port chosen by `Deno.serve` (default `8000`).
+The Hono server is served via the `serve` helper from `std/http/server` (`https://deno.land/std@0.193.0/http/server.ts`), which listens on `0.0.0.0:8000` by default.
 
 ### Required environment variables
 
@@ -74,7 +74,7 @@ Discord and GitHub both require HTTPS for webhook-style endpoints. Terminate TLS
 
 Set `ENDPOINT_URL` in the **target repository's** Actions secrets to the public URL of the bot's callback endpoint, e.g.:
 
-```
+```text
 ENDPOINT_URL = https://bot.example.com/api/callback
 ```
 
@@ -82,7 +82,7 @@ The runner workflow uses this when posting progress / success / failure updates.
 
 ## Health check
 
-```
+```http
 GET /api/ping  -> 200 OK with body "OK!"
 ```
 

@@ -10,7 +10,7 @@
 
 ## Repository layout (top level)
 
-```
+```text
 .
 ├── deno.json               # tasks (dev, lint, build, run, start, cache)
 ├── scripts.json            # denon config used by `deno task dev`
@@ -73,14 +73,14 @@ deno task start
 
 ### What runs at startup
 
-`src/main.ts`:
+`src/main.ts` imports `bot` from `src/bot/bot.ts`. As a side effect of that import, `bot.ts` runs two top-level `await bot.helpers.createGlobalApplicationCommand(...)` calls that register the `dl` and `dl-spoiler` global slash commands. Then `main.ts`:
 
 1. Loads `Secrets` (fails fast on missing env vars).
-2. Calls `startBot(bot)` to open the Discord gateway connection and registers the `dl` and `dl-spoiler` global slash commands.
-3. Mounts the Hono app at `/api` and serves it via `std/http/server`.
+2. Calls `startBot(bot)` to open the Discord gateway connection.
+3. Mounts the Hono app at `/api` and serves it via the `serve` helper from `std/http/server`.
 4. Starts a periodic RAM-usage update on the bot status (`Bot.updateRAMUsage2BotStatus`, every 10 seconds).
 
-The HTTP server listens on the default port chosen by `serve` (`Deno.serve` defaults to `0.0.0.0:8000` unless overridden via env). When developing locally, expose this port to the public internet (e.g. with [ngrok](https://ngrok.com/) or [Cloudflare Tunnel](https://www.cloudflare.com/products/tunnel/)) and set `ENDPOINT_URL` in your GitHub Actions secrets to the public URL of `/api/callback`.
+The HTTP server listens on `0.0.0.0:8000` by default (the `serve` from `https://deno.land/std@0.193.0/http/server.ts` is the one actually used — not `Deno.serve`). When developing locally, expose this port to the public internet (e.g. with [ngrok](https://ngrok.com/) or [Cloudflare Tunnel](https://www.cloudflare.com/products/tunnel/)) and set `ENDPOINT_URL` in your GitHub Actions secrets to the public URL of `/api/callback`.
 
 ## Troubleshooting
 
