@@ -58,8 +58,10 @@ deno task build
   Downloads one or more Tweet videos (space-separated URLs supported)
 * `/dl-spoiler url:<Tweet URL>`
   Same as `/dl`, but the resulting file is uploaded as a Discord spoiler attachment
-* `/threaddl name:<Thread Name> url:<Tweet URL>`
-  Creates a thread with the given name and posts each download result inside it; multiple URLs (space-separated) are processed in parallel by a GitHub Actions matrix workflow
+* `/threaddl name:<Thread Name>`
+  Opens a Modal where you paste any number of Tweet URLs (one per line, or any combination of newlines / spaces / commas / semicolons), creates a thread with the given name, and posts each download result inside it; URLs are processed in parallel by a GitHub Actions matrix workflow
+* `/threaddl-spoiler name:<Thread Name>`
+  Same as `/threaddl`, but every resulting file is uploaded with the `SPOILER_` prefix
 
 See [`docs/commands.md`](./docs/commands.md) for the full command reference.
 

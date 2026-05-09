@@ -6,7 +6,7 @@ The bot offloads all `yt-dlp` work to GitHub Actions. Four workflows are involve
 | --- | --- | --- |
 | Build runner image | `.github/workflows/build.yml` | Builds and pushes `ghcr.io/<owner>/tw-dl-runner:latest` on `push` to `master` and on a daily schedule. |
 | Run download | `.github/workflows/run.yml` | Triggered by a `repository_dispatch` event of type `download`. Runs the runner container against a single URL and posts progress / success / failure callbacks. Used by `/dl` and `/dl-spoiler`. |
-| Run thread download | `.github/workflows/run-thread.yml` | Triggered by a `repository_dispatch` event of type `thread-download`. A `prepare` job builds a `strategy.matrix` from the `links` payload, then `run-with-container` fans out one shard per URL (`max-parallel: 16`, `fail-fast: false`). Used by `/threaddl`. |
+| Run thread download | `.github/workflows/run-thread.yml` | Triggered by a `repository_dispatch` event of type `thread-download`. A `prepare` job builds a `strategy.matrix` from the `links` payload, then `run-with-container` fans out one shard per URL (`max-parallel: 16`, `fail-fast: false`). Shared by `/threaddl` and `/threaddl-spoiler` — the workflow does not branch on `commandType`; it just echoes the value back on every callback so the bot's router can pick the spoiler vs. non-spoiler success handler. |
 | Test | `.github/workflows/test.yml` | Runs `deno lint`, `deno task test`, and `deno task test:coverage` on every `pull_request` and on `push` to `master`. The coverage report is appended to the GitHub Step Summary. |
 
 ## Workflow comparison: `run.yml` vs `run-thread.yml`
@@ -48,7 +48,7 @@ Content-Type: application/json
 
 The bot fires one dispatch per URL when the user passes multiple URLs to `/dl`.
 
-### `event_type: "thread-download"` (`/threaddl`)
+### `event_type: "thread-download"` (`/threaddl`, `/threaddl-spoiler`)
 
 ```http
 POST {DISPATCH_URL}
@@ -59,7 +59,7 @@ Content-Type: application/json
 {
   "event_type": "thread-download",
   "client_payload": {
-    "commandType": "threaddl",
+    "commandType": "threaddl" | "threaddl-spoiler",
     "channel": "<thread channel id, stringified>",
     "token": "<discord interaction token>",
     "startTime": "<unix-ms timestamp, stringified>",
@@ -71,7 +71,9 @@ Content-Type: application/json
 }
 ```
 
-`channel` here is the **thread** ID returned by `startThreadWithoutMessage`, not the original source channel. Each `links[i].message` is the ID of the placeholder posted inside that thread.
+`channel` here is the **thread** ID returned by `startThreadWithoutMessage`, not the original source channel. Each `links[i].message` is the ID of the placeholder posted inside that thread. The same workflow handles both `commandType` values — `commandType` is just echoed back on every callback so the bot's router can pick the spoiler vs. non-spoiler success handler.
+
+The `interaction.token` carried here is the **ModalSubmit** interaction token (not the original ApplicationCommand token), since `runThreadFlow` runs on the second half of the Modal handshake.
 
 `DISPATCH_URL` is conventionally `https://api.github.com/repos/<owner>/<repo>/dispatches`.
 
@@ -85,7 +87,7 @@ The runner posts to the URL in the `ENDPOINT_URL` Actions secret (which should r
 | --- | --- | --- |
 | `status` | `"success" \| "failure" \| "progress" \| null` | Drives which handler runs. |
 | `number` | `string` (per `CallbackTypes.bodyDataObject`) | `${{ github.run_number }}`, displayed in success / failure embeds. The producer is inconsistent: `run.yml` and `run-thread.yml` inject the value unquoted into JSON callbacks (so it arrives as a JSON number) and as a plain `multipart/form-data` field on success (string). The router does not coerce it, so `body.number` may be either at runtime even though the type declares `string`. |
-| `commandType` | `"dl" \| "dl-spoiler" \| "threaddl"` (optional) | Required for `success`; selects the handler family. Also set on **thread-mode** `progress` / `failure` callbacks (so the handlers can detect thread mode), but omitted from `run.yml`'s non-thread `progress` / `failure` callbacks. |
+| `commandType` | `"dl" \| "dl-spoiler" \| "threaddl" \| "threaddl-spoiler"` (optional) | Required for `success`; selects the handler family. Also set on **thread-mode** `progress` / `failure` callbacks (so the handlers can detect thread mode and route the spoiler vs. non-spoiler variant), but omitted from `run.yml`'s non-thread `progress` / `failure` callbacks. |
 | `actionType` | `"single" \| "multi" \| "thread-single" \| "thread-multi"` (optional) | Required for `success`; selects single-file vs. multi-file handler and thread vs. non-thread routing. Omitted from `progress` / `failure` callbacks. |
 | `startTime` | `string` | Echo of the bot-supplied `startTime`; used to compute elapsed time. |
 | `channel` | `string` | Discord channel ID (echoed). For `/threaddl` this is the thread ID. |
@@ -113,15 +115,19 @@ The router uses `Custom.CallbackPattern` (`src/libs/custom.ts`) to pick a handle
 | `["success", "dl-spoiler", "multi"]` | `success.dlSpoiler.multi` — multi-file spoiler. |
 | `["success", "threaddl", "thread-single"]` | `success.threadDl.single` — single file edited into the thread placeholder via `editMessage`. |
 | `["success", "threaddl", "thread-multi"]` | `success.threadDl.multi` — multiple files edited into the thread placeholder. |
+| `["success", "threaddl-spoiler", "thread-single"]` | `success.threadDlSpoiler.single` — single file edited into the thread placeholder, with `SPOILER_` filename prefix. |
+| `["success", "threaddl-spoiler", "thread-multi"]` | `success.threadDlSpoiler.multi` — multiple files edited into the thread placeholder, with `SPOILER_` filename prefix. |
 | `["progress", "threaddl", <nullish>]` | `progress` (`ProgressThread` triplet) — edits the thread placeholder via `editMessage`. The 15-minute window does not apply. |
+| `["progress", "threaddl-spoiler", <nullish>]` | `progress` (`ProgressThreadSpoiler` triplet) — same as above; spoiler-vs-non-spoiler is irrelevant for progress callbacks (no file attached) but the routing is preserved so the per-command pattern stays exhaustive. |
 | `["failure", "threaddl", <nullish>]` | `failure` (`FailureThread` triplet) — edits the thread placeholder to a failure embed. |
+| `["failure", "threaddl-spoiler", <nullish>]` | `failure` (`FailureThreadSpoiler` triplet) — same handler. |
 | `["progress", <nullish>, <nullish>]` | `progress` — edits the existing follow-up message via `editFollowupMessage`, only within the 15-minute edit window. |
 | `["failure", <nullish>, <nullish>]` | `failure` — edits the follow-up to a failure embed (within the window) or sends a fresh message (outside it). |
 | `[<nullish>, <nullish>, <nullish>]` | `InvalidPost` — body parsed, but `status`, `commandType`, and `actionType` are all missing. Returns `400 Bad Request`. |
 
 Anything else returns `500 Internal Server Error`.
 
-The handler implementation itself is shared: `callbackSuccessFunctions.ts` exports `dl`, `dlSpoiler`, and `threadDl` as thin wrappers around two private helpers, `handleSingleSuccess(infoObject, spoiler, useThread)` and `handleMultiSuccess(infoObject, spoiler, useThread)`. Only the `spoiler` and `useThread` flags differ across the six entry points. `useThread === true` causes the message builders in `successMessage.ts` to use `bot.helpers.editMessage(channel, message)` instead of `editFollowupMessage` and to short-circuit the oversize / 15-minute fallback gates.
+The handler implementation itself is shared: `callbackSuccessFunctions.ts` exports `dl`, `dlSpoiler`, `threadDl`, and `threadDlSpoiler` as thin wrappers around two private helpers, `handleSingleSuccess(infoObject, spoiler, useThread)` and `handleMultiSuccess(infoObject, spoiler, useThread)`. Only the `spoiler` and `useThread` flags differ across the eight entry points (`{single, multi} × {dl, dlSpoiler, threadDl, threadDlSpoiler}`). `useThread === true` causes the message builders in `successMessage.ts` to use `bot.helpers.editMessage(channel, message)` instead of `editFollowupMessage` and to short-circuit the oversize / 15-minute fallback gates.
 
 ### Response codes
 
@@ -176,12 +182,12 @@ The output is a JSON object of the form `{"include": [{"link": "...", "message":
 Runs `if: ${{ fromJson(needs.prepare.outputs.count) > 0 }}` with `strategy.matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}`, `fail-fast: false`, `max-parallel: 16`. Each shard receives `matrix.link` and `matrix.message`. Otherwise the steps mirror `run.yml`:
 
 1. **Masking Secrets** — masks `commandType`, `channel`, `token`, `matrix.link`, `matrix.message`.
-2. **Start Steps / Setup** — `progress` callbacks include `commandType: "threaddl"` so the bot routes them through `ProgressThread` and edits the per-shard placeholder via `editMessage`.
+2. **Start Steps / Setup** — `progress` callbacks include the original `commandType` (`"threaddl"` or `"threaddl-spoiler"`) so the bot routes them through `ProgressThread` / `ProgressThreadSpoiler` and edits the per-shard placeholder via `editMessage`.
 3. **Confirmation of link survival → Start Download → Check and Convert Files → Upload files** — identical pipeline, with `actionType=thread-single` or `thread-multi` set on the success callback.
-4. **Failure paths** — same explicit `failure` callbacks as `run.yml`, all with `commandType: "threaddl"`.
+4. **Failure paths** — same explicit `failure` callbacks as `run.yml`, with the original `commandType` echoed back.
 5. **Cleanup temp files**.
 
-Because each shard knows its own `matrix.message`, every callback edits the right placeholder inside the thread independently of the other shards.
+Because each shard knows its own `matrix.message`, every callback edits the right placeholder inside the thread independently of the other shards. The workflow itself is **commandType-agnostic** — `commandType` is just opaquely passed through; the spoiler-vs-non-spoiler branching happens entirely on the bot side via the success-handler routing table above.
 
 ## CI workflow (`test.yml`)
 
