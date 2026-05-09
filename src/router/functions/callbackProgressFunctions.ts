@@ -1,5 +1,6 @@
 import bot from "@bot/bot.ts";
 import { match } from "ts-pattern";
+import { EditMessage } from "discordeno";
 import { Constants, Messages } from "@libs";
 import { CallbackTypes } from "@router/types/callbackTypes.ts";
 
@@ -7,6 +8,7 @@ type InfoObject<T extends string> = CallbackTypes.infoObjectType<T>;
 
 const noContent = Constants.HttpStatus.NO_CONTENT;
 const internalServerError = Constants.HttpStatus.INTERNAL_SERVER_ERROR;
+const threadDl = Constants.CallbackObject.commandType.THREAD_DL;
 
 const callbackProgressFunctions: CallbackTypes.Functions.callbackProgress = {
   /**
@@ -20,23 +22,37 @@ const callbackProgressFunctions: CallbackTypes.Functions.callbackProgress = {
   ): Promise<Response> => {
     const runTime: number =
       new Date().getTime() - Number(infoObject.body!.startTime);
-    const isEditFollowupMessage: boolean =
-      runTime <= Constants.EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT;
-    return match(isEditFollowupMessage)
+    const useThread: boolean = infoObject.body!.commandType === threadDl;
+    // editMessage (thread mode) is not bound by the 15-min interaction-token
+    // window, so always edit the placeholder when running in a thread.
+    const isEditOriginalMessage: boolean =
+      useThread || runTime <= Constants.EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT;
+    return match(isEditOriginalMessage)
       .with(
         true,
-        async (): Promise<Response> =>
-          await bot.helpers
-            .editFollowupMessage(
-              infoObject.body!.token,
-              infoObject.body!.message,
-              Messages.createProgressMessage({
-                runNumber: infoObject.body!.number,
-                runTime: runTime,
-                link: infoObject.body!.link,
-                content: infoObject.body!.content!,
-              })
-            )
+        (): Promise<Response> =>
+          (useThread
+            ? bot.helpers.editMessage(
+                infoObject.body!.channel,
+                infoObject.body!.message,
+                Messages.createProgressMessage({
+                  runNumber: infoObject.body!.number,
+                  runTime: runTime,
+                  link: infoObject.body!.link,
+                  content: infoObject.body!.content!,
+                }) as EditMessage
+              )
+            : bot.helpers.editFollowupMessage(
+                infoObject.body!.token,
+                infoObject.body!.message,
+                Messages.createProgressMessage({
+                  runNumber: infoObject.body!.number,
+                  runTime: runTime,
+                  link: infoObject.body!.link,
+                  content: infoObject.body!.content!,
+                })
+              )
+          )
             .then(
               (): Response => infoObject.c.body(null, { status: noContent })
             )
