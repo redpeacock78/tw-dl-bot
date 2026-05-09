@@ -21,4 +21,5 @@ import { Commands } from "@bot/commands.ts";
 export const registerCommands = async (bot: Bot): Promise<void> => {
   await bot.helpers.createGlobalApplicationCommand(Commands.dlCommand);
   await bot.helpers.createGlobalApplicationCommand(Commands.dlSpoilerCommand);
+  await bot.helpers.createGlobalApplicationCommand(Commands.threadDlCommand);
 };

@@ -1,6 +1,6 @@
 import bot from "@bot/bot.ts";
 import { Match } from "functional";
-import { Message } from "discordeno";
+import { Message, EditMessage } from "discordeno";
 import { Messages, Constants } from "@libs";
 import { CreateMessageTypes } from "@router/types/createMessageTypes.ts";
 
@@ -24,28 +24,49 @@ const successMessage = {
   ): Promise<Message> => {
     const runTime: number =
       new Date().getTime() - Number(singleSuccsessMessageObject!.startTime);
-    const isEditFollowupMessage: boolean =
+    const useThread: boolean = !!singleSuccsessMessageObject!.useThread;
+    // editMessage (thread mode) is not bound by the 15-min interaction-token
+    // window or the followup oversize fallback, so always edit the
+    // placeholder when running in a thread.
+    const isEditOriginalMessage: boolean =
+      useThread ||
       runTime <= editFollowupMessageTimeLimit ||
       singleSuccsessMessageObject!.oversize !== trueOversize;
-    return Match(isEditFollowupMessage)
+    return Match(isEditOriginalMessage)
       .with(
         true,
         async (): Promise<Message> =>
-          await bot.helpers
-            .editFollowupMessage(
-              singleSuccsessMessageObject!.token,
-              singleSuccsessMessageObject!.messageId,
-              Messages.createSuccessMessage({
-                runNumber: singleSuccsessMessageObject!.runNumber,
-                runTime: runTime,
-                totalSize: singleSuccsessMessageObject!.totalSize,
-                fileName: singleSuccsessMessageObject!.fileName,
-                link: singleSuccsessMessageObject!.link,
-                file: singleSuccsessMessageObject!.file,
-                spoiler: singleSuccsessMessageObject!.spoiler,
-              }),
-            )
-            .finally((): null => (singleSuccsessMessageObject = null)),
+          useThread
+            ? await bot.helpers
+                .editMessage(
+                  singleSuccsessMessageObject!.channelId,
+                  singleSuccsessMessageObject!.messageId,
+                  Messages.createSuccessMessage({
+                    runNumber: singleSuccsessMessageObject!.runNumber,
+                    runTime: runTime,
+                    totalSize: singleSuccsessMessageObject!.totalSize,
+                    fileName: singleSuccsessMessageObject!.fileName,
+                    link: singleSuccsessMessageObject!.link,
+                    file: singleSuccsessMessageObject!.file,
+                    spoiler: singleSuccsessMessageObject!.spoiler,
+                  }) as EditMessage,
+                )
+                .finally((): null => (singleSuccsessMessageObject = null))
+            : await bot.helpers
+                .editFollowupMessage(
+                  singleSuccsessMessageObject!.token,
+                  singleSuccsessMessageObject!.messageId,
+                  Messages.createSuccessMessage({
+                    runNumber: singleSuccsessMessageObject!.runNumber,
+                    runTime: runTime,
+                    totalSize: singleSuccsessMessageObject!.totalSize,
+                    fileName: singleSuccsessMessageObject!.fileName,
+                    link: singleSuccsessMessageObject!.link,
+                    file: singleSuccsessMessageObject!.file,
+                    spoiler: singleSuccsessMessageObject!.spoiler,
+                  }),
+                )
+                .finally((): null => (singleSuccsessMessageObject = null)),
       )
       .with(
         false,
@@ -80,28 +101,49 @@ const successMessage = {
   ): Promise<Message> => {
     const runTime: number =
       new Date().getTime() - Number(multiSuccsessMessageObject!.startTime);
-    const editFollowupMessageFlag: boolean =
+    const useThread: boolean = !!multiSuccsessMessageObject!.useThread;
+    // editMessage (thread mode) is not bound by the 15-min interaction-token
+    // window or the followup oversize fallback, so always edit the
+    // placeholder when running in a thread.
+    const editOriginalMessageFlag: boolean =
+      useThread ||
       runTime <= editFollowupMessageTimeLimit ||
       multiSuccsessMessageObject!.oversize !== trueOversize;
-    return Match(editFollowupMessageFlag)
+    return Match(editOriginalMessageFlag)
       .with(
         true,
         async (): Promise<Message> =>
-          await bot.helpers
-            .editFollowupMessage(
-              multiSuccsessMessageObject!.token,
-              multiSuccsessMessageObject!.messageId,
-              Messages.createSuccessMessage({
-                runNumber: multiSuccsessMessageObject!.runNumber,
-                runTime: runTime,
-                totalSize: multiSuccsessMessageObject!.totalSize,
-                fileNamesArray: multiSuccsessMessageObject!.fileNamesArray,
-                link: multiSuccsessMessageObject!.link,
-                filesArray: multiSuccsessMessageObject!.filesArray,
-                spoiler: multiSuccsessMessageObject!.spoiler,
-              }),
-            )
-            .finally((): null => (multiSuccsessMessageObject = null)),
+          useThread
+            ? await bot.helpers
+                .editMessage(
+                  multiSuccsessMessageObject!.channelId,
+                  multiSuccsessMessageObject!.messageId,
+                  Messages.createSuccessMessage({
+                    runNumber: multiSuccsessMessageObject!.runNumber,
+                    runTime: runTime,
+                    totalSize: multiSuccsessMessageObject!.totalSize,
+                    fileNamesArray: multiSuccsessMessageObject!.fileNamesArray,
+                    link: multiSuccsessMessageObject!.link,
+                    filesArray: multiSuccsessMessageObject!.filesArray,
+                    spoiler: multiSuccsessMessageObject!.spoiler,
+                  }) as EditMessage,
+                )
+                .finally((): null => (multiSuccsessMessageObject = null))
+            : await bot.helpers
+                .editFollowupMessage(
+                  multiSuccsessMessageObject!.token,
+                  multiSuccsessMessageObject!.messageId,
+                  Messages.createSuccessMessage({
+                    runNumber: multiSuccsessMessageObject!.runNumber,
+                    runTime: runTime,
+                    totalSize: multiSuccsessMessageObject!.totalSize,
+                    fileNamesArray: multiSuccsessMessageObject!.fileNamesArray,
+                    link: multiSuccsessMessageObject!.link,
+                    filesArray: multiSuccsessMessageObject!.filesArray,
+                    spoiler: multiSuccsessMessageObject!.spoiler,
+                  }),
+                )
+                .finally((): null => (multiSuccsessMessageObject = null)),
       )
       .with(
         false,
