@@ -82,7 +82,16 @@ Both `run.yml` and `run-thread.yml` use this when posting progress / success / f
 
 ### Bot permissions in Discord
 
-For `/dl` and `/dl-spoiler` the bot needs the standard message-send and attachment scopes. For `/threaddl` the bot also needs **Create Public Threads** and **Send Messages in Threads** in the channel where the command is invoked, otherwise `startThreadWithoutMessage` and the per-URL placeholders will fail and the user will see a `Failed to create thread: ...` error embed.
+For `/dl` and `/dl-spoiler` the bot needs the standard message-send and attachment scopes.
+
+For `/threaddl` and `/threaddl-spoiler` the bot needs **two distinct** permissions in the source guild text channel. They fail in **different** ways and produce **different** user-visible symptoms — operators must verify both, not just check that no error embed appeared:
+
+| Missing permission | Failure path | What the user sees |
+| --- | --- | --- |
+| **Create Public Threads** | `bot.helpers.startThreadWithoutMessage(...)` rejects at the REST layer; `runThreadFlow`'s `.catch` posts an error embed and stops. | A `Failed to create thread: <reason>` error embed in the source channel. The thread is never created; nothing is dispatched. |
+| **Send Messages in Threads** | The thread *is* created (the two permissions are independent), but every per-URL `bot.helpers.sendMessage(thread.id, ...)` placeholder rejects. The bot swallows each rejection silently (`.catch((): null => null)`) and short-circuits on `links.length === 0`. | A `🧵 Created thread <#thread-id> for N URL(s).` follow-up appears in the source channel and an empty thread is created — but **no error embed**, and the bot never dispatches the runner workflow. |
+
+> **Operator note.** If `/threaddl` (or `/threaddl-spoiler`) looks like it "ran without error" but nothing ever appears in the new thread, suspect the second row first.
 
 ## Health check
 
