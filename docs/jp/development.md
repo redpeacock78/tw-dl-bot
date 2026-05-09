@@ -85,7 +85,22 @@ deno task test:coverage
 
 ### Tests
 
-Deno test suite は `tests/` の下に住み、`src/` tree をミラーリング（例：`src/bot/registerCommands.ts` ↔ `tests/bot/registerCommands.test.ts`）。3 つすべての `test*` タスクは `DISCORD_TOKEN`、`DISPATCH_URL`、`GITHUB_TOKEN` に対して placeholder values を事前設定するため、transitively に `Secrets` をロードする modules をインポートしても missing env vars で失敗しません。tests は `bot.helpers.*` と `ky` を ファイルごとに stub（real network calls ではなく）。
+Deno test suite は `tests/` の下に住み、`src/` の構造に加えて、scripts と utilities 用の追加テストディレクトリをミラーリング。Test subdirectories は以下を含む：
+
+- **`tests/bot/`** — slash commands と interaction handlers（`interactionCreate`、`registerCommands` など）用のテスト。
+- **`tests/router/`** — callback routing、message editing（thread vs. non-thread）、health checks 用のテスト。
+- **`tests/libs/`** — webhook payloads、message builders、secrets loading 用のテスト。
+- **`tests/scripts/`** — subprocess execution を伴う `deno test` による shell scripts と AWK tools 用のテスト（`--allow-run`、`--allow-write`、`--allow-net` が必要）。
+
+3 つすべての `test*` タスクは `DISCORD_TOKEN`、`DISPATCH_URL`、`GITHUB_TOKEN` に対して placeholder values を事前設定するため、transitively に `Secrets` をロードする modules をインポートしても missing env vars で失敗しません。Tests は `bot.helpers.*` と `ky` をファイルごとに stub（real network calls ではなく）します。Tests は `--allow-env`、`--allow-read`、`--allow-run`、`--allow-write`、`--allow-net` permissions で実行され、script testing と file operations をサポート。
+
+単一テストの例（すべての必要な permissions 付き）：
+
+```bash
+deno test --import-map import_map.json --allow-env --allow-read --allow-run --allow-write --allow-net tests/path/to/file.test.ts
+```
+
+`DISCORD_TOKEN`、`DISPATCH_URL`、`GITHUB_TOKEN` を dummy values（任意の non-empty string）に設定して、`secrets.ts` validation を満たす。
 
 ### Coverage
 

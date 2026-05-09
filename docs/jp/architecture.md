@@ -138,10 +138,16 @@ flowchart LR
 | `src/libs/contents/` | callback bodies を `singleFileContent` / `multiFilesContent` blobs に変換。 |
 | `src/utils/` | Pure helpers：`fileToBlob`、`unitChangeForByte`、`millisecondChangeFormat`。 |
 | `tests/` | `src/` 構造をミラーリングする Deno test suite。各 production module には、その public API を実行する対応する `.test.ts` ファイルがあります。Tests は production code と同じ modules をインポートし、`bot.helpers.*` をテストごとに stub。 |
+| `tests/bot/` | bot interaction tests：command registration、slash command handlers（`/dl`、`/dl-spoiler`、`/threaddl`、`/threaddl-spoiler`）、Modal submission。 |
+| `tests/router/` | Callback router tests：success / progress / failure handler routing、thread vs. non-thread modes のメッセージ編集パターン、ping health check。 |
+| `tests/libs/` | Library tests：webhook dispatch payload building、message embed construction、callback pattern matching、secret loading。 |
+| `tests/scripts/` | Shell script と AWK tool tests（`deno test` with subprocess execution）：`progress.awk` parsing、`retry_curl.sh` retry logic、`post_process.sh` file handling、`conv_progress.sh` text conversion。 |
+| `.github/scripts/` | Runner workflows で使用される Shell scripts と AWK tools：`progress.awk`（yt-dlp progress を parse）、`retry_curl.sh`（robust HTTP POST with backoff）、`post_process.sh`（file staging と multipart assembly）、`conv_progress.sh`（text encoding と Discord-safe formatting）。 |
+| `.github/actions/check-and-convert-files/action.yml` | Composite GitHub Action。`post_process.sh` を実行して、ファイルを validate、convert、check。`run.yml` と `run-thread.yml` から呼び出し。 |
 | `.github/workflows/build.yml` | runner image を GHCR にビルドしてプッシュ。`master` への `push` および daily schedule で実施。 |
-| `.github/workflows/run.yml` | `repository_dispatch`（type `download`）consumer。`yt-dlp` を実行し、callbacks を投稿。`/dl` と `/dl-spoiler` で使用。 |
-| `.github/workflows/run-thread.yml` | `repository_dispatch`（type `thread-download`）consumer。`prepare` job（`client_payload.links` から `strategy.matrix` を構築）および `run-with-container` job（shards を並列でファンアウト、`max-parallel: 16`、`fail-fast: false`）。`/threaddl` で使用。 |
-| `.github/workflows/test.yml` | CI：`deno lint` → `deno task test` → `deno task test:coverage`。coverage report は GitHub Step Summary に追加。 |
+| `.github/workflows/run.yml` | `repository_dispatch`（type `download`）consumer。`yt-dlp` を実行し、callbacks を投稿。`/dl` と `/dl-spoiler` で使用。Composite action と scripts を使用。 |
+| `.github/workflows/run-thread.yml` | `repository_dispatch`（type `thread-download`）consumer。`prepare` job（`client_payload.links` から `strategy.matrix` を構築）および `run-with-container` job（shards を並列でファンアウト、`max-parallel: 16`、`fail-fast: false`）。`/threaddl` で使用。Composite action と scripts を使用。 |
+| `.github/workflows/test.yml` | CI：`deno lint` → `deno task test` → `deno task test:coverage`。coverage report は GitHub Step Summary に追加。`tests/scripts/` を含むすべての modules をテスト。 |
 | `docker/Dockerfile` | runner image：Ubuntu base + `ffmpeg`、`aria2`、`jq`、`bc`、`gawk`、`curl`、plus nightly `yt-dlp`。`run.yml` と `run-thread.yml` の両方で共有。 |
 
 ## Status lifecycle
