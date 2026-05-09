@@ -20,7 +20,7 @@ jobs:
           # Each item carries link + per-URL Discord message ID. The shared
           # thread channel ID, commandType, token and startTime are read from
           # the top-level event payload by every matrix shard.
-          matrix="$(jq -c '{include: [.client_payload.links[] | {link: .link, message: .message}]}' "${GITHUB_EVENT_PATH}")"
+          matrix="$(jq -c '{include: [.client_payload.links | to_entries[] | {index: ((.key + 1) | tostring | if length < 2 then ("0" + .) else . end), link: .value.link, message: .value.message}]}' "${GITHUB_EVENT_PATH}")"
           count="$(jq -r '.client_payload.links | length' "${GITHUB_EVENT_PATH}")"
           echo "matrix=${matrix}" >> "${GITHUB_OUTPUT}"
           echo "count=${count}" >> "${GITHUB_OUTPUT}"
@@ -28,7 +28,7 @@ jobs:
           echo "Count: ${count}"
 
   run-with-container:
-    name: Download (${{ matrix.link }})
+    name: Download #${{ matrix.index }}
     needs: [prepare]
     if: ${{ fromJson(needs.prepare.outputs.count) > 0 }}
     runs-on: ubuntu-latest
@@ -78,6 +78,7 @@ jobs:
             {
               "status": "progress",
               "number": ${{ github.run_number }},
+              "shardIndex": ${{ toJSON(matrix.index) }},
               "commandType": ${{ toJSON(github.event.client_payload.commandType) }},
               "startTime": ${{ toJSON(github.event.client_payload.startTime) }},
               "channel": ${{ toJSON(github.event.client_payload.channel) }},
@@ -105,6 +106,7 @@ jobs:
             {
               "status": "progress",
               "number": ${{ github.run_number }},
+              "shardIndex": ${{ toJSON(matrix.index) }},
               "commandType": ${{ toJSON(github.event.client_payload.commandType) }},
               "startTime": ${{ toJSON(github.event.client_payload.startTime) }},
               "channel": ${{ toJSON(github.event.client_payload.channel) }},
@@ -240,6 +242,7 @@ jobs:
             {
               "status": "progress",
               "number": ${{ github.run_number }},
+              "shardIndex": ${{ toJSON(matrix.index) }},
               "commandType": ${{ toJSON(github.event.client_payload.commandType) }},
               "startTime": ${{ toJSON(github.event.client_payload.startTime) }},
               "channel": ${{ toJSON(github.event.client_payload.channel) }},
@@ -364,6 +367,7 @@ jobs:
           endpoint_url: ${{ secrets.ENDPOINT_URL }}
           run_number: ${{ github.run_number }}
           command_type: ${{ github.event.client_payload.commandType }}
+          shard_index: ${{ matrix.index }}
           start_time: ${{ github.event.client_payload.startTime }}
           channel: ${{ github.event.client_payload.channel }}
           message: ${{ matrix.message }}
@@ -387,6 +391,7 @@ jobs:
             {
               "status": "progress",
               "number": ${{ github.run_number }},
+              "shardIndex": ${{ toJSON(matrix.index) }},
               "commandType": ${{ toJSON(github.event.client_payload.commandType) }},
               "startTime": ${{ toJSON(github.event.client_payload.startTime) }},
               "channel": ${{ toJSON(github.event.client_payload.channel) }},
@@ -416,6 +421,7 @@ jobs:
             options=()
             options+=(-F 'status=success')
             options+=(-F 'number=${{ github.run_number }}')
+            options+=(-F 'shardIndex=${{ matrix.index }}')
             options+=(-F 'commandType=${{ toJSON(github.event.client_payload.commandType) }}')
             options+=(-F 'actionType=thread-multi')
             options+=(-F 'channel=${{ toJSON(github.event.client_payload.channel) }}')
@@ -491,6 +497,7 @@ jobs:
                   --retry-all-errors \
                   -F "status=success" \
                   -F 'number=${{ github.run_number }}' \
+                  -F "shardIndex=${{ matrix.index }}" \
                   -F "commandType=${{ toJSON(github.event.client_payload.commandType) }}" \
                   -F "actionType=thread-single" \
                   -F "convert=false" \
@@ -573,6 +580,7 @@ jobs:
           {
             "status": "failure",
             "number": ${{ github.run_number }},
+            "shardIndex": ${{ toJSON(matrix.index) }},
             "commandType": ${{ toJSON(github.event.client_payload.commandType) }},
             "startTime": ${{ toJSON(github.event.client_payload.startTime) }},
             "channel": ${{ toJSON(github.event.client_payload.channel) }},
@@ -604,6 +612,7 @@ jobs:
           {
             "status": "failure",
             "number": ${{ github.run_number }},
+            "shardIndex": ${{ toJSON(matrix.index) }},
             "commandType": ${{ toJSON(github.event.client_payload.commandType) }},
             "startTime": ${{ toJSON(github.event.client_payload.startTime) }},
             "channel": ${{ toJSON(github.event.client_payload.channel) }},
@@ -648,6 +657,7 @@ jobs:
           {
             "status": "failure",
             "number": ${{ github.run_number }},
+            "shardIndex": ${{ toJSON(matrix.index) }},
             "commandType": ${{ toJSON(github.event.client_payload.commandType) }},
             "startTime": ${{ toJSON(github.event.client_payload.startTime) }},
             "channel": ${{ toJSON(github.event.client_payload.channel) }},
@@ -680,6 +690,7 @@ jobs:
           {
             "status": "failure",
             "number": ${{ github.run_number }},
+            "shardIndex": ${{ toJSON(matrix.index) }},
             "commandType": ${{ toJSON(github.event.client_payload.commandType) }},
             "startTime": ${{ toJSON(github.event.client_payload.startTime) }},
             "channel": ${{ toJSON(github.event.client_payload.channel) }},

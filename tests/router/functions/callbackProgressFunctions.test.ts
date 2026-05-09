@@ -221,7 +221,83 @@ Deno.test("callbackProgressFunctions.progress", async (t) => {
     },
   );
 
-  // ── Case 7: editFollowupMessage rejects → 500 ──
+  // ── Case 7 (shardIndex): threaddl + shardIndex → run number is "#N-XX" ──
+  await t.step(
+    "threaddl + shardIndex=02 → editMessage called with runNumber '1-02'",
+    async () => {
+      let capturedArg: unknown;
+      const editMsg = stub(
+        bot.helpers,
+        "editMessage",
+        (_ch, _msg, payload) => {
+          capturedArg = payload;
+          return Promise.resolve(fakeMsg);
+        },
+      );
+      const editFollowup = stub(
+        bot.helpers,
+        "editFollowupMessage",
+        () => Promise.resolve(fakeMsg),
+      );
+      try {
+        const body = { ...makeBody("threaddl"), shardIndex: "02" };
+        const res = await callbackProgressFunctions.progress({
+          c: makeCtx() as never,
+          body,
+        });
+        assertEquals(res.status, 204);
+        assertSpyCalls(editMsg, 1);
+        assertSpyCalls(editFollowup, 0);
+        // The embed field value for RUN_NUMBER should contain "1-02"
+        const embed = (capturedArg as { embeds?: { fields?: { value: string }[] }[] })
+          ?.embeds?.[0];
+        const runField = embed?.fields?.find((f) => f.value.includes("1-02"));
+        assertEquals(runField !== undefined, true);
+      } finally {
+        editMsg.restore();
+        editFollowup.restore();
+      }
+    },
+  );
+
+  // ── Case 7b: dl without shardIndex → run number stays plain "#N" ──
+  await t.step(
+    "dl without shardIndex → editFollowupMessage called with plain runNumber '1'",
+    async () => {
+      let capturedArg: unknown;
+      const editMsg = stub(
+        bot.helpers,
+        "editMessage",
+        () => Promise.resolve(fakeMsg),
+      );
+      const editFollowup = stub(
+        bot.helpers,
+        "editFollowupMessage",
+        (_tok, _msg, payload) => {
+          capturedArg = payload;
+          return Promise.resolve(fakeMsg);
+        },
+      );
+      try {
+        const res = await callbackProgressFunctions.progress({
+          c: makeCtx() as never,
+          body: makeBody("dl"),
+        });
+        assertEquals(res.status, 204);
+        assertSpyCalls(editFollowup, 1);
+        const embed = (capturedArg as { embeds?: { fields?: { value: string }[] }[] })
+          ?.embeds?.[0];
+        // value should be `> \`#1\`` — no dash
+        const runField = embed?.fields?.find((f) => f.value === "> `#1`");
+        assertEquals(runField !== undefined, true);
+      } finally {
+        editMsg.restore();
+        editFollowup.restore();
+      }
+    },
+  );
+
+  // ── Case 8: editFollowupMessage rejects → 500 ──
   await t.step(
     "editFollowupMessage rejects → returns 500",
     async () => {

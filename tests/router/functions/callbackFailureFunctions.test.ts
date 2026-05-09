@@ -228,7 +228,52 @@ Deno.test("callbackFailureFunctions.failure", async (t) => {
     },
   );
 
-  // ── Case 6: editMessage rejects → 500 ──
+  // ── Case 6 (shardIndex): threaddl + shardIndex → run number is "#N-XX" ──
+  await t.step(
+    "threaddl + shardIndex=03 → editMessage called with runNumber '2-03'",
+    async () => {
+      let capturedArg: unknown;
+      const editMsg = stub(
+        bot.helpers,
+        "editMessage",
+        (_ch: unknown, _msg: unknown, payload: unknown) => {
+          capturedArg = payload;
+          return Promise.resolve(fakeMsg);
+        },
+      );
+      const editFollowup = stub(
+        bot.helpers,
+        "editFollowupMessage",
+        () => Promise.resolve(fakeMsg),
+      );
+      const sendMsg = stub(
+        bot.helpers,
+        "sendMessage",
+        () => Promise.resolve(fakeMsg),
+      );
+      try {
+        const body = { ...makeBody("threaddl"), shardIndex: "03" };
+        const res = await callbackFailureFunctions.failure({
+          c: makeCtx() as never,
+          body,
+        });
+        assertEquals(res.status, 204);
+        assertSpyCalls(editMsg, 1);
+        assertSpyCalls(editFollowup, 0);
+        assertSpyCalls(sendMsg, 0);
+        const embed = (capturedArg as { embeds?: { fields?: { value: string }[] }[] })
+          ?.embeds?.[0];
+        const runField = embed?.fields?.find((f) => f.value.includes("2-03"));
+        assertEquals(runField !== undefined, true);
+      } finally {
+        editMsg.restore();
+        editFollowup.restore();
+        sendMsg.restore();
+      }
+    },
+  );
+
+  // ── Case 7: editMessage rejects → 500 ──
   await t.step(
     "editMessage rejects → returns 500",
     async () => {
