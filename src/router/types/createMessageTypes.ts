@@ -50,6 +50,7 @@ export namespace CreateMessageTypes {
       file: Blob;
       oversize: string;
       spoiler: boolean;
+      useThread?: boolean;
     };
     export type multiFilesObject = {
       token: string;
@@ -63,6 +64,7 @@ export namespace CreateMessageTypes {
       filesArray: FileContent[];
       oversize: string;
       spoiler: boolean;
+      useThread?: boolean;
     };
   }
   export type sendErrorMessageObject = {
@@ -74,5 +76,6 @@ export namespace CreateMessageTypes {
     description: string;
     startTime: string;
     oversize: string;
+    useThread?: boolean;
   };
 }

@@ -45,6 +45,7 @@ export const Constants = {
   Webhook: {
     Json: {
       EVENT_TYPE: "download",
+      EVENT_TYPE_THREAD: "thread-download",
       ClientPayload: {
         CommandType: {
           DOWNLOAD: "dl",
@@ -57,6 +58,10 @@ export const Constants = {
       ACCEPT: "application/vnd.github.everest-preview+json",
     },
   },
+  Thread: {
+    AUTO_ARCHIVE_DURATION: 1440,
+    TYPE: 11,
+  },
   CallbackObject: {
     Status: {
       SUCCESS: "success",
@@ -66,10 +71,13 @@ export const Constants = {
     commandType: {
       DL: "dl",
       DL_SPOILER: "dl-spoiler",
+      THREAD_DL: "threaddl",
     },
     actionType: {
       SINGLE: "single",
       MULTI: "multi",
+      THREAD_SINGLE: "thread-single",
+      THREAD_MULTI: "thread-multi",
     },
     Oversize: {
       TRUE: "true",

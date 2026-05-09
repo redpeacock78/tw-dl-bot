@@ -28,7 +28,29 @@ export const Custom = {
           Constants.CallbackObject.actionType.MULTI,
         ],
       },
+      ThreadDl: {
+        Single: [
+          Constants.CallbackObject.Status.SUCCESS,
+          Constants.CallbackObject.commandType.THREAD_DL,
+          Constants.CallbackObject.actionType.THREAD_SINGLE,
+        ],
+        Multi: [
+          Constants.CallbackObject.Status.SUCCESS,
+          Constants.CallbackObject.commandType.THREAD_DL,
+          Constants.CallbackObject.actionType.THREAD_MULTI,
+        ],
+      },
     },
+    FailureThread: [
+      Constants.CallbackObject.Status.FAILURE,
+      Constants.CallbackObject.commandType.THREAD_DL,
+      P.nullish,
+    ],
+    ProgressThread: [
+      Constants.CallbackObject.Status.PROGRESS,
+      Constants.CallbackObject.commandType.THREAD_DL,
+      P.nullish,
+    ],
     Failure: [Constants.CallbackObject.Status.FAILURE, P.nullish, P.nullish],
     Progress: [Constants.CallbackObject.Status.PROGRESS, P.nullish, P.nullish],
     InvalidPost: [P.nullish, P.nullish, P.nullish],

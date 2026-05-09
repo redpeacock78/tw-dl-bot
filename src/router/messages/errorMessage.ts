@@ -1,6 +1,6 @@
 import bot from "@bot/bot.ts";
 import { Match } from "functional";
-import { Message } from "discordeno";
+import { Message, EditMessage } from "discordeno";
 import { Messages, Constants } from "@libs";
 import { CreateMessageTypes } from "@router/types/createMessageTypes.ts";
 
@@ -16,28 +16,41 @@ const editFollowupMessageTimeLimit = Constants.EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT;
  * @return {Promise<Message>} A promise that resolves to a message response.
  */
 const errorMessage = (
-  errorMessageObject: SendErrorMessageObject
+  errorMessageObject: SendErrorMessageObject,
 ): Promise<Message> => {
   const runTime: number =
     new Date().getTime() - Number(errorMessageObject!.startTime);
-  const isEditFollowupMessage: boolean =
+  const useThread: boolean = !!errorMessageObject!.useThread;
+  const isEditOriginalMessage: boolean =
     runTime <= editFollowupMessageTimeLimit ||
     errorMessageObject!.oversize !== trueOversize;
-  return Match(isEditFollowupMessage)
+  return Match(isEditOriginalMessage)
     .with(
       true,
       async (): Promise<Message> =>
-        await bot.helpers
-          .editFollowupMessage(
-            errorMessageObject!.token,
-            errorMessageObject!.message,
-            Messages.createErrorMessage({
-              runNumber: errorMessageObject!.number,
-              description: errorMessageObject!.description,
-              link: errorMessageObject!.link,
-            })
-          )
-          .finally((): null => (errorMessageObject = null))
+        useThread
+          ? await bot.helpers
+              .editMessage(
+                errorMessageObject!.channel,
+                errorMessageObject!.message,
+                Messages.createErrorMessage({
+                  runNumber: errorMessageObject!.number,
+                  description: errorMessageObject!.description,
+                  link: errorMessageObject!.link,
+                }) as EditMessage,
+              )
+              .finally((): null => (errorMessageObject = null))
+          : await bot.helpers
+              .editFollowupMessage(
+                errorMessageObject!.token,
+                errorMessageObject!.message,
+                Messages.createErrorMessage({
+                  runNumber: errorMessageObject!.number,
+                  description: errorMessageObject!.description,
+                  link: errorMessageObject!.link,
+                }),
+              )
+              .finally((): null => (errorMessageObject = null)),
     )
     .with(
       false,
@@ -51,9 +64,9 @@ const errorMessage = (
               runNumber: errorMessageObject!.number,
               description: errorMessageObject!.description,
               link: errorMessageObject!.link,
-            })
+            }),
           )
-          .finally((): null => (errorMessageObject = null))
+          .finally((): null => (errorMessageObject = null)),
     )
     .exhaustive();
 };

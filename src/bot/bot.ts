@@ -3,6 +3,7 @@ import { Secrets } from "@libs";
 import { Match } from "functional";
 import { Bot, createBot, Intents, Interaction } from "discordeno";
 import { interactionCreate } from "@bot/interactionCreate.ts";
+import { threadInteractionCreate } from "@bot/threadInteractionCreate.ts";
 
 const bot: Bot = createBot({
   token: Secrets.DISCORD_TOKEN,
@@ -16,6 +17,7 @@ const bot: Bot = createBot({
 
 await bot.helpers.createGlobalApplicationCommand(Commands.dlCommand);
 await bot.helpers.createGlobalApplicationCommand(Commands.dlSpoilerCommand);
+await bot.helpers.createGlobalApplicationCommand(Commands.threadDlCommand);
 
 /**
  * Handles the interactionCreate event for the bot.
@@ -48,6 +50,13 @@ bot.events.interactionCreate = async (
       async (commandType: string): Promise<void> => {
         props.commandType = commandType;
         await interactionCreate(props);
+      },
+    )
+    .with(
+      Commands.threadDlCommand.name,
+      async (commandType: string): Promise<void> => {
+        props.commandType = commandType;
+        await threadInteractionCreate(props);
       },
     )
     .otherwise((): void => {});

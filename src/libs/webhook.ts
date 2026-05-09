@@ -31,3 +31,34 @@ export const webhook = async (message: {
       Accept: Constants.Webhook.Headers.ACCEPT,
     },
   });
+
+/**
+ * Sends a thread-download webhook with multiple links so the matrix workflow
+ * can fan-out per-URL processing in parallel.
+ *
+ * @param {object} payload - The thread payload containing links and the target thread channel.
+ * @return {Promise<KyResponse>} A promise that resolves with the response from the webhook request.
+ */
+export const webhookThread = async (payload: {
+  commandType: string;
+  links: { link: string; message: string }[];
+  channelId: bigint;
+  token: string;
+  startTime: string;
+}): Promise<KyResponse> =>
+  await ky.post(Secrets.DISPATCH_URL, {
+    json: {
+      event_type: Constants.Webhook.Json.EVENT_TYPE_THREAD,
+      client_payload: {
+        commandType: payload.commandType,
+        channel: `${payload.channelId}`,
+        token: payload.token,
+        startTime: payload.startTime,
+        links: payload.links,
+      },
+    },
+    headers: {
+      Authorization: `token ${Secrets.GITHUB_TOKEN}`,
+      Accept: Constants.Webhook.Headers.ACCEPT,
+    },
+  });
