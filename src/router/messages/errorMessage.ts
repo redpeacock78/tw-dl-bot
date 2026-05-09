@@ -21,7 +21,11 @@ const errorMessage = (
   const runTime: number =
     new Date().getTime() - Number(errorMessageObject!.startTime);
   const useThread: boolean = !!errorMessageObject!.useThread;
+  // editMessage (thread mode) is not bound by the 15-min interaction-token
+  // window or the followup oversize fallback, so always edit the placeholder
+  // when running in a thread.
   const isEditOriginalMessage: boolean =
+    useThread ||
     runTime <= editFollowupMessageTimeLimit ||
     errorMessageObject!.oversize !== trueOversize;
   return Match(isEditOriginalMessage)

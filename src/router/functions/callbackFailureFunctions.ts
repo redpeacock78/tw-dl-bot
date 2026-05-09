@@ -21,8 +21,10 @@ const callbackFailureFunctions: CallbackTypes.Functions.callbackFailure = {
     const runTime: number =
       new Date().getTime() - Number(infoObject.body!.startTime);
     const useThread: boolean = infoObject.body!.commandType === threadDl;
+    // editMessage (thread mode) is not bound by the 15-min interaction-token
+    // window, so always edit the placeholder when running in a thread.
     const isEditOriginalMessage: boolean =
-      runTime <= Constants.EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT;
+      useThread || runTime <= Constants.EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT;
     return match(isEditOriginalMessage)
       .with(
         true,

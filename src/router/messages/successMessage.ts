@@ -25,7 +25,11 @@ const successMessage = {
     const runTime: number =
       new Date().getTime() - Number(singleSuccsessMessageObject!.startTime);
     const useThread: boolean = !!singleSuccsessMessageObject!.useThread;
+    // editMessage (thread mode) is not bound by the 15-min interaction-token
+    // window or the followup oversize fallback, so always edit the
+    // placeholder when running in a thread.
     const isEditOriginalMessage: boolean =
+      useThread ||
       runTime <= editFollowupMessageTimeLimit ||
       singleSuccsessMessageObject!.oversize !== trueOversize;
     return Match(isEditOriginalMessage)
@@ -98,7 +102,11 @@ const successMessage = {
     const runTime: number =
       new Date().getTime() - Number(multiSuccsessMessageObject!.startTime);
     const useThread: boolean = !!multiSuccsessMessageObject!.useThread;
+    // editMessage (thread mode) is not bound by the 15-min interaction-token
+    // window or the followup oversize fallback, so always edit the
+    // placeholder when running in a thread.
     const editOriginalMessageFlag: boolean =
+      useThread ||
       runTime <= editFollowupMessageTimeLimit ||
       multiSuccsessMessageObject!.oversize !== trueOversize;
     return Match(editOriginalMessageFlag)
