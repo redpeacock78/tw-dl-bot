@@ -115,6 +115,7 @@ Tests run with permissions `--allow-env`, `--allow-read`, `--allow-run`, `--allo
 - `Constants.Thread.TYPE = 11` = `GUILD_PUBLIC_THREAD`.
 - `/threaddl` and `/threaddl-spoiler` are **guild-only** via `dmPermission: false`. Both commands are hidden from DM autocomplete. The guild check in `runThreadFlow.ts` validates both `channelId` **and** `guildId` as a defensive measure because DM interactions still expose `channelId`. (Users with stale cached clients (~1 hour old) may briefly see the commands in their autocomplete from before the permission was set, but the Discord client will reject them locally; our `guildId` guard is a second defense layer.)
 - File-size cap: Discord's 10MB per-attachment limit. The runner re-encodes via ffmpeg to fit; spoiler variants (`/dl-spoiler`, `/threaddl-spoiler`) prefix the filename with `SPOILER_` (`Constants.Message.File.Name.SPOILER_PREFIX`).
+- **Shard indexing (thread mode only):** `/threaddl` and `/threaddl-spoiler` fire a single `thread-download` dispatch that fans out one job per URL via `run-thread.yml`'s `strategy.matrix`. The `prepare` job assigns each entry a zero-padded `index` field (01, 02, …), which is forwarded as `shardIndex` through the callback pipeline. The bot formats run numbers as `#N-XX` (N = `github.run_number`, XX = `shardIndex`) in Discord embeds to identify which shard processed which URL. Non-thread modes (`/dl`, `/dl-spoiler`) omit `shardIndex`.
 
 ## Adding a new slash command
 
