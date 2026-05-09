@@ -14,7 +14,7 @@ import { threadModalSubmit } from "@bot/threadModalSubmit.ts";
 
 const bot: Bot = createBot({
   token: Secrets.DISCORD_TOKEN,
-  intents: Intents.Guilds | Intents.GuildMessages | Intents.MessageContent,
+  intents: Intents.Guilds,
   events: {
     ready: (_bot, payload) => {
       console.log(`${payload.user.username} is ready!`);
