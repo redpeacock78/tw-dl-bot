@@ -1,5 +1,7 @@
 # GitHub Actions Integration
 
+> 日本語版: [./jp/github-actions.md](./jp/github-actions.md)
+
 The bot offloads all `yt-dlp` work to GitHub Actions. Four workflows are involved:
 
 | Workflow | File | Purpose |

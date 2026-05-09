@@ -1,5 +1,7 @@
 # Architecture
 
+> 日本語版: [./jp/architecture.md](./jp/architecture.md)
+
 `tw-dl-bot` is split into two cooperating processes:
 
 1. **Bot service** — a long-running Deno process that talks to Discord (gateway + REST) and exposes an HTTP callback endpoint built with [Hono](https://hono.dev/).

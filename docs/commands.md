@@ -1,5 +1,7 @@
 # Slash Command Reference
 
+> 日本語版: [./jp/commands.md](./jp/commands.md)
+
 All command definitions live in `src/bot/commands.ts`; their names come from `Constants.Webhook.Json.ClientPayload.CommandType` in `src/libs/constants.ts`. Registration with Discord is performed by `src/bot/registerCommands.ts`, which is invoked once from `src/main.ts` before `startBot`. All four commands — `dl`, `dl-spoiler`, `threaddl`, and `threaddl-spoiler` — are registered as **global** application commands and dispatched in `src/bot/bot.ts`'s `interactionCreate` handler. The dispatcher branches on `interaction.type`:
 
 - `ApplicationCommand` → routed by command name to `interactionCreate` (`/dl`, `/dl-spoiler`) or `threadInteractionCreate` (`/threaddl`, `/threaddl-spoiler`).

@@ -1,5 +1,7 @@
 # Development
 
+> 日本語版: [./jp/development.md](./jp/development.md)
+
 ## Prerequisites
 
 - [Deno](https://deno.land/) — the bot is written in TypeScript and runs on Deno. The exact version is not pinned via `deno.json`; a recent stable release is fine.
