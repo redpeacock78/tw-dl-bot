@@ -156,10 +156,10 @@ The runner workflows (`run.yml` and `run-thread.yml`) execute inside the Docker 
 
 | Script | Purpose |
 | --- | --- |
-| `progress.awk` | AWK script that parses FFmpeg progress output (`frame=...time=HH:MM:SS...`) and formats it as readable time markers with ETA estimates. Called by `conv_progress.sh` to extract progress from encoding operations. |
+| `progress.awk` | AWK script that parses FFmpeg progress output (`frame=...time=HH:MM:SS...`) and formats it as readable time markers with ETA estimates. Called by the ffmpeg encoding pipeline in the composite action (via `awk -f progress.awk`) to write the progress log file. |
 | `retry_curl.sh` | Bash script that wraps `curl` with exponential backoff retry logic. Retries on transient errors (5xx, 429, 408) up to a configurable limit with increasing delays (max 60s). Used for robust callback delivery to the bot's `/api/callback`. |
-| `post_process.sh` | Bash script that validates and converts video files to H.264/MP4 format (if needed). Uses FFprobe to check format/codec/pixel format and re-encodes via FFmpeg if not already H.264 + yuv420p. Ensures compatibility with Discord and downstream processing. |
-| `conv_progress.sh` | Bash script that monitors a progress log file for changes and sends real-time progress callbacks to the bot. Reads environment variables (`ENDPOINT_URL`, `COMMAND_TYPE`, etc.), watches the log, parses progress with `progress.awk`, and POSTs JSON payloads to the callback endpoint. Runs as a background process during encoding. |
+| `post_process.sh` | Bash script that validates and converts video files to H.264/MP4 format using libx264 single-pass encoding (if needed). Uses FFprobe to check format/codec/pixel format and re-encodes via FFmpeg if not already H.264 + yuv420p. Ensures compatibility with Discord and downstream processing. |
+| `conv_progress.sh` | Bash script that monitors a progress log file for changes and sends real-time progress callbacks to the bot. Reads environment variables (`ENDPOINT_URL`, `COMMAND_TYPE`, etc.), watches the log file produced by the ffmpeg/awk pipeline, and POSTs JSON payloads to the callback endpoint. Runs as a background process during encoding. |
 
 ### Composite Action (`.github/actions/check-and-convert-files/`)
 
