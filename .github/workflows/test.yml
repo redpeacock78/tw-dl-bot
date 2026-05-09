@@ -55,6 +55,4 @@ jobs:
           files: ./coverage.lcov
           flags: deno
           fail_ci_if_error: false
-          # Public repo + the Codecov GitHub App is installed on this org,
-          # so tokenless upload works. If that ever breaks, set
-          # `secrets.CODECOV_TOKEN` and add `token: ${{ secrets.CODECOV_TOKEN }}`.
+          token: ${{ secrets.CODECOV_TOKEN }}
