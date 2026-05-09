@@ -17,7 +17,7 @@ Deno.test("registerCommands", async (t) => {
 
       await registerCommands(fakeBot);
 
-      assertSpyCalls(createGlobalApplicationCommand, 3);
+      assertSpyCalls(createGlobalApplicationCommand, 4);
       assertSpyCallArg(createGlobalApplicationCommand, 0, 0, Commands.dlCommand);
       assertSpyCallArg(
         createGlobalApplicationCommand,
@@ -30,6 +30,12 @@ Deno.test("registerCommands", async (t) => {
         2,
         0,
         Commands.threadDlCommand,
+      );
+      assertSpyCallArg(
+        createGlobalApplicationCommand,
+        3,
+        0,
+        Commands.threadDlSpoilerCommand,
       );
     },
   );
@@ -75,6 +81,8 @@ Deno.test("registerCommands", async (t) => {
         `end:${Commands.dlSpoilerCommand.name}`,
         `start:${Commands.threadDlCommand.name}`,
         `end:${Commands.threadDlCommand.name}`,
+        `start:${Commands.threadDlSpoilerCommand.name}`,
+        `end:${Commands.threadDlSpoilerCommand.name}`,
       ]);
     },
   );

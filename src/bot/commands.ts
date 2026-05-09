@@ -5,6 +5,7 @@ type CommandsType = {
   dlCommand: CreateSlashApplicationCommand;
   dlSpoilerCommand: CreateSlashApplicationCommand;
   threadDlCommand: CreateSlashApplicationCommand;
+  threadDlSpoilerCommand: CreateSlashApplicationCommand;
 };
 
 export const Commands: CommandsType = {
@@ -34,6 +35,12 @@ export const Commands: CommandsType = {
       },
     ],
   },
+  // NOTE: `/threaddl` and `/threaddl-spoiler` are Modal-based commands.
+  // The `url` option used to live here, but URLs are now collected from a
+  // Discord Modal (Paragraph TextInput, one URL per line) so users can paste
+  // many URLs without worrying about quoting/escaping.
+  // The slash command itself only takes `name` (the thread title), and the
+  // bot opens the Modal as the immediate interaction response.
   threadDlCommand: {
     name: Constants.Webhook.Json.ClientPayload.CommandType.THREAD_DOWNLOAD,
     description: "DL multiple Tweets into a thread",
@@ -45,7 +52,20 @@ export const Commands: CommandsType = {
         required: true,
         description: "Thread Name",
       },
-      { name: "url", type: 3, required: true, description: "Tweet URL" },
+    ],
+  },
+  threadDlSpoilerCommand: {
+    name:
+      Constants.Webhook.Json.ClientPayload.CommandType.THREAD_DOWNLOAD_SPOILER,
+    description: "DL multiple Tweets into a thread with spoiler",
+    type: 1,
+    options: [
+      {
+        name: "name",
+        type: 3,
+        required: true,
+        description: "Thread Name",
+      },
     ],
   },
 };
