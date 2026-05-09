@@ -14,7 +14,6 @@
  *   7. Assert JSON structure
  */
 import { assertEquals } from "@std/assert";
-import { join } from "https://deno.land/std@0.193.0/path/mod.ts";
 
 const SCRIPT = new URL(
   "../../.github/scripts/conv_progress.sh",
@@ -25,40 +24,7 @@ const SCRIPT = new URL(
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** Start a mock server and return the first captured POST body. */
-function startCaptureSrv(): {
-  url: string;
-  bodyPromise: Promise<string>;
-  close: () => void;
-} {
-  let resolveBody!: (body: string) => void;
-  const bodyPromise = new Promise<string>((r) => (resolveBody = r));
-  const ac = new AbortController();
-  let resolvePort!: (port: number) => void;
-  const portP = new Promise<number>((r) => (resolvePort = r));
-
-  const server = Deno.serve(
-    { port: 0, signal: ac.signal, onListen: ({ port }) => resolvePort(port) },
-    async (req) => {
-      const body = await req.text();
-      resolveBody(body);
-      return new Response("ok", { status: 200 });
-    },
-  );
-
-  // We don't await portP here; callers must wait for url to be ready
-  return {
-    get url() {
-      // Synchronously unusable — callers must use the async factory below
-      return "";
-    },
-    bodyPromise,
-    close: () => { ac.abort(); server.finished.catch(() => {}); },
-    // expose portP for the factory
-    _portP: portP,
-  } as { url: string; bodyPromise: Promise<string>; close: () => void; _portP: Promise<number> };
-}
-
+/** Start a mock HTTP server and return the first captured POST body. */
 async function makeCaptureSrv(): Promise<{
   url: string;
   bodyPromise: Promise<string>;
@@ -153,7 +119,7 @@ Deno.test("conv_progress.sh", async (t) => {
     "without COMMAND_TYPE → JSON payload omits commandType field",
     async () => {
       const tmpDir = await Deno.makeTempDir();
-      const progressFile = join(tmpDir, "progress.log");
+      const progressFile = `${tmpDir}/progress.log`;
       await Deno.writeTextFile(progressFile, "initial");
 
       const srv = await makeCaptureSrv();
@@ -186,7 +152,7 @@ Deno.test("conv_progress.sh", async (t) => {
     "with COMMAND_TYPE=threaddl → JSON includes commandType field",
     async () => {
       const tmpDir = await Deno.makeTempDir();
-      const progressFile = join(tmpDir, "progress.log");
+      const progressFile = `${tmpDir}/progress.log`;
       await Deno.writeTextFile(progressFile, "initial");
 
       const srv = await makeCaptureSrv();
@@ -220,7 +186,7 @@ Deno.test("conv_progress.sh", async (t) => {
     "phase label and file index (2/3) appear in content field",
     async () => {
       const tmpDir = await Deno.makeTempDir();
-      const progressFile = join(tmpDir, "progress.log");
+      const progressFile = `${tmpDir}/progress.log`;
       await Deno.writeTextFile(progressFile, "initial");
 
       const srv = await makeCaptureSrv();
@@ -257,7 +223,7 @@ Deno.test("conv_progress.sh", async (t) => {
     "required fields startTime and message are present in payload",
     async () => {
       const tmpDir = await Deno.makeTempDir();
-      const progressFile = join(tmpDir, "progress.log");
+      const progressFile = `${tmpDir}/progress.log`;
       await Deno.writeTextFile(progressFile, "initial");
 
       const srv = await makeCaptureSrv();

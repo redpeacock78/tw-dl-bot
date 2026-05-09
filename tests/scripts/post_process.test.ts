@@ -11,7 +11,6 @@
  *   3. mp4 but wrong codec → ffmpeg called
  */
 import { assertEquals } from "@std/assert";
-import { join } from "https://deno.land/std@0.193.0/path/mod.ts";
 
 const SCRIPT = new URL(
   "../../.github/scripts/post_process.sh",
@@ -31,7 +30,7 @@ async function makeFakeBins(
   dir: string,
   opts: { format: string; codec: string; pixFmt: string; ffmpegFail?: boolean },
 ) {
-  const binDir = join(dir, "bin");
+  const binDir = `${dir}/bin`;
   await Deno.mkdir(binDir, { recursive: true });
 
   // Fake ffprobe: returns one of three values depending on which -show_entries is present
@@ -45,7 +44,7 @@ for arg in "$@"; do
 done
 exit 0
 `;
-  const ffprobePath = join(binDir, "ffprobe");
+  const ffprobePath = `${binDir}/ffprobe`;
   await Deno.writeTextFile(ffprobePath, ffprobeScript);
   await Deno.chmod(ffprobePath, 0o755);
 
@@ -60,7 +59,7 @@ if [[ "${exitCode}" == "0" ]]; then
 fi
 exit ${exitCode}
 `;
-  const ffmpegPath = join(binDir, "ffmpeg");
+  const ffmpegPath = `${binDir}/ffmpeg`;
   await Deno.writeTextFile(ffmpegPath, ffmpegScript);
   await Deno.chmod(ffmpegPath, 0o755);
 
@@ -97,7 +96,7 @@ Deno.test("post_process.sh", async (t) => {
     async () => {
       const tmpDir = await Deno.makeTempDir();
       try {
-        const inputFile = join(tmpDir, "video.mp4");
+        const inputFile = `${tmpDir}/video.mp4`;
         const sentinel = "original-content";
         await Deno.writeTextFile(inputFile, sentinel);
 
@@ -124,7 +123,7 @@ Deno.test("post_process.sh", async (t) => {
     async () => {
       const tmpDir = await Deno.makeTempDir();
       try {
-        const inputFile = join(tmpDir, "video.webm");
+        const inputFile = `${tmpDir}/video.webm`;
         await Deno.writeTextFile(inputFile, "fake-webm-data");
 
         const binDir = await makeFakeBins(tmpDir, {
@@ -136,7 +135,7 @@ Deno.test("post_process.sh", async (t) => {
         const { code } = await runScript(inputFile, binDir);
         assertEquals(code, 0);
         // Output file should be video.mp4 (because format != mp4, ext defaults to "mp4")
-        const mp4Exists = await Deno.stat(join(tmpDir, "video.mp4"))
+        const mp4Exists = await Deno.stat(`${tmpDir}/video.mp4`)
           .then(() => true)
           .catch(() => false);
         assertEquals(mp4Exists, true);
@@ -152,7 +151,7 @@ Deno.test("post_process.sh", async (t) => {
     async () => {
       const tmpDir = await Deno.makeTempDir();
       try {
-        const inputFile = join(tmpDir, "video.mp4");
+        const inputFile = `${tmpDir}/video.mp4`;
         await Deno.writeTextFile(inputFile, "fake-h265-data");
 
         const binDir = await makeFakeBins(tmpDir, {
