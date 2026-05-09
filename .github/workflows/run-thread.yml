@@ -28,7 +28,7 @@ jobs:
           echo "Count: ${count}"
 
   run-with-container:
-    name: Download #${{ matrix.index }}
+    name: 'Download #${{ matrix.index }}'
     needs: [prepare]
     if: ${{ fromJson(needs.prepare.outputs.count) > 0 }}
     runs-on: ubuntu-latest
