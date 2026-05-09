@@ -133,161 +133,15 @@ jobs:
               }
             done
           }
-      - name: Setup progress awk script
+      - name: Install scripts
         if: ${{ success() }}
         shell: bash
         run: |
-          cat <<'EOF' > progress.awk
-          BEGIN{RS="frame="}
-          /Duration: /{
-            match($0, /[0-2][0-3]:[0-5][0-9]:[0-5][0-9]/)
-            TIME=substr($0, RSTART, RLENGTH)
-            split(TIME, array, ":")
-            Dura=array[1]*3600+array[2]*60+array[3]
-            Start=systime()
-            Old=-1
-          }
-          /time=/{
-            match($0, /[0-2][0-3]:[0-5][0-9]:[0-5][0-9]/)
-            Now=substr($0, RSTART, RLENGTH)
-            split(Now, array1, ":")
-            Prog=array1[1]*3600+array1[2]*60+array1[3]
-            Ratio=int(Prog/Dura*100)
-            if ( Ratio != Old ) {
-              if ( Ratio % 1 == 0 ) {
-                Current=systime()
-                px=Current-Start
-                Remain=""
-                if ( Prog != 0 ) {
-                  rx=(Dura*px)/Prog-px
-                  Remain=sprintf(" ETA:%02d:%02d:%02d", int(int(rx)/3600), int(int(rx)/60)%60, int(rx)%60)
-                }
-                printf ("%s/%s(%s%)%s\n", Now, TIME, Ratio, Remain)
-                system("")
-              }
-              Old=Ratio
-            }
-          }
-          EOF
-      - name: Setup progress bash script
-        if: ${{ success() }}
-        shell: bash
-        run: |
-          cat <<'EOF' > /usr/local/bin/conv_progress.sh
-          #!/usr/bin/env bash
-          run_number=${{ github.run_number }}
-          start_time=${{ toJSON(github.event.client_payload.startTime) }}
-          command_type=${{ toJSON(github.event.client_payload.commandType) }}
-          channel=${{ toJSON(github.event.client_payload.channel) }}
-          message=${{ toJSON(matrix.message) }}
-          token=${{ toJSON(github.event.client_payload.token) }}
-          link=${{ toJSON(matrix.link) }}
-
-          interval=1
-          last="$(openssl sha256 -r ${1} | awk '{print $1}')"
-          while true; do
-            sleep "${interval}"
-            current="$(openssl sha256 -r ${1} | awk '{print $1}')"
-            if [[ "${last}" != "${current}" ]]; then
-              retry=0 && \
-              flag=false && \
-              until "${flag}" || (( "${retry}" == 1000 )); do
-                if ((  "${retry}" > 0 )); then
-                  echo "Retry count: ${retry}"
-                  echo "Flag status: ${flag}"
-                fi
-                progress="$(cat ${1} | tail -n1)"
-                if grep -e '^/' <<< "${progress}" > /dev/null; then
-                  progress="00:00:00${progress}"
-                else
-                  :
-                fi
-                echo '{"status": "progress", "number": "'"${run_number}"'", "commandType": "'"${command_type}"'", "startTime": "'"${start_time}"'", "channel": "'"${channel}"'", "message": "'"${message}"'", "token": "'"${token}"'", "link": "'"${link}"'", "content": "'"${4}(${2} / ${3})\n${progress}"'"}' | \
-                curl -s -X POST \
-                  ${{ secrets.ENDPOINT_URL }} \
-                  -H "Accept: application/json" \
-                  -H "Content-type: application/json" \
-                  -m 18000 \
-                  --retry 100 \
-                  --retry-all-errors \
-                  -d @- > /dev/null 2>&1 && \
-                {
-                  flag=true
-                } || \
-                {
-                  ((retry++)) || true
-                }
-              done
-              last="${current}"
-            fi
-          done
-          EOF
-          chmod +x /usr/local/bin/conv_progress.sh
-      - name: Setup wrapper curl bash script
-        if: ${{ success() }}
-        shell: bash
-        run: |
-          cat <<'EOF' > /usr/local/bin/retry_curl.sh
-          #!/usr/bin/env bash
-          declare max="${1}";shift
-          declare delay="${1}";shift
-          [[ "${1:-1}" == "--" ]] && shift || true
-          declare attempt=1
-          declare status
-          while (( attempt <= max )); do
-            status="$(curl -sS -o /dev/null -w '%{http_code}' "${@}")"
-            if [[ "${status}" =~ ^2[0-9][0-9] ]]; then
-              exit 0
-            fi
-            if [[ "${status}" == "499" || "${status}" -ge 500 || "${status}" == "408" || "${status}" == "429" ]]; then
-              echo "Retry ${attempt}/${max} failed with status ${status}. Retrying in ${delay} seconds..."
-              sleep "${delay}"
-              delay=$(( delay * 2 > 60 ? 60 : delay * 2 ))
-              ((attempt++))
-              continue
-            fi
-            echo "Non-retriable error: ${status}" >&2
-            exit 22
-          done
-          echo "Exceeded retries. Last status: ${status}" >&2
-          exit 22
-          EOF
-          chmod +x /usr/local/bin/retry_curl.sh
-      - name: Setup post process bash script
-        if: ${{ success() }}
-        shell: bash
-        run: |
-          cat <<'EOF' > /usr/local/bin/post_process.sh
-          #!/usr/bin/env bash
-          input="${1}"
-          vformat="$(ffprobe -v error -select_streams v:0 -show_entries format=format_name -of default=nk=1:nw=1 "${input}")"
-          vcodec="$(ffprobe -v error -select_streams v:0 -show_entries stream=codec_name -of default=nk=1:nw=1 "${input}")"
-          pix_fmt="$(ffprobe -v error -select_streams v:0 -show_entries stream=pix_fmt -of default=nk=1:nw=1 "${input}")"
-          if [[ "${vformat}" == "mov,mp4,m4a,3gp,3g2,mj2" ]]; then
-            ext="${input##*.}"
-          else
-            ext="mp4"
-          fi
-          tmp="${input%.*}.tmp.${ext}"
-          if [[ ${vformat} != "mov,mp4,m4a,3gp,3g2,mj2" || "${vcodec}" != "h264" || "${pix_fmt}" != "yuv420p" ]]; then
-            ffmpeg -y \
-              -i "${input}" \
-              -threads "$(nproc)" \
-              -preset veryfast \
-              -c:v libx264 \
-              -pix_fmt yuv420p \
-              -c:a copy \
-              -movflags +faststart \
-              "${tmp}" && \
-            rm -f "${input}" && \
-            if [[ "${vformat}" == "mov,mp4,m4a,3gp,3g2,mj2" ]]; then
-              mv "${tmp}" "${input}"
-            else
-              mv "${tmp}" "${input%.*}.${ext}"
-            fi
-          fi
-          EOF
-          chmod +x /usr/local/bin/post_process.sh
+          cp .github/scripts/progress.awk ./progress.awk && \
+          cp .github/scripts/conv_progress.sh /usr/local/bin/conv_progress.sh && \
+          cp .github/scripts/retry_curl.sh /usr/local/bin/retry_curl.sh && \
+          cp .github/scripts/post_process.sh /usr/local/bin/post_process.sh && \
+          chmod +x /usr/local/bin/conv_progress.sh /usr/local/bin/retry_curl.sh /usr/local/bin/post_process.sh
       - name: Confirmation of link survival
         if: ${{ success() }}
         id: link_status
@@ -505,6 +359,15 @@ jobs:
           fi
       - name: Check and Convert Files
         if: ${{ success() }}
+        env:
+          ENDPOINT_URL: ${{ secrets.ENDPOINT_URL }}
+          RUN_NUMBER: ${{ github.run_number }}
+          COMMAND_TYPE: ${{ github.event.client_payload.commandType }}
+          START_TIME: ${{ github.event.client_payload.startTime }}
+          CHANNEL: ${{ github.event.client_payload.channel }}
+          MESSAGE: ${{ matrix.message }}
+          TOKEN: ${{ github.event.client_payload.token }}
+          LINK: ${{ matrix.link }}
         shell: bash
         run: |
           dir=$(pwd) && \
