@@ -135,7 +135,7 @@ flowchart LR
 | `src/libs/messages/` | Builders for progress / success / failure / error embeds. |
 | `src/libs/contents/` | Converts callback bodies into `singleFileContent` / `multiFilesContent` blobs. |
 | `src/utils/` | Pure helpers: `fileToBlob`, `unitChangeForByte`, `millisecondChangeFormat`. |
-| `tests/` | Deno test suite mirroring the `src/` tree (e.g. `tests/bot/registerCommands.test.ts`, `tests/libs/isUrl.test.ts`). Tests import the same modules as production code and stub `bot.helpers.*` per test. |
+| `tests/` | Deno test suite mirroring the `src/` structure; for each production module, a corresponding `.test.ts` file exercises its public API. Tests import the same modules as production code and stub `bot.helpers.*` per test. |
 | `.github/workflows/build.yml` | Builds and pushes the runner image to GHCR on `push` to `master` and on a daily schedule. |
 | `.github/workflows/run.yml` | `repository_dispatch` (type `download`) consumer that runs `yt-dlp` and posts callbacks. Used by `/dl` and `/dl-spoiler`. |
 | `.github/workflows/run-thread.yml` | `repository_dispatch` (type `thread-download`) consumer with a `prepare` job (builds a `strategy.matrix` from `client_payload.links`) and a `run-with-container` job that fans out shards in parallel (`max-parallel: 16`, `fail-fast: false`). Used by `/threaddl`. |

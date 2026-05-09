@@ -105,7 +105,14 @@ Progress callbacks ship as `application/json`. Success callbacks that include at
 
 ### Status routing
 
-The router uses `Custom.CallbackPattern` (`src/libs/custom.ts`) to pick a handler based on `[status, commandType, actionType]`. Thread-mode patterns are tried **before** the non-thread `Progress` / `Failure` patterns so they win when `commandType === "threaddl"`:
+The router uses `Custom.CallbackPattern` (`src/libs/custom.ts`) to pick a handler based on `[status, commandType, actionType]`.
+
+**Routing structure:**
+
+- **Success callbacks** use a union of two disjoint sub-products: (`dl` / `dl-spoiler` × `single` / `multi`) ∪ (`threaddl` / `threaddl-spoiler` × `thread-single` / `thread-multi`) = 4 + 4 = 8 entries, each routed uniquely. The `status` is always `"success"`.
+- **Progress and failure callbacks** use a subset-first match: the thread-specific patterns (`commandType === "threaddl"` or `commandType === "threaddl-spoiler"`, `actionType` nullish) must be checked **before** the generic patterns (`commandType` nullish, `actionType` nullish), because both patterns would match a thread-mode callback if the order were reversed. The `actionType` is omitted on progress / failure callbacks from the runner, so matching relies on `status` and `commandType` only.
+
+Thread-mode patterns are listed **before** non-thread patterns in `Custom.CallbackPattern`:
 
 | Pattern | Handler |
 | --- | --- |
