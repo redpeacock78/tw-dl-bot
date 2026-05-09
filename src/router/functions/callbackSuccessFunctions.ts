@@ -198,6 +198,30 @@ const callbackSuccessFunctions: CallbackTypes.Functions.callbackSuccess = {
         infoObject: InfoObject<T>,
       ): Promise<Response> => handleMultiSuccess(infoObject, false, true),
     },
+    threadDlSpoiler: {
+      /**
+       * Asynchronously handles a single callback success event for a thread
+       * download with spoiler. Uses `editMessage` (thread mode) and applies
+       * the `SPOILER_` filename prefix via `spoiler=true`.
+       *
+       * @param {InfoObject<T>} infoObject - The information object containing the necessary data for the callback success event.
+       * @return {Promise<Response>} A promise that resolves to a Response object.
+       */
+      single: <T extends string>(
+        infoObject: InfoObject<T>,
+      ): Promise<Response> => handleSingleSuccess(infoObject, true, true),
+      /**
+       * Asynchronously handles multi callback success events for a thread
+       * download with spoiler. Uses `editMessage` (thread mode) and applies
+       * the `SPOILER_` filename prefix via `spoiler=true`.
+       *
+       * @param {InfoObject<T>} infoObject - The information object containing the necessary data for the callback success event.
+       * @return {Promise<Response>} A promise that resolves to a Response object.
+       */
+      multi: <T extends string>(
+        infoObject: InfoObject<T>,
+      ): Promise<Response> => handleMultiSuccess(infoObject, true, true),
+    },
   },
 };
 

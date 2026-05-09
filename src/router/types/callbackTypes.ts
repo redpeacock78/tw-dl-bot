@@ -5,7 +5,7 @@ export namespace CallbackTypes {
   export type bodyDataObject = {
     status: "success" | "failure" | "progress" | null;
     number: string;
-    commandType?: "dl" | "dl-spoiler" | "threaddl";
+    commandType?: "dl" | "dl-spoiler" | "threaddl" | "threaddl-spoiler";
     actionType?: "single" | "multi" | "thread-single" | "thread-multi";
     startTime: string;
     channel: string;

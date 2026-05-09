@@ -35,23 +35,65 @@ Deno.test("Commands", async (t) => {
     assertEquals(url?.required, true);
   });
 
-  await t.step("threadDlCommand: maps to THREAD_DOWNLOAD + name + url options", () => {
-    assertEquals(
-      Commands.threadDlCommand.name,
-      Constants.Webhook.Json.ClientPayload.CommandType.THREAD_DOWNLOAD,
-    );
-    assertEquals(Commands.threadDlCommand.type, 1);
-    assertEquals(Commands.threadDlCommand.options?.length, 2);
+  await t.step(
+    "threadDlCommand: maps to THREAD_DOWNLOAD + only name option (URLs are collected via Modal)",
+    () => {
+      assertEquals(
+        Commands.threadDlCommand.name,
+        Constants.Webhook.Json.ClientPayload.CommandType.THREAD_DOWNLOAD,
+      );
+      assertEquals(Commands.threadDlCommand.type, 1);
+      // url option intentionally removed in the Modal-based flow
+      assertEquals(Commands.threadDlCommand.options?.length, 1);
 
-    const opts = Commands.threadDlCommand.options ?? [];
-    const optByName = Object.fromEntries(opts.map((o) => [o.name, o]));
+      const opts = Commands.threadDlCommand.options ?? [];
+      const optByName = Object.fromEntries(opts.map((o) => [o.name, o]));
 
-    assertEquals(optByName.name?.required, true);
-    assertEquals(optByName.name?.type, 3);
-    assertEquals(optByName.name?.description, "Thread Name");
+      assertEquals(optByName.name?.required, true);
+      assertEquals(optByName.name?.type, 3);
+      assertEquals(optByName.name?.description, "Thread Name");
 
-    assertEquals(optByName.url?.required, true);
-    assertEquals(optByName.url?.type, 3);
-    assertEquals(optByName.url?.description, "Tweet URL");
-  });
+      // url option no longer exists on the slash command — URLs come from
+      // the Modal that opens after the user invokes /threaddl
+      assertEquals(optByName.url, undefined);
+    },
+  );
+
+  await t.step(
+    "threadDlSpoilerCommand: maps to THREAD_DOWNLOAD_SPOILER + only name option (Modal-based)",
+    () => {
+      assertEquals(
+        Commands.threadDlSpoilerCommand.name,
+        Constants.Webhook.Json.ClientPayload.CommandType
+          .THREAD_DOWNLOAD_SPOILER,
+      );
+      assertEquals(Commands.threadDlSpoilerCommand.type, 1);
+      assertEquals(
+        Commands.threadDlSpoilerCommand.description,
+        "DL multiple Tweets into a thread with spoiler",
+      );
+      assertEquals(Commands.threadDlSpoilerCommand.options?.length, 1);
+
+      const opts = Commands.threadDlSpoilerCommand.options ?? [];
+      const optByName = Object.fromEntries(opts.map((o) => [o.name, o]));
+
+      assertEquals(optByName.name?.required, true);
+      assertEquals(optByName.name?.type, 3);
+      assertEquals(optByName.name?.description, "Thread Name");
+      assertEquals(optByName.url, undefined);
+    },
+  );
+
+  await t.step(
+    "threadDl ↔ threadDlSpoiler share the same options shape (parity check)",
+    () => {
+      const normal = (Commands.threadDlCommand.options ?? [])
+        .map((o) => ({ name: o.name, type: o.type, required: o.required }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+      const spoiler = (Commands.threadDlSpoilerCommand.options ?? [])
+        .map((o) => ({ name: o.name, type: o.type, required: o.required }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+      assertEquals(spoiler, normal);
+    },
+  );
 });

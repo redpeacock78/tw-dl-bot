@@ -9,6 +9,7 @@ type InfoObject<T extends string> = CallbackTypes.infoObjectType<T>;
 const noContent = Constants.HttpStatus.NO_CONTENT;
 const internalServerError = Constants.HttpStatus.INTERNAL_SERVER_ERROR;
 const threadDl = Constants.CallbackObject.commandType.THREAD_DL;
+const threadDlSpoiler = Constants.CallbackObject.commandType.THREAD_DL_SPOILER;
 
 const callbackProgressFunctions: CallbackTypes.Functions.callbackProgress = {
   /**
@@ -22,7 +23,9 @@ const callbackProgressFunctions: CallbackTypes.Functions.callbackProgress = {
   ): Promise<Response> => {
     const runTime: number =
       new Date().getTime() - Number(infoObject.body!.startTime);
-    const useThread: boolean = infoObject.body!.commandType === threadDl;
+    const useThread: boolean =
+      infoObject.body!.commandType === threadDl ||
+      infoObject.body!.commandType === threadDlSpoiler;
     // editMessage (thread mode) is not bound by the 15-min interaction-token
     // window, so always edit the placeholder when running in a thread.
     const isEditOriginalMessage: boolean =
