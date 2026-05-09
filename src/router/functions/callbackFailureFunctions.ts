@@ -1,5 +1,5 @@
 import bot from "@bot/bot.ts";
-import { match } from "ts-pattern";
+import { Match } from "functional";
 import { EditMessage } from "discordeno";
 import { Constants, Messages } from "@libs";
 import { CallbackTypes } from "@router/types/callbackTypes.ts";
@@ -28,7 +28,7 @@ const callbackFailureFunctions: CallbackTypes.Functions.callbackFailure = {
     // window, so always edit the placeholder when running in a thread.
     const isEditOriginalMessage: boolean =
       useThread || runTime <= Constants.EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT;
-    return match(isEditOriginalMessage)
+    return Match(isEditOriginalMessage)
       .with(
         true,
         (): Promise<Response> =>

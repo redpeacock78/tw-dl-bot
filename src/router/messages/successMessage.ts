@@ -105,11 +105,11 @@ const successMessage = {
     // editMessage (thread mode) is not bound by the 15-min interaction-token
     // window or the followup oversize fallback, so always edit the
     // placeholder when running in a thread.
-    const editOriginalMessageFlag: boolean =
+    const isEditOriginalMessage: boolean =
       useThread ||
       runTime <= editFollowupMessageTimeLimit ||
       multiSuccsessMessageObject!.oversize !== trueOversize;
-    return Match(editOriginalMessageFlag)
+    return Match(isEditOriginalMessage)
       .with(
         true,
         async (): Promise<Message> =>
