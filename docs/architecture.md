@@ -138,10 +138,16 @@ flowchart LR
 | `src/libs/contents/` | Converts callback bodies into `singleFileContent` / `multiFilesContent` blobs. |
 | `src/utils/` | Pure helpers: `fileToBlob`, `unitChangeForByte`, `millisecondChangeFormat`. |
 | `tests/` | Deno test suite mirroring the `src/` structure; for each production module, a corresponding `.test.ts` file exercises its public API. Tests import the same modules as production code and stub `bot.helpers.*` per test. |
+| `tests/bot/` | Bot interaction tests: command registration, slash command handlers (`/dl`, `/dl-spoiler`, `/threaddl`, `/threaddl-spoiler`), Modal submission. |
+| `tests/router/` | Callback router tests: success / progress / failure handler routing, message editing patterns for thread vs. non-thread modes, ping health check. |
+| `tests/libs/` | Library tests: webhook dispatch payload building, message embed construction, callback pattern matching, secret loading. |
+| `tests/scripts/` | Shell script and AWK tool tests via `deno test` with subprocess execution: `progress.awk` ffmpeg output parsing, `retry_curl.sh` retry logic, `post_process.sh` format conversion, `conv_progress.sh` callback dispatch. |
+| `.github/scripts/` | Shell scripts and AWK tools used by runner workflows: `progress.awk` (parses ffmpeg encoding progress output), `retry_curl.sh` (robust HTTP POST with backoff), `post_process.sh` (H.264/yuv420p format validation and conversion using libx264), `conv_progress.sh` (monitors ffmpeg progress log file and dispatches HTTP callbacks to the bot). |
+| `.github/actions/check-and-convert-files/action.yml` | Composite GitHub Action that performs inline two-pass HEVC (libx265) + Opus re-encoding to fit files within the 10 MB Discord limit. Called by `run.yml` and `run-thread.yml`. |
 | `.github/workflows/build.yml` | Builds and pushes the runner image to GHCR on `push` to `master` and on a daily schedule. |
-| `.github/workflows/run.yml` | `repository_dispatch` (type `download`) consumer that runs `yt-dlp` and posts callbacks. Used by `/dl` and `/dl-spoiler`. |
-| `.github/workflows/run-thread.yml` | `repository_dispatch` (type `thread-download`) consumer with a `prepare` job (builds a `strategy.matrix` from `client_payload.links`) and a `run-with-container` job that fans out shards in parallel (`max-parallel: 16`, `fail-fast: false`). Used by `/threaddl`. |
-| `.github/workflows/test.yml` | CI: `deno lint` → `deno task test` → `deno task test:coverage`, with the coverage report appended to the GitHub Step Summary. |
+| `.github/workflows/run.yml` | `repository_dispatch` (type `download`) consumer that runs `yt-dlp` and posts callbacks. Used by `/dl` and `/dl-spoiler`. Calls composite action and uses scripts. |
+| `.github/workflows/run-thread.yml` | `repository_dispatch` (type `thread-download`) consumer with a `prepare` job (builds a `strategy.matrix` from `client_payload.links`) and a `run-with-container` job that fans out shards in parallel (`max-parallel: 16`, `fail-fast: false`). Used by `/threaddl`. Calls composite action and uses scripts. |
+| `.github/workflows/test.yml` | CI: `deno lint` → `deno task test` → `deno task test:coverage`, with the coverage report appended to the GitHub Step Summary. Tests all modules including `tests/scripts/`. |
 | `docker/Dockerfile` | The runner image: Ubuntu base + `ffmpeg`, `aria2`, `jq`, `bc`, `gawk`, `curl`, plus a nightly `yt-dlp`. Shared by both `run.yml` and `run-thread.yml`. |
 
 ## Status lifecycle

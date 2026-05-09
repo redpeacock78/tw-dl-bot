@@ -148,6 +148,45 @@ body は parse され、`[status, commandType, actionType]` triplet は `Custom.
 | `400 Bad Request` | body は parsed（JSON または multipart）。但し `status`、`commandType`、`actionType` はすべて missing — `InvalidPost` pattern。 |
 | `500 Internal Server Error` | `.otherwise` にフォールスルー — body-parse failures と `Custom.CallbackPattern` に列挙されない `[status, commandType, actionType]` combination に使用。handler 内の Discord API errors も handler の `.catch` によって `500` としてレポート。 |
 
+## Runner processing pipeline
+
+Runner workflows（`run.yml` と `run-thread.yml`）は Docker container 内で実行され、shell scripts と composite GitHub Actions を使用して download、encoding、upload workflow を管理。
+
+### Shell scripts（`.github/scripts/`）
+
+| Script | Purpose |
+| --- | --- |
+| `progress.awk` | AWK script。FFmpeg progress output（`frame=...time=HH:MM:SS...`）をパースし、ETA estimates 付きで readable time markers としてフォーマット。Composite action の ffmpeg encoding pipeline によって（`awk -f progress.awk` 経由で）呼び出され、progress log file に書き込み。 |
+| `retry_curl.sh` | Bash script。`curl` を exponential backoff retry logic でラップ。Transient errors（5xx、429、408）に対して configurable limit（最大遅延 60s）までリトライ。Bot の `/api/callback` への robust callback delivery に使用。 |
+| `post_process.sh` | Bash script。Video ファイルを validate し、必要に応じて libx264 single-pass encoding を使用して H.264/MP4 format に変換。FFprobe を使用して format/codec/pixel format をチェックし、まだ H.264 + yuv420p でない場合は FFmpeg 経由で re-encode。Discord と downstream processing との互換性を ensure。 |
+| `conv_progress.sh` | Bash script。Progress log file の変更を監視し、Bot へ real-time progress callbacks を送信。Environment variables（`ENDPOINT_URL`、`COMMAND_TYPE` など）を読み込み、ffmpeg/awk pipeline によって生成された log file を watch。JSON payloads を callback endpoint に POST。Encoding 中に background process として実行。 |
+
+### Composite Action（`.github/actions/check-and-convert-files/`）
+
+**Name:** `Check and Convert Files`
+
+**Purpose:** Total download size を validate し、Discord の 10 MB per-attachment limit に収まるように two-pass HEVC（H.265）+ Opus encoding で oversized files を re-encode。
+
+**Inputs:**
+- `endpoint_url` — Bot callback URL（progress updates 用）
+- `run_number` — GitHub Actions run ID
+- `start_time` — Workflow start timestamp（elapsed time の計算に使用）
+- `channel` — Discord channel/thread ID
+- `message` — Discord message ID（in-thread edits 用の placeholder、`/dl` 用の follow-up）
+- `token` — Discord interaction token（edit operations 用）
+- `link` — Original media URL（callbacks で echo back）
+- `command_type` — Optional；`/threaddl` / `/threaddl-spoiler` の場合のみ設定し、callbacks を correct にルーティング
+
+**Workflow:**
+1. Total download size が ≤ 10 MB の場合、encoding は不要。upload に進行。
+2. いずれかのファイルが > 10 MB の場合：
+   - **Probe step:** ファイルの middle の 5% をサンプリング。target encoding settings で overhead と bitrate requirements を estimate。
+   - **Analyze step**（first pass）： HEVC analysis pass を実行して optimal two-pass encoding 用の statistics を gather。
+   - **Convert step**（second pass）： HEVC video（Opus audio）を使用して encode。Bitrate は 10 MB に収まり品質を保持するよう計算。Safety cap として `-fs 10MB` limit を使用。
+3. Process 全体を通じて progress callbacks を送信（phase labels `🔎Probing...`、`🧪Analyzing...`、`🔁Converting...` 付き）。`conv_progress.sh` 経由。
+
+**Called by:** `run.yml`（`/dl`、`/dl-spoiler` 用）と `run-thread.yml`（`/threaddl`、`/threaddl-spoiler` 用）の両方。
+
 ## Secrets
 
 | Where | Name | Purpose |

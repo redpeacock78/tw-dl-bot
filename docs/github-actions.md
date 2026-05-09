@@ -148,6 +148,45 @@ These are decided by `src/router/callback.ts` after the body is parsed and the `
 | `400 Bad Request` | Body parsed (JSON or multipart), but `status`, `commandType`, and `actionType` are all missing — the `InvalidPost` pattern. |
 | `500 Internal Server Error` | Falls through to `.otherwise` — used for body-parse failures and for any other `[status, commandType, actionType]` combination not enumerated above. Discord API errors inside a handler are also reported as `500` by the per-handler `.catch`. |
 
+## Runner processing pipeline
+
+The runner workflows (`run.yml` and `run-thread.yml`) execute inside the Docker container and use shell scripts and composite GitHub Actions to manage the download, encoding, and upload workflow.
+
+### Shell scripts (`.github/scripts/`)
+
+| Script | Purpose |
+| --- | --- |
+| `progress.awk` | AWK script that parses FFmpeg progress output (`frame=...time=HH:MM:SS...`) and formats it as readable time markers with ETA estimates. Called by the ffmpeg encoding pipeline in the composite action (via `awk -f progress.awk`) to write the progress log file. |
+| `retry_curl.sh` | Bash script that wraps `curl` with exponential backoff retry logic. Retries on transient errors (5xx, 429, 408) up to a configurable limit with increasing delays (max 60s). Used for robust callback delivery to the bot's `/api/callback`. |
+| `post_process.sh` | Bash script that validates and converts video files to H.264/MP4 format using libx264 single-pass encoding (if needed). Uses FFprobe to check format/codec/pixel format and re-encodes via FFmpeg if not already H.264 + yuv420p. Ensures compatibility with Discord and downstream processing. |
+| `conv_progress.sh` | Bash script that monitors a progress log file for changes and sends real-time progress callbacks to the bot. Reads environment variables (`ENDPOINT_URL`, `COMMAND_TYPE`, etc.), watches the log file produced by the ffmpeg/awk pipeline, and POSTs JSON payloads to the callback endpoint. Runs as a background process during encoding. |
+
+### Composite Action (`.github/actions/check-and-convert-files/`)
+
+**Name:** `Check and Convert Files`
+
+**Purpose:** Validates total download size and re-encodes oversized files to fit within Discord's 10 MB per-attachment limit using two-pass HEVC (H.265) + Opus encoding.
+
+**Inputs:**
+- `endpoint_url` — Bot callback URL (for progress updates)
+- `run_number` — GitHub Actions run ID
+- `start_time` — Workflow start timestamp (used to compute elapsed time)
+- `channel` — Discord channel/thread ID
+- `message` — Discord message ID (placeholder for in-thread edits, follow-up for `/dl`)
+- `token` — Discord interaction token (for edit operations)
+- `link` — Original media URL (echoed in callbacks)
+- `command_type` — Optional; set only for `/threaddl` / `/threaddl-spoiler` to route callbacks correctly
+
+**Workflow:**
+1. If total download size ≤ 10 MB, no encoding needed; proceed to upload.
+2. If any file is > 10 MB:
+   - **Probe step:** Sample 5% of the middle of the file with target encoding settings to estimate overhead and bitrate requirements.
+   - **Analyze step** (first pass): Runs HEVC analysis pass to gather statistics for optimal two-pass encoding.
+   - **Convert step** (second pass): Encodes using HEVC video (Opus audio) with bitrate calculated to fit within 10 MB and preserve quality. Uses `-fs 10MB` limit as a safety cap.
+3. Sends progress callbacks (with phase labels `🔎Probing...`, `🧪Analyzing...`, `🔁Converting...`) throughout the process via `conv_progress.sh`.
+
+**Called by:** Both `run.yml` (for `/dl`, `/dl-spoiler`) and `run-thread.yml` (for `/threaddl`, `/threaddl-spoiler`).
+
 ## Secrets
 
 | Where | Name | Purpose |

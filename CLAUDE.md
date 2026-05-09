@@ -15,7 +15,7 @@ All tasks live in `deno.json`. Run via `deno task <name>`:
 - `deno task test:watch` — same with `--watch`
 - `deno task test:coverage` — generates `coverage/` directory; CI publishes coverage to Codecov
 
-Single test: `deno test --import-map import_map.json --allow-env --allow-read tests/path/to/file.test.ts`. Set `DISCORD_TOKEN`, `DISPATCH_URL`, `GITHUB_TOKEN` to dummy values (any non-empty string) to satisfy `secrets.ts` validation.
+Single test: `deno test --import-map import_map.json --allow-env --allow-read --allow-run --allow-write --allow-net tests/path/to/file.test.ts`. Set `DISCORD_TOKEN`, `DISPATCH_URL`, `GITHUB_TOKEN` to dummy values (any non-empty string) to satisfy `secrets.ts` validation.
 
 ## Architecture
 
@@ -86,7 +86,15 @@ Use these throughout `src/` (defined in `import_map.json`):
 
 ## Tests
 
-Tests live under `tests/`, mirroring `src/` structure (e.g. `tests/bot/interactionCreate.test.ts`). Mocking uses `@std/testing/mock` (`spy`, `stub`); `bot.helpers.*` is replaced with a fake plain object cast to `Bot`, and `globalThis.fetch` is stubbed for `ky`. Tests must avoid importing `src/main.ts` (it triggers `startBot`) — import `interactionCreate.ts`, `commands.ts`, `registerCommands.ts` etc. directly.
+Tests live under `tests/`, structured as:
+- **`tests/bot/`** — slash command and interaction handler tests
+- **`tests/router/`** — callback router and message editing tests
+- **`tests/libs/`** — webhook and message builder tests
+- **`tests/scripts/`** — shell script and AWK tool tests via subprocess execution
+
+Mocking uses `@std/testing/mock` (`spy`, `stub`); `bot.helpers.*` is replaced with a fake plain object cast to `Bot`, and `globalThis.fetch` is stubbed for `ky`. Tests must avoid importing `src/main.ts` (it triggers `startBot`) — import `interactionCreate.ts`, `commands.ts`, `registerCommands.ts` etc. directly.
+
+Tests run with permissions `--allow-env`, `--allow-read`, `--allow-run`, `--allow-write`, and `--allow-net` to support both TypeScript module testing and subprocess-based script validation.
 
 `Constants` is imported from `@libs/constants.ts` (leaf) rather than the `@libs` barrel inside `updateRAMUsage2BotStatus.ts` to avoid circular-init TDZ when tests import the helper directly.
 

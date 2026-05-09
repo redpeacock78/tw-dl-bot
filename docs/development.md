@@ -85,7 +85,22 @@ deno task test:coverage
 
 ### Tests
 
-The Deno test suite lives under `tests/` and mirrors the `src/` tree (e.g. `src/bot/registerCommands.ts` ↔ `tests/bot/registerCommands.test.ts`). All three `test*` tasks pre-set placeholder values for `DISCORD_TOKEN`, `DISPATCH_URL`, and `GITHUB_TOKEN` so that importing modules which transitively load `Secrets` does not fail on missing env vars; tests stub `bot.helpers.*` and `ky` per file rather than making real network calls.
+The Deno test suite lives under `tests/` and mirrors the structure of `src/` plus additional test directories for scripts and utilities. Test subdirectories include:
+
+- **`tests/bot/`** — tests for slash commands and interaction handlers (`interactionCreate`, `registerCommands`, etc.).
+- **`tests/router/`** — tests for callback routing, message editing (thread vs. non-thread), and health checks.
+- **`tests/libs/`** — tests for webhook payloads, message builders, and secrets loading.
+- **`tests/scripts/`** — tests for shell scripts and AWK tools via `deno test` with subprocess execution (requires `--allow-run`, `--allow-write`, `--allow-net`).
+
+All three `test*` tasks pre-set placeholder values for `DISCORD_TOKEN`, `DISPATCH_URL`, and `GITHUB_TOKEN` so that importing modules which transitively load `Secrets` does not fail on missing env vars. Tests stub `bot.helpers.*` and `ky` per file rather than making real network calls. Tests run with permissions `--allow-env`, `--allow-read`, `--allow-run`, `--allow-write`, and `--allow-net` to support script testing and file operations.
+
+Single test example (with all required permissions):
+
+```bash
+deno test --import-map import_map.json --allow-env --allow-read --allow-run --allow-write --allow-net tests/path/to/file.test.ts
+```
+
+Set `DISCORD_TOKEN`, `DISPATCH_URL`, `GITHUB_TOKEN` to dummy values (any non-empty string) to satisfy `secrets.ts` validation.
 
 ### Coverage
 
