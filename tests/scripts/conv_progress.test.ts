@@ -294,10 +294,9 @@ Deno.test("conv_progress.sh", async (t) => {
       await Deno.writeTextFile(progressFile, "initial");
 
       const srv = await makeCaptureSrv();
-      // No commandType means non-thread workflow — SHARD_INDEX is never set
-      // for those runs, but guard that the script still behaves correctly when
-      // only one of the two is absent.
-      const proc = startScript({ url: srv.url, progressFile });
+      // SHARD_INDEX is set but COMMAND_TYPE is absent (non-thread path).
+      // The script omits both fields from the payload in this case.
+      const proc = startScript({ url: srv.url, progressFile, shardIndex: "02" });
 
       try {
         await new Promise((r) => setTimeout(r, 1200));
