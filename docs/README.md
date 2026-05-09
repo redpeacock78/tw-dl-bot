@@ -1,5 +1,7 @@
 # tw-dl-bot Documentation
 
+> 日本語版: [./jp/README.md](./jp/README.md)
+
 This directory contains the developer-facing documentation for **tw-dl-bot**, a Deno + TypeScript Discord bot that downloads videos from Tweets via yt-dlp running in GitHub Actions.
 
 ## Contents

@@ -99,6 +99,8 @@ In-depth documentation lives under [`docs/`](./docs/):
 * [`docs/deployment.md`](./docs/deployment.md) — runner image and bot deployment
 * [`docs/github-actions.md`](./docs/github-actions.md) — `repository_dispatch` payload, callback API, secrets
 
+日本語版ドキュメントは [`docs/jp/`](./docs/jp/) を参照してください。
+
 ---
 
 ## License

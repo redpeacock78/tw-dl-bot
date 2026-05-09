@@ -1,5 +1,7 @@
 # Deployment
 
+> 日本語版: [./jp/deployment.md](./jp/deployment.md)
+
 The deployable surface of this project has two pieces:
 
 1. The **bot service** (`src/main.ts`) — a long-running Deno process that must reach Discord and accept inbound HTTP from GitHub Actions.
