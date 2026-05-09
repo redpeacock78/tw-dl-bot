@@ -34,7 +34,11 @@ export const interactionCreate = async (props: {
       type: InteractionResponseTypes.DeferredChannelMessageWithSource,
     }
   );
-  If(
+  // `await` the If/else so the function does not return before the
+  // followup message / webhook chain settles. Without this `await`,
+  // pending fetches outlive the test runner (op-leak) and the
+  // function's caller can't observe completion.
+  await If(
     !contents.every((i: string): boolean => isUrl(i)),
     async (): Promise<void> => {
       await props.b.helpers.sendFollowupMessage(props.interaction.token, {

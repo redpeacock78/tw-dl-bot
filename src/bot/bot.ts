@@ -15,9 +15,11 @@ const bot: Bot = createBot({
   },
 });
 
-await bot.helpers.createGlobalApplicationCommand(Commands.dlCommand);
-await bot.helpers.createGlobalApplicationCommand(Commands.dlSpoilerCommand);
-await bot.helpers.createGlobalApplicationCommand(Commands.threadDlCommand);
+// NOTE: slash command registration (including `threadDlCommand`) was
+// moved to `registerCommands` (see `src/bot/registerCommands.ts`) and
+// is now invoked from `src/main.ts` before `startBot`. Keeping it out
+// of `bot.ts`'s top-level lets unit tests import the bot setup without
+// making a Discord REST call at module load time.
 
 /**
  * Handles the interactionCreate event for the bot.

@@ -1,0 +1,41 @@
+name: Test
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Lint
+        run: deno lint
+      - name: Run tests
+        run: deno task test
+      - name: Run tests with coverage
+        run: deno task test:coverage | tee coverage.txt
+      - name: Publish coverage to Step Summary
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          {
+            echo "## Test coverage"
+            echo ""
+            echo '```'
+            if [[ -f coverage.txt ]]; then
+              cat coverage.txt
+            else
+              echo "(coverage report not produced)"
+            fi
+            echo '```'
+          } >> "${GITHUB_STEP_SUMMARY}"
