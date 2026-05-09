@@ -54,7 +54,13 @@ deno task build
 ## Slash Commands
 
 * `/dl url:<Tweet URL>`
-  Downloads a single Tweet video
+  Downloads one or more Tweet videos (space-separated URLs supported)
+* `/dl-spoiler url:<Tweet URL>`
+  Same as `/dl`, but the resulting file is uploaded as a Discord spoiler attachment
+* `/threaddl name:<Thread Name> url:<Tweet URL>` *(in development)*
+  Will create a thread with the given name and post each download result inside it. Currently registered as a command definition; runtime wiring is being implemented in a separate stream.
+
+See [`docs/commands.md`](./docs/commands.md) for the full command reference.
 
 ---
 
@@ -75,6 +81,18 @@ deno task build
   Start the bot locally
 * `docker/Dockerfile`
   Defines the video processing runner image
+
+---
+
+## Documentation
+
+In-depth documentation lives under [`docs/`](./docs/):
+
+* [`docs/architecture.md`](./docs/architecture.md) — system overview and data flow
+* [`docs/commands.md`](./docs/commands.md) — slash command reference
+* [`docs/development.md`](./docs/development.md) — local setup, env vars, GitHub token scopes
+* [`docs/deployment.md`](./docs/deployment.md) — runner image and bot deployment
+* [`docs/github-actions.md`](./docs/github-actions.md) — `repository_dispatch` payload, callback API, secrets
 
 ---
 
