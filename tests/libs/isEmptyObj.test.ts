@@ -1,5 +1,5 @@
 import { assertEquals } from "@std/assert";
-import { isEmptyObj } from "./isEmptyObj.ts";
+import { isEmptyObj } from "../../src/libs/isEmptyObj.ts";
 
 Deno.test("isEmptyObj", async (t) => {
   await t.step("returns true for an object with no own keys", () => {

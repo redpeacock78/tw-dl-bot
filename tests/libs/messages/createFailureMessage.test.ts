@@ -1,6 +1,6 @@
 import { assertEquals, assertExists } from "@std/assert";
 import { Constants } from "@libs";
-import createFailureMessage from "./createFailureMessage.ts";
+import createFailureMessage from "../../../src/libs/messages/createFailureMessage.ts";
 
 type EmbedFieldLike = { name: string; value: string };
 

@@ -1,5 +1,5 @@
 import { assertEquals } from "@std/assert";
-import unitChangeForByte from "./unitChangeForByte.ts";
+import unitChangeForByte from "../../src/utils/unitChangeForByte.ts";
 
 Deno.test("unitChangeForByte", async (t) => {
   await t.step("renders raw bytes (with `byte` suffix) for sub-KB values", () => {

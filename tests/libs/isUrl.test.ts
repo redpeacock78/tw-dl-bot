@@ -1,5 +1,5 @@
 import { assertEquals } from "@std/assert";
-import { isUrl } from "./isUrl.ts";
+import { isUrl } from "../../src/libs/isUrl.ts";
 
 Deno.test("isUrl", async (t) => {
   await t.step("accepts well-formed http/https URLs", () => {

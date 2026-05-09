@@ -1,5 +1,5 @@
 import { assertEquals } from "@std/assert";
-import millisecondChangeFormat from "./millisecondChangeFormat.ts";
+import millisecondChangeFormat from "../../src/utils/millisecondChangeFormat.ts";
 
 Deno.test("millisecondChangeFormat", async (t) => {
   await t.step("returns raw `${ms}ms` when value is below 1 second", () => {
