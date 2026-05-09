@@ -101,7 +101,7 @@ open coverage/html/index.html   # macOS
 xdg-open coverage/html/index.html   # Linux
 \`\`\`
 
-CI（\`.github/workflows/test.yml\`）はさらに \`deno coverage coverage --lcov > coverage.lcov\` を実行し、結果を [`codecov/codecov-action@v5`](https://github.com/codecov/codecov-action) 経由で **Codecov** にアップロード。Configuration は [`codecov.yml`](../codecov.yml)に住んでいます：
+CI（\`.github/workflows/test.yml\`）はさらに \`deno coverage coverage --lcov > coverage.lcov\` を実行し、結果を [`codecov/codecov-action@v5`](https://github.com/codecov/codecov-action) 経由で **Codecov** にアップロード。Configuration は [`codecov.yml`](../../codecov.yml)に住んでいます：
 
 - \`tools/\`、\`tests/\`、\`docker/\`、\`**/*.test.ts\` は無視。
 - \`project\` status：\`target: auto\`、\`threshold: 1%\` — overall coverage drops を 1% より大きくフラグ。

@@ -14,5 +14,5 @@
 
 ## 関連リンク
 
-- トップレベル [README](../README.md) — プロジェクト概要、セットアップ、コマンド一覧。
-- [LICENSE](../LICENSE) — MIT。
+- トップレベル [README](../../README.md) — プロジェクト概要、セットアップ、コマンド一覧。
+- [LICENSE](../../LICENSE) — MIT。
