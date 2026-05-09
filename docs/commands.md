@@ -73,6 +73,8 @@ The interaction handler is shared with `/dl` (see `src/bot/interactionCreate.ts`
 
 Download multiple Tweets into a Discord **thread** named by the user. URLs are collected via a Discord **Modal** so the user can paste an arbitrary number of links without quoting / escaping. Each URL is processed in parallel by a dedicated GitHub Actions matrix shard, and each shard's result lands inside the thread next to the matching placeholder message.
 
+> **Guild-only command.** This command is registered with `dmPermission: false` and is not visible in DM autocomplete. Thread creation requires a guild text channel — there is no valid DM use-case. If a user with a stale cached client (~1 hour) attempts to run this command from a DM, the client will reject it locally; `runThreadFlow` also includes a defensive `guildId` check as a second defense layer for stale cached clients.
+
 | Field | Value |
 | --- | --- |
 | Name | `threaddl` |
@@ -155,6 +157,8 @@ URL extraction is delimiter-agnostic. The submitted text is matched against the 
 
 Identical to `/threaddl`, except every successful upload is sent with the `SPOILER_` filename prefix so Discord renders the attachment as a spoiler.
 
+> **Guild-only command.** This command is registered with `dmPermission: false` and is not visible in DM autocomplete. Thread creation requires a guild text channel — there is no valid DM use-case. If a user with a stale cached client (~1 hour) attempts to run this command from a DM, the client will reject it locally; `runThreadFlow` also includes a defensive `guildId` check as a second defense layer for stale cached clients.
+
 | Field | Value |
 | --- | --- |
 | Name | `threaddl-spoiler` |
@@ -209,3 +213,4 @@ The string values used in dispatch payloads and callbacks are defined once and r
 | Modal opens, user submits, then **interaction fails** (Discord shows 3-sec error timeout) (`/threaddl`, `/threaddl-spoiler`) | A forged ModalSubmit with an unknown `customId` prefix is silently dropped by the allowlist check (the handler returns early with no ACK, leaving Discord to timeout the interaction). This is a security measure against spoofed submissions; under normal use it does not occur. |
 | Modal opens, user submits, thread is created, but **thread is empty** (no placeholders, no dispatch) (`/threaddl`, `/threaddl-spoiler`) | The bot lacks the **Send Messages in Threads** permission in the source channel. The thread is successfully created and the `🧵 Created thread` follow-up posts, but every per-URL `sendMessage` call fails, the placeholders are dropped silently, and the flow returns without firing `repository_dispatch`. See [deployment.md](./deployment.md#bot-permissions-in-discord). |
 | Nothing happens at all | The bot process is offline, or the `repository_dispatch` POST failed (check `DISPATCH_URL` and `GITHUB_TOKEN`). |
+| `"This command must be used in a guild text channel."` error (`/threaddl`, `/threaddl-spoiler`) | Normally impossible: the command is registered with `dmPermission: false` and is not visible in DM autocomplete. If a user with a cached Discord client (~1 hour stale) has the command in their autocomplete from before the permission was set, they can attempt it from a DM. The client will reject it; if the rejection is bypassed or a stale cached client somehow bypasses the check, `runThreadFlow`'s defensive `guildId` check will also reject it. |
