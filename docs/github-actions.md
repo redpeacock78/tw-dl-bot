@@ -96,6 +96,7 @@ The runner posts to the URL in the `ENDPOINT_URL` Actions secret (which should r
 | `message` | `string` | The Discord message to edit. For `/dl` / `/dl-spoiler` this is the follow-up message ID; for `/threaddl` it is the per-URL placeholder posted inside the thread. |
 | `token` | `string` | Discord interaction token (echoed). |
 | `link` | `string` | The original Tweet URL (echoed). For `/threaddl`, this is the per-URL `matrix.link`. |
+| `shardIndex` | `string` (optional) | Zero-padded matrix shard index (e.g. `"01"`, `"02"`), present only for thread-mode callbacks when the `prepare` job assigns `matrix.index`. Used by the bot to render run numbers as `#N-XX` in Discord embeds (N = `github.run_number`, XX = `shardIndex`). Omitted for `/dl` / `/dl-spoiler` (single-shard) callbacks. |
 | `convert` | `"true" \| "false"` (optional) | Whether the runner had to re-encode the file. |
 | `oversize` | `"true" \| "false"` (optional) | `"true"` when the resulting file exceeded Discord's upload limit; for non-thread mode the bot then surfaces the file via a fresh `sendMessage`. For thread mode (`useThread`) the bot edits the placeholder in-place anyway. |
 | `name1`..`name4`, `file1`..`file4` | `string` / `File` (optional) | File names and `multipart/form-data` parts when uploading 1–4 result files. |
@@ -159,7 +160,7 @@ The runner workflows (`run.yml` and `run-thread.yml`) execute inside the Docker 
 | `progress.awk` | AWK script that parses FFmpeg progress output (`frame=...time=HH:MM:SS...`) and formats it as readable time markers with ETA estimates. Called by the ffmpeg encoding pipeline in the composite action (via `awk -f progress.awk`) to write the progress log file. |
 | `retry_curl.sh` | Bash script that wraps `curl` with exponential backoff retry logic. Retries on transient errors (5xx, 429, 408) up to a configurable limit with increasing delays (max 60s). Used for robust callback delivery to the bot's `/api/callback`. |
 | `post_process.sh` | Bash script that validates and converts video files to H.264/MP4 format using libx264 single-pass encoding (if needed). Uses FFprobe to check format/codec/pixel format and re-encodes via FFmpeg if not already H.264 + yuv420p. Ensures compatibility with Discord and downstream processing. |
-| `conv_progress.sh` | Bash script that monitors a progress log file for changes and sends real-time progress callbacks to the bot. Reads environment variables (`ENDPOINT_URL`, `COMMAND_TYPE`, etc.), watches the log file produced by the ffmpeg/awk pipeline, and POSTs JSON payloads to the callback endpoint. Runs as a background process during encoding. |
+| `conv_progress.sh` | Bash script that monitors a progress log file for changes and sends real-time progress callbacks to the bot. Reads environment variables (`ENDPOINT_URL`, `COMMAND_TYPE`, `SHARD_INDEX`, etc.), watches the log file produced by the ffmpeg/awk pipeline, and POSTs JSON payloads to the callback endpoint. When `SHARD_INDEX` is set (thread mode), it is included in the callback payload so the bot can render run numbers as `#N-XX`; for non-thread runs it is omitted. Runs as a background process during encoding. |
 
 ### Composite Action (`.github/actions/check-and-convert-files/`)
 
@@ -176,6 +177,7 @@ The runner workflows (`run.yml` and `run-thread.yml`) execute inside the Docker 
 - `token` — Discord interaction token (for edit operations)
 - `link` — Original media URL (echoed in callbacks)
 - `command_type` — Optional; set only for `/threaddl` / `/threaddl-spoiler` to route callbacks correctly
+- `shard_index` — Optional; zero-padded matrix shard index (e.g. `"01"`, `"02"`); passed to `conv_progress.sh` as the `SHARD_INDEX` environment variable so that progress callbacks include the index and the bot can render run numbers as `#N-XX`. Omitted for `/dl` / `/dl-spoiler` (non-thread) runs.
 
 **Workflow:**
 1. If total download size ≤ 10 MB, no encoding needed; proceed to upload.
@@ -219,15 +221,17 @@ The runner workflows (`run.yml` and `run-thread.yml`) execute inside the Docker 
 Builds the strategy matrix from `client_payload.links`:
 
 ```bash
-matrix="$(jq -c '{include: [.client_payload.links[] | {link: .link, message: .message}]}' "${GITHUB_EVENT_PATH}")"
+matrix="$(jq -c '{include: [.client_payload.links | to_entries[] | {index: ((.key + 1) | tostring | if length < 2 then ("0" + .) else . end), link: .value.link, message: .value.message}]}' "${GITHUB_EVENT_PATH}")"
 count="$(jq -r '.client_payload.links | length' "${GITHUB_EVENT_PATH}")"
 ```
 
-The output is a JSON object of the form `{"include": [{"link": "...", "message": "..."}, ...]}` consumed by the next job's `strategy.matrix`. The shared thread channel ID, `commandType`, `token`, and `startTime` come from the top-level event payload and are read by every shard.
+The output is a JSON object of the form `{"include": [{"index": "01", "link": "...", "message": "..."}, {"index": "02", "link": "...", "message": "..."}, ...]}` consumed by the next job's `strategy.matrix`. Each entry includes an `index` field containing a zero-padded 2-digit shard number (01, 02, …) derived from the array position. The shared thread channel ID, `commandType`, `token`, and `startTime` come from the top-level event payload and are read by every shard.
 
 ### `run-with-container` job
 
-Runs `if: ${{ fromJson(needs.prepare.outputs.count) > 0 }}` with `strategy.matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}`, `fail-fast: false`, `max-parallel: 16`. Each shard receives `matrix.link` and `matrix.message`. Otherwise the steps mirror `run.yml`:
+Runs `if: ${{ fromJson(needs.prepare.outputs.count) > 0 }}` with `strategy.matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}`, `fail-fast: false`, `max-parallel: 16`. The job is named `Download #${{ matrix.index }}` (e.g. `Download #01`, `Download #02`) so that Tweet URLs do not appear in the public GitHub Actions job list; Discord interactions (links, channel IDs) are already masked via `::add-mask::` on the step level, but GitHub's matrix expansion happens before masking can take effect on job names, so the numeric index is used instead as a privacy/security layer.
+
+Each shard receives `matrix.link`, `matrix.message`, and `matrix.index`. Otherwise the steps mirror `run.yml`:
 
 1. **Masking Secrets** — masks `commandType`, `channel`, `token`, `matrix.link`, `matrix.message`.
 2. **Start Steps / Setup** — `progress` callbacks include the original `commandType` (`"threaddl"` or `"threaddl-spoiler"`) so the bot routes them through `ProgressThread` / `ProgressThreadSpoiler` and edits the per-shard placeholder via `editMessage`.
