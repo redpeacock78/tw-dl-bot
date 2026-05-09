@@ -28,6 +28,10 @@ inputs:
     description: Command type for thread-download callbacks (omit or leave empty for non-thread)
     required: false
     default: ''
+  shard_index:
+    description: Zero-padded matrix shard index (e.g. "01"); forwarded to conv_progress.sh as SHARD_INDEX so the bot can render "#N-XX" run numbers. Omit for non-thread runs.
+    required: false
+    default: ''
 runs:
   using: composite
   steps:
@@ -42,6 +46,7 @@ runs:
         TOKEN: ${{ inputs.token }}
         LINK: ${{ inputs.link }}
         COMMAND_TYPE: ${{ inputs.command_type }}
+        SHARD_INDEX: ${{ inputs.shard_index }}
       run: |
         dir=$(pwd) && \
         cd download && \

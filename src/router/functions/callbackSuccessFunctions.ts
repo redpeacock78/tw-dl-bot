@@ -19,6 +19,11 @@ const handleSingleSuccess = async <T extends string>(
 ): Promise<Response> => {
   if (!infoObject.body)
     return infoObject.c.body(null, { status: serverError });
+  // Thread shards include a shardIndex field so the run number is shown
+  // as `#N-XX` (e.g. `#42-02`) in the Discord embed.
+  const runNumber: string = infoObject.body.shardIndex
+    ? `${infoObject.body.number}-${infoObject.body.shardIndex}`
+    : infoObject.body.number;
   let filesObject = await Contents.singleFileContent(infoObject.body)
     .then((i) => i)
     .catch(() => null);
@@ -30,7 +35,7 @@ const handleSingleSuccess = async <T extends string>(
         token: infoObject.body.token,
         channelId: infoObject.body.channel,
         messageId: infoObject.body.message,
-        runNumber: infoObject.body.number,
+        runNumber: runNumber,
         startTime: infoObject.body.startTime,
         totalSize: infoObject.body.size!,
         fileName: filesObject.fileName,
@@ -51,7 +56,7 @@ const handleSingleSuccess = async <T extends string>(
       token: infoObject.body.token,
       channel: infoObject.body.channel,
       message: infoObject.body.message,
-      number: infoObject.body.number,
+      number: runNumber,
       link: infoObject.body.link,
       description: (e as Error).message,
       startTime: infoObject.body.startTime,
@@ -82,6 +87,11 @@ const handleMultiSuccess = async <T extends string>(
 ): Promise<Response> => {
   if (!infoObject.body)
     return infoObject.c.body(null, { status: serverError });
+  // Thread shards include a shardIndex field so the run number is shown
+  // as `#N-XX` (e.g. `#42-02`) in the Discord embed.
+  const runNumber: string = infoObject.body.shardIndex
+    ? `${infoObject.body.number}-${infoObject.body.shardIndex}`
+    : infoObject.body.number;
   let multiFilesObject = await Contents.multiFilesContent(infoObject.body)
     .then((i) => i)
     .catch(() => null);
@@ -93,7 +103,7 @@ const handleMultiSuccess = async <T extends string>(
         token: infoObject.body.token,
         channelId: infoObject.body.channel,
         messageId: infoObject.body.message,
-        runNumber: infoObject.body.number,
+        runNumber: runNumber,
         startTime: infoObject.body.startTime,
         totalSize: infoObject.body.size!,
         fileNamesArray: multiFilesObject.fileNamesArray,
@@ -114,7 +124,7 @@ const handleMultiSuccess = async <T extends string>(
       token: infoObject.body.token,
       channel: infoObject.body.channel,
       message: infoObject.body.message,
-      number: infoObject.body.number,
+      number: runNumber,
       link: infoObject.body.link,
       description: (e as Error).message,
       startTime: infoObject.body.startTime,

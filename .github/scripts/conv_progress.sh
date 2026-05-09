@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # Read runtime values from environment variables set by the calling workflow step.
 # Required: ENDPOINT_URL, RUN_NUMBER, START_TIME, CHANNEL, MESSAGE, TOKEN, LINK
-# Optional: COMMAND_TYPE (set only for /threaddl and /threaddl-spoiler variants)
+# Optional: COMMAND_TYPE  (set only for /threaddl and /threaddl-spoiler variants)
+# Optional: SHARD_INDEX   (zero-padded matrix shard index, e.g. "01"; when set
+#                          the bot renders the run number as "#N-XX" in Discord)
 #
 # Positional arguments:
 #   $1 - progress log file path (monitored for changes)
@@ -11,6 +13,7 @@
 run_number="${RUN_NUMBER}"
 start_time="${START_TIME}"
 command_type="${COMMAND_TYPE:-}"
+shard_index="${SHARD_INDEX:-}"
 channel="${CHANNEL}"
 message="${MESSAGE}"
 token="${TOKEN}"
@@ -35,7 +38,9 @@ while true; do
       else
         :
       fi
-      if [[ -n "${command_type}" ]]; then
+      if [[ -n "${command_type}" && -n "${shard_index}" ]]; then
+        payload='{"status": "progress", "number": "'"${run_number}"'", "commandType": "'"${command_type}"'", "shardIndex": "'"${shard_index}"'", "startTime": "'"${start_time}"'", "channel": "'"${channel}"'", "message": "'"${message}"'", "token": "'"${token}"'", "link": "'"${link}"'", "content": "'"${4}(${2} / ${3})\n${progress}"'"}'
+      elif [[ -n "${command_type}" ]]; then
         payload='{"status": "progress", "number": "'"${run_number}"'", "commandType": "'"${command_type}"'", "startTime": "'"${start_time}"'", "channel": "'"${channel}"'", "message": "'"${message}"'", "token": "'"${token}"'", "link": "'"${link}"'", "content": "'"${4}(${2} / ${3})\n${progress}"'"}'
       else
         payload='{"status": "progress", "number": "'"${run_number}"'", "startTime": "'"${start_time}"'", "channel": "'"${channel}"'", "message": "'"${message}"'", "token": "'"${token}"'", "link": "'"${link}"'", "content": "'"${4}(${2} / ${3})\n${progress}"'"}'

@@ -12,6 +12,7 @@ export namespace CallbackTypes {
     message: string;
     token: string;
     link: string;
+    shardIndex?: string;
     convert?: "true" | "false";
     oversize?: "true" | "false";
     name1?: string;

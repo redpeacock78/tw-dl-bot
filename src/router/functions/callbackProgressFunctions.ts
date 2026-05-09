@@ -26,6 +26,11 @@ const callbackProgressFunctions: CallbackTypes.Functions.callbackProgress = {
     const useThread: boolean =
       infoObject.body!.commandType === threadDl ||
       infoObject.body!.commandType === threadDlSpoiler;
+    // Thread shards include a shardIndex field so the run number is shown
+    // as `#N-XX` (e.g. `#42-02`) in the Discord embed.
+    const runNumber: string = infoObject.body!.shardIndex
+      ? `${infoObject.body!.number}-${infoObject.body!.shardIndex}`
+      : infoObject.body!.number;
     // editMessage (thread mode) is not bound by the 15-min interaction-token
     // window, so always edit the placeholder when running in a thread.
     const isEditOriginalMessage: boolean =
@@ -39,7 +44,7 @@ const callbackProgressFunctions: CallbackTypes.Functions.callbackProgress = {
                 infoObject.body!.channel,
                 infoObject.body!.message,
                 Messages.createProgressMessage({
-                  runNumber: infoObject.body!.number,
+                  runNumber: runNumber,
                   runTime: runTime,
                   link: infoObject.body!.link,
                   content: infoObject.body!.content!,
@@ -49,7 +54,7 @@ const callbackProgressFunctions: CallbackTypes.Functions.callbackProgress = {
                 infoObject.body!.token,
                 infoObject.body!.message,
                 Messages.createProgressMessage({
-                  runNumber: infoObject.body!.number,
+                  runNumber: runNumber,
                   runTime: runTime,
                   link: infoObject.body!.link,
                   content: infoObject.body!.content!,

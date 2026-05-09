@@ -70,6 +70,7 @@ interface RunOpts {
   totalFiles?: string;
   phase?: string;
   commandType?: string;
+  shardIndex?: string;
 }
 
 /** Start conv_progress.sh in background. Returns kill handle. */
@@ -80,6 +81,7 @@ function startScript(opts: RunOpts): Deno.ChildProcess {
     PATH: Deno.env.get("PATH") ?? "/usr/bin:/bin",
   };
   if (opts.commandType !== undefined) env.COMMAND_TYPE = opts.commandType;
+  if (opts.shardIndex !== undefined) env.SHARD_INDEX = opts.shardIndex;
 
   const cmd = new Deno.Command("bash", {
     args: [
@@ -239,6 +241,73 @@ Deno.test("conv_progress.sh", async (t) => {
         assertEquals(json.startTime, "1000000");
         assertEquals(json.message, "444555666");
         assertEquals(json.number, "42");
+      } finally {
+        proc.kill("SIGKILL");
+        await proc.status.catch(() => {});
+        srv.close();
+        await Deno.remove(tmpDir, { recursive: true });
+      }
+    },
+  );
+
+  // ── Case 5: SHARD_INDEX + COMMAND_TYPE → shardIndex field in payload ──
+  await t.step(
+    "with COMMAND_TYPE=threaddl and SHARD_INDEX=02 → shardIndex field present",
+    async () => {
+      const tmpDir = await Deno.makeTempDir();
+      const progressFile = `${tmpDir}/progress.log`;
+      await Deno.writeTextFile(progressFile, "initial");
+
+      const srv = await makeCaptureSrv();
+      const proc = startScript({
+        url: srv.url,
+        progressFile,
+        commandType: "threaddl",
+        shardIndex: "02",
+      });
+
+      try {
+        await new Promise((r) => setTimeout(r, 1200));
+        await Deno.writeTextFile(progressFile, "00:00:03/00:01:00(3%)");
+
+        const body = await withTimeout(srv.bodyPromise, 10_000);
+        const json = JSON.parse(body);
+
+        assertEquals(json.commandType, "threaddl");
+        assertEquals(json.shardIndex, "02");
+        assertEquals(json.number, "42");
+      } finally {
+        proc.kill("SIGKILL");
+        await proc.status.catch(() => {});
+        srv.close();
+        await Deno.remove(tmpDir, { recursive: true });
+      }
+    },
+  );
+
+  // ── Case 6: SHARD_INDEX without COMMAND_TYPE → shardIndex omitted ──
+  await t.step(
+    "without COMMAND_TYPE but with SHARD_INDEX → shardIndex omitted (non-thread path)",
+    async () => {
+      const tmpDir = await Deno.makeTempDir();
+      const progressFile = `${tmpDir}/progress.log`;
+      await Deno.writeTextFile(progressFile, "initial");
+
+      const srv = await makeCaptureSrv();
+      // No commandType means non-thread workflow — SHARD_INDEX is never set
+      // for those runs, but guard that the script still behaves correctly when
+      // only one of the two is absent.
+      const proc = startScript({ url: srv.url, progressFile });
+
+      try {
+        await new Promise((r) => setTimeout(r, 1200));
+        await Deno.writeTextFile(progressFile, "00:00:04/00:01:00(4%)");
+
+        const body = await withTimeout(srv.bodyPromise, 10_000);
+        const json = JSON.parse(body);
+
+        assertEquals("commandType" in json, false);
+        assertEquals("shardIndex" in json, false);
       } finally {
         proc.kill("SIGKILL");
         await proc.status.catch(() => {});
