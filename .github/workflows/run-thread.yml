@@ -166,6 +166,7 @@ jobs:
               {
                 "status": "progress",
                 "number": ${{ github.run_number }},
+                "shardIndex": ${{ toJSON(matrix.index) }},
                 "commandType": ${{ toJSON(github.event.client_payload.commandType) }},
                 "startTime": ${{ toJSON(github.event.client_payload.startTime) }},
                 "channel": ${{ toJSON(github.event.client_payload.channel) }},
@@ -194,6 +195,7 @@ jobs:
                   {
                     "status": "progress",
                     "number": ${{ github.run_number }},
+                    "shardIndex": ${{ toJSON(matrix.index) }},
                     "commandType": ${{ toJSON(github.event.client_payload.commandType) }},
                     "startTime": ${{ toJSON(github.event.client_payload.startTime) }},
                     "channel": ${{ toJSON(github.event.client_payload.channel) }},
@@ -278,6 +280,7 @@ jobs:
                 {
                   "status": "progress",
                   "number": ${{ github.run_number }},
+                  "shardIndex": ${{ toJSON(matrix.index) }},
                   "commandType": ${{ toJSON(github.event.client_payload.commandType) }},
                   "startTime": ${{ toJSON(github.event.client_payload.startTime) }},
                   "channel": ${{ toJSON(github.event.client_payload.channel) }},
