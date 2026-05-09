@@ -71,6 +71,28 @@ deno task start
 1. `deno lint` over all TypeScript sources, and
 2. `deno run --allow-env --allow-read --allow-sys tools/textlint.ts *` — a custom runner that loads `.textlintrc` and lints the files passed as arguments. The shell glob `*` expands to top-level files only.
 
+### Coverage
+
+```bash
+# Run the test suite and produce a `coverage/` profile
+deno task test:coverage
+```
+
+`deno task test:coverage` writes raw profile data to `coverage/`, then prints a per-file table and generates `coverage/lcov.info` and `coverage/html/index.html`. To browse line-level coverage locally, open the HTML report:
+
+```bash
+open coverage/html/index.html   # macOS
+xdg-open coverage/html/index.html   # Linux
+```
+
+CI (`.github/workflows/test.yml`) additionally runs `deno coverage coverage --lcov > coverage.lcov` and uploads the result to **Codecov** via [`codecov/codecov-action@v5`](https://github.com/codecov/codecov-action). Configuration lives in [`codecov.yml`](../codecov.yml):
+
+- `tools/`, `tests/`, `docker/`, and `**/*.test.ts` are ignored.
+- `project` status: `target: auto`, `threshold: 1%` — flags overall coverage drops larger than 1 %.
+- `patch` status: `target: 70%`, `threshold: 1%` — every PR's new/modified lines must reach 70 %.
+
+The dashboard is at <https://app.codecov.io/gh/redpeacock78/tw-dl-bot>; the badge in `README.md` mirrors the master-branch percentage.
+
 ### What runs at startup
 
 `src/main.ts` imports `bot` from `src/bot/bot.ts`. As a side effect of that import, `bot.ts` runs two top-level `await bot.helpers.createGlobalApplicationCommand(...)` calls that register the `dl` and `dl-spoiler` global slash commands. Then `main.ts`:

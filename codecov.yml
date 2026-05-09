@@ -1,0 +1,26 @@
+# Codecov configuration. See https://docs.codecov.com/docs/codecovyml-reference
+#
+# - `project` status: track the repo's overall coverage trend; tolerate
+#   ±1% movement so trivial refactors don't trip the gate.
+# - `patch` status: every PR's *new/modified* lines must hit 70 %; this
+#   is the metric that actually gates merges. Start permissive and
+#   ratchet up later.
+# - `ignore`: tooling, tests, and Docker assets are not application
+#   code; counting them would dilute the percentages.
+
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 1%
+    patch:
+      default:
+        target: 70%
+        threshold: 1%
+
+ignore:
+  - "tools/"
+  - "tests/"
+  - "docker/"
+  - "**/*.test.ts"
