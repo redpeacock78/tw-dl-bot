@@ -113,7 +113,7 @@ Tests run with permissions `--allow-env`, `--allow-read`, `--allow-run`, `--allo
 - `EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT` = 900000 ms (Discord's 15-min interaction-token edit window). Standard channel/thread messages have no such limit.
 - `Constants.Thread.AUTO_ARCHIVE_DURATION = 1440` (24h, last-activity relative; each shard callback resets it).
 - `Constants.Thread.TYPE = 11` = `GUILD_PUBLIC_THREAD`.
-- `/threaddl` and `/threaddl-spoiler` require a guild text channel — `runThreadFlow.ts` checks both `channelId` **and** `guildId` because DM interactions still expose `channelId`. (`threadInteractionCreate.ts` itself only opens the Modal; the guild check lives one layer down where the actual thread creation happens.)
+- `/threaddl` and `/threaddl-spoiler` are **guild-only** via `dmPermission: false`. Both commands are hidden from DM autocomplete. The guild check in `runThreadFlow.ts` validates both `channelId` **and** `guildId` as a defensive measure because DM interactions still expose `channelId`. (Users with stale cached clients (~1 hour old) may briefly see the commands in their autocomplete from before the permission was set, but the Discord client will reject them locally; our `guildId` guard is a second defense layer.)
 - File-size cap: Discord's 10MB per-attachment limit. The runner re-encodes via ffmpeg to fit; spoiler variants (`/dl-spoiler`, `/threaddl-spoiler`) prefix the filename with `SPOILER_` (`Constants.Message.File.Name.SPOILER_PREFIX`).
 
 ## Adding a new slash command

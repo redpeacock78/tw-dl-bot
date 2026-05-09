@@ -116,9 +116,9 @@ flowchart LR
 | Path | Responsibility |
 | --- | --- |
 | `src/main.ts` | Bot をブート：`await registerCommands(bot)`（Discord REST）を呼び出し、その後 `startBot(bot)` を呼び出し、Hono app を `/api` にマウントし、`std/http/server` から `serve` 経由で提供。 |
-| `src/bot/bot.ts` | discordeno bot を作成し、`interactionCreate` を `interaction.type` でディスパッチするようにワイヤリング。`ModalSubmit` interactions は直接 `threadModalSubmit` に行き、`ApplicationCommand` interactions はコマンド名で `interactionCreate`（`/dl`、`/dl-spoiler`）または `threadInteractionCreate`（`/threaddl`、`/threaddl-spoiler`）にルーティングされます。top-level `await` なし（`bot.ts` をインポートすることは side-effect-free で、テスト可能にします）。 |
+| `src/bot/bot.ts` | `intents: Intents.Guilds` で discordeno bot を作成（slash command は gateway にディスパッチされます。bot はguild messages や message content をリッスンしません）。`interactionCreate` を `interaction.type` でディスパッチするようにワイヤリング。`ModalSubmit` interactions は直接 `threadModalSubmit` に行き、`ApplicationCommand` interactions はコマンド名で `interactionCreate`（`/dl`、`/dl-spoiler`）または `threadInteractionCreate`（`/threaddl`、`/threaddl-spoiler`）にルーティングされます。top-level `await` なし（`bot.ts` をインポートすることは side-effect-free で、テスト可能にします）。 |
 | `src/bot/registerCommands.ts` | `dlCommand`、`dlSpoilerCommand`、`threadDlCommand`、`threadDlSpoilerCommand` に対して `bot.helpers.createGlobalApplicationCommand` を呼び出します。`main.ts` から `startBot` の前に一度呼び出されます。 |
-| `src/bot/commands.ts` | `dl`、`dl-spoiler`、`threaddl`、`threaddl-spoiler` のスラッシュコマンド定義。2 つの thread コマンドは `name` option のみを宣言します — URL は応答時に開く Modal 経由で収集されます。 |
+| `src/bot/commands.ts` | `dl`、`dl-spoiler`、`threaddl`、`threaddl-spoiler` のスラッシュコマンド定義。2 つの thread コマンドは guild 限定で、`dmPermission: false` 経由（thread は guild text/announcement/forum channel 内でのみ作成可能、DM では不可）。すべての 4 つのコマンドは Discord の API registration 用に options と descriptions を宣言します。 |
 | `src/bot/interactionCreate.ts` | `/dl` と `/dl-spoiler` を処理：URL arguments を検証し、URL ごとに初期「Queuing...」follow-up を投稿、`webhook` を火します（URL ごとに 1 つのディスパッチ）。`If(...).else(...)` chain は `await`-ed であり、呼び出しは返される前に settle します。 |
 | `src/bot/threadInteractionCreate.ts` | `/threaddl` と `/threaddl-spoiler` の**ApplicationCommand** ハーフを処理：`name` option を読み取り、80 文字に切り詰め（`MAX_NAME_IN_CUSTOM_ID`）、直ちに Modal で応答します。`customId` は `<commandType>\|<threadName>`、Paragraph `InputText`（`customId: "urls"`、`maxLength: 4000`）は複数行 URL リストを収集します。defer しません（Modal は interaction への最初の応答である必要があります）。 |
 | `src/bot/threadModalSubmit.ts` | **ModalSubmit** ハーフを処理。最初の `\|` で `customId` を分割、prefix を `Set<string>` allowlist `{ "threaddl", "threaddl-spoiler" }` に対して検証（unknown prefix を持つ forged ModalSubmits は silent に drop）、InputText から `/https?:\/\/[^\s,;]+/g` 経由で URL を抽出、`(commandType, threadName, contents)` を `runThreadFlow` に引き渡し。 |
@@ -136,7 +136,7 @@ flowchart LR
 | `src/libs/custom.ts` | `Custom.CallbackPattern` triplets。`ThreadDl.{Single,Multi}`、`ThreadDlSpoiler.{Single,Multi}`、`ProgressThread`、`ProgressThreadSpoiler`、`FailureThread`、`FailureThreadSpoiler` を含む。 |
 | `src/libs/messages/` | progress / success / failure / error embeds の Builders。 |
 | `src/libs/contents/` | callback bodies を `singleFileContent` / `multiFilesContent` blobs に変換。 |
-| `src/utils/` | Pure helpers：`fileToBlob`、`unitChangeForByte`、`millisecondChangeFormat`。 |
+| `src/utils/` | Pure helpers：`unitChangeForByte`、`millisecondChangeFormat`。 |
 | `tests/` | `src/` 構造をミラーリングする Deno test suite。各 production module には、その public API を実行する対応する `.test.ts` ファイルがあります。Tests は production code と同じ modules をインポートし、`bot.helpers.*` をテストごとに stub。 |
 | `tests/bot/` | bot interaction tests：command registration、slash command handlers（`/dl`、`/dl-spoiler`、`/threaddl`、`/threaddl-spoiler`）、Modal submission。 |
 | `tests/router/` | Callback router tests：success / progress / failure handler routing、thread vs. non-thread modes のメッセージ編集パターン、ping health check。 |
