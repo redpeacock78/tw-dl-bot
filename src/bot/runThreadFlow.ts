@@ -78,6 +78,12 @@ export const runThreadFlow = async (props: {
     // channel. `interaction.channelId` is populated for DM interactions too
     // (it's the DM channel ID), so also gate on `guildId` to ensure we are
     // running in a guild context before calling `startThreadWithoutMessage`.
+    //
+    // NOTE: `/threaddl` and `/threaddl-spoiler` are registered with
+    // `dmPermission: false` so Discord clients should never surface them in
+    // DMs. This guard is kept as a defensive measure against stale client-side
+    // command caches — Discord propagates command updates within ~1 hour, so a
+    // small window exists where users may still see the old definition.
     if (!props.interaction.channelId || !props.interaction.guildId) {
       await props.b.helpers.sendFollowupMessage(props.interaction.token, {
         type: InteractionResponseTypes.ChannelMessageWithSource,
