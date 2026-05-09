@@ -1,14 +1,10 @@
-import { If } from "functional";
-import { KyResponse } from "ky";
 import {
   Bot,
-  ChannelTypes,
-  EditMessage,
   Interaction,
   InteractionResponseTypes,
-  Message,
+  MessageComponentTypes,
+  TextStyles,
 } from "discordeno";
-import { Messages, Constants, isUrl, webhookThread } from "@libs";
 
 type InteractionData = Exclude<Pick<Interaction, "data">["data"], undefined>;
 type InteractionOption = Exclude<
@@ -17,7 +13,26 @@ type InteractionOption = Exclude<
 >[number];
 
 const NAME_OPTION = "name";
-const URL_OPTION = "url";
+
+/**
+ * customId conventions used by the thread Modal flow.
+ *
+ * The wire format is:
+ *
+ *     <commandType>|<threadName-truncated-to-MAX_NAME_IN_CUSTOM_ID>
+ *
+ * Discord caps `customId` at 100 characters. Today the longest commandType
+ * is `"threaddl-spoiler"` (16 chars) plus the `|` separator (1 char), so we
+ * leave 80 chars of room for the thread name to be safe across both
+ * `/threaddl` and `/threaddl-spoiler`.
+ *
+ * Truncation here only affects what we round-trip via `customId`. The Modal
+ * `title` (and the actual thread name we hand to `startThreadWithoutMessage`)
+ * use the same truncated value so what the user sees, what gets created on
+ * Discord, and what we route on the callback are all consistent.
+ */
+export const MAX_NAME_IN_CUSTOM_ID = 80;
+export const URLS_INPUT_CUSTOM_ID = "urls";
 
 /**
  * Resolves a string-typed option from the interaction data by name.
@@ -30,22 +45,29 @@ const pickOption = (
   options: InteractionOption[] | undefined,
   name: string,
 ): string =>
-  (options ?? []).find(
+  ((options ?? []).find(
     (i: InteractionOption): boolean => i.name === name,
-  )?.value as string ?? "";
+  )?.value as string) ?? "";
 
 /**
- * Handles the `/threaddl` interaction by creating a Discord thread on the
- * source channel, queueing one message per URL inside the thread, and firing
- * a single `repository_dispatch` (event_type=`thread-download`) so the
- * GitHub Actions matrix workflow can fan-out per-URL processing in parallel.
+ * Handles the `/threaddl` and `/threaddl-spoiler` ApplicationCommand
+ * interactions by opening a Discord Modal so the user can paste an
+ * arbitrary number of URLs (one per line) without quoting/escaping.
  *
- * @param {object} props - The handler props bag.
- * @param {Bot} props.b - The bot instance.
- * @param {InteractionData} props.data - The interaction data object.
- * @param {Interaction} props.interaction - The interaction object.
- * @param {string} props.commandType - The command type (`threaddl`).
- * @return {Promise<void>} A promise that resolves when fan-out completes.
+ * The actual thread-creation + dispatch flow does NOT run here — it runs on
+ * the follow-up `ModalSubmit` interaction (see `threadModalSubmit.ts`).
+ *
+ * Why this is split: a Modal must be the *first* response to an interaction.
+ * `DeferredChannelMessageWithSource` would consume the response slot and
+ * make the Modal impossible. So this handler returns the Modal immediately,
+ * and the ModalSubmit handler is the one that ACKs + does the work.
+ *
+ * @param props - The handler props bag.
+ * @param props.b - The bot instance.
+ * @param props.data - The interaction data object.
+ * @param props.interaction - The interaction object.
+ * @param props.commandType - The command type (`threaddl` or `threaddl-spoiler`).
+ * @returns A promise that resolves when the Modal response has been sent.
  */
 export const threadInteractionCreate = async (props: {
   b: Bot;
@@ -53,119 +75,36 @@ export const threadInteractionCreate = async (props: {
   interaction: Interaction;
   commandType: string;
 }): Promise<void> => {
-  const threadName: string = pickOption(props.data.options, NAME_OPTION);
-  const rawUrl: string = pickOption(props.data.options, URL_OPTION);
-  const contents: string[] = rawUrl.split(" ").filter((i: string): boolean =>
-    i.length > 0,
-  );
+  const rawName: string = pickOption(props.data.options, NAME_OPTION);
+  const threadName: string = rawName.slice(0, MAX_NAME_IN_CUSTOM_ID);
 
   await props.b.helpers.sendInteractionResponse(
     props.interaction.id,
     props.interaction.token,
     {
-      type: InteractionResponseTypes.DeferredChannelMessageWithSource,
+      type: InteractionResponseTypes.Modal,
+      data: {
+        title: `Add URLs to "${threadName.slice(0, 40)}"`,
+        customId: `${props.commandType}|${threadName}`,
+        components: [
+          {
+            type: MessageComponentTypes.ActionRow,
+            components: [
+              {
+                type: MessageComponentTypes.InputText,
+                customId: URLS_INPUT_CUSTOM_ID,
+                style: TextStyles.Paragraph,
+                label: "Tweet URLs",
+                placeholder:
+                  "Paste one URL per line. Spaces / commas are also fine.",
+                required: true,
+                minLength: 1,
+                maxLength: 4000,
+              },
+            ],
+          },
+        ],
+      },
     },
   );
-
-  const allValid: boolean =
-    contents.length > 0 &&
-    contents.every((i: string): boolean => isUrl(i)) &&
-    threadName.length > 0;
-
-  await If(
-    !allValid,
-    async (): Promise<void> => {
-      await props.b.helpers.sendFollowupMessage(props.interaction.token, {
-        type: InteractionResponseTypes.ChannelMessageWithSource,
-        data: Messages.createErrorMessage({
-          description: contents.length > 0 ? contents.join("\n") : rawUrl,
-        }),
-      });
-    },
-  ).else(async (): Promise<void> => {
-    // Threads can only be created inside a guild text/announcement/forum
-    // channel. `interaction.channelId` is populated for DM interactions too
-    // (it's the DM channel ID), so also gate on `guildId` to ensure we are
-    // running in a guild context before calling `startThreadWithoutMessage`.
-    if (!props.interaction.channelId || !props.interaction.guildId) {
-      await props.b.helpers.sendFollowupMessage(props.interaction.token, {
-        type: InteractionResponseTypes.ChannelMessageWithSource,
-        data: Messages.createErrorMessage({
-          description: "This command must be used in a guild text channel.",
-        }),
-      });
-      return;
-    }
-
-    const thread = await props.b.helpers
-      .startThreadWithoutMessage(props.interaction.channelId, {
-        name: threadName,
-        autoArchiveDuration: Constants.Thread.AUTO_ARCHIVE_DURATION,
-        type: Constants.Thread.TYPE as ChannelTypes.PublicThread,
-      })
-      .catch(async (e: Error): Promise<null> => {
-        await props.b.helpers.sendFollowupMessage(props.interaction.token, {
-          type: InteractionResponseTypes.ChannelMessageWithSource,
-          data: Messages.createErrorMessage({
-            description: `Failed to create thread: ${e.message}`,
-          }),
-        });
-        return null;
-      });
-    if (!thread) return;
-
-    await props.b.helpers.sendFollowupMessage(props.interaction.token, {
-      type: InteractionResponseTypes.ChannelMessageWithSource,
-      data: {
-        content: `🧵 Created thread <#${thread.id}> for ${contents.length} URL(s).`,
-      },
-    });
-
-    const queueResults = await Promise.all(
-      contents.map(
-        async (
-          content: string,
-        ): Promise<{ link: string; message: string } | null> =>
-          await props.b.helpers
-            .sendMessage(
-              thread.id,
-              Messages.createProgressMessage({
-                content: `**🕑Queuing...**`,
-                link: content,
-              }),
-            )
-            .then((m: Message): { link: string; message: string } => ({
-              link: content,
-              message: `${m.id}`,
-            }))
-            .catch((): null => null),
-      ),
-    );
-    const links = queueResults.filter(
-      (i): i is { link: string; message: string } => i !== null,
-    );
-    if (links.length === 0) return;
-
-    await webhookThread({
-      commandType: props.commandType,
-      links,
-      channelId: thread.id,
-      token: props.interaction.token,
-      startTime: new Date().getTime().toString(),
-    }).catch(async (e: Error): Promise<KyResponse | void> => {
-      await Promise.all(
-        links.map(
-          async (i: { link: string; message: string }): Promise<Message> =>
-            await props.b.helpers.editMessage(
-              thread.id,
-              BigInt(i.message),
-              Messages.createErrorMessage({
-                link: i.link,
-                description: e.message,
-              }) as EditMessage,
-            ),
-        ),
-      );
-    });
-  });
 };

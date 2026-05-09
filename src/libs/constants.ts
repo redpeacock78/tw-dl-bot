@@ -51,6 +51,7 @@ export const Constants = {
           DOWNLOAD: "dl",
           DOWNLOAD_SPOILER: "dl-spoiler",
           THREAD_DOWNLOAD: "threaddl",
+          THREAD_DOWNLOAD_SPOILER: "threaddl-spoiler",
         },
       },
     },
@@ -72,6 +73,7 @@ export const Constants = {
       DL: "dl",
       DL_SPOILER: "dl-spoiler",
       THREAD_DL: "threaddl",
+      THREAD_DL_SPOILER: "threaddl-spoiler",
     },
     actionType: {
       SINGLE: "single",

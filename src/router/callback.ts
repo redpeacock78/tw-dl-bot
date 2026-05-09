@@ -102,12 +102,38 @@ callback.post(
           }),
       )
       .with(
+        callbackPattern.Success.ThreadDlSpoiler.Single,
+        (): Promise<Response> =>
+          Functions.callbackSuccessFunctions.success.threadDlSpoiler.single({
+            c,
+            body,
+          }),
+      )
+      .with(
+        callbackPattern.Success.ThreadDlSpoiler.Multi,
+        (): Promise<Response> =>
+          Functions.callbackSuccessFunctions.success.threadDlSpoiler.multi({
+            c,
+            body,
+          }),
+      )
+      .with(
         callbackPattern.ProgressThread,
         (): Promise<Response> =>
           Functions.callbackProgressFunctions.progress({ c, body }),
       )
       .with(
+        callbackPattern.ProgressThreadSpoiler,
+        (): Promise<Response> =>
+          Functions.callbackProgressFunctions.progress({ c, body }),
+      )
+      .with(
         callbackPattern.FailureThread,
+        (): Promise<Response> =>
+          Functions.callbackFailureFunctions.failure({ c, body }),
+      )
+      .with(
+        callbackPattern.FailureThreadSpoiler,
         (): Promise<Response> =>
           Functions.callbackFailureFunctions.failure({ c, body }),
       )

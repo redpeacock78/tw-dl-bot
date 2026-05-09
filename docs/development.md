@@ -85,7 +85,27 @@ deno task test:coverage
 
 The Deno test suite lives under `tests/` and mirrors the `src/` tree (e.g. `src/bot/registerCommands.ts` ↔ `tests/bot/registerCommands.test.ts`). All three `test*` tasks pre-set placeholder values for `DISCORD_TOKEN`, `DISPATCH_URL`, and `GITHUB_TOKEN` so that importing modules which transitively load `Secrets` does not fail on missing env vars; tests stub `bot.helpers.*` and `ky` per file rather than making real network calls.
 
-`deno task test:coverage` writes per-file profiles into `./coverage/` and then runs `deno coverage coverage` to print a summary. CI publishes the same summary to the GitHub Step Summary (see `.github/workflows/test.yml`).
+### Coverage
+
+```bash
+# Run the test suite and produce a `coverage/` profile
+deno task test:coverage
+```
+
+`deno task test:coverage` writes raw profile data to `coverage/`, then prints a per-file table and generates `coverage/lcov.info` and `coverage/html/index.html`. To browse line-level coverage locally, open the HTML report:
+
+```bash
+open coverage/html/index.html   # macOS
+xdg-open coverage/html/index.html   # Linux
+```
+
+CI (`.github/workflows/test.yml`) additionally runs `deno coverage coverage --lcov > coverage.lcov` and uploads the result to **Codecov** via [`codecov/codecov-action@v5`](https://github.com/codecov/codecov-action). Configuration lives in [`codecov.yml`](../codecov.yml):
+
+- `tools/`, `tests/`, `docker/`, and `**/*.test.ts` are ignored.
+- `project` status: `target: auto`, `threshold: 1%` — flags overall coverage drops larger than 1 %.
+- `patch` status: `target: 70%`, `threshold: 1%` — every PR's new/modified lines must reach 70 %.
+
+The dashboard is at <https://app.codecov.io/gh/redpeacock78/tw-dl-bot>; the badge in `README.md` mirrors the master-branch percentage.
 
 ### What runs at startup
 
