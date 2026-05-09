@@ -1,10 +1,13 @@
-import { fileToBlob } from "@utils";
 import { FileContent } from "discordeno";
 import { ContentsTypes } from "@libs/types/contentsTypes.ts";
 import { CallbackTypes } from "@router/types/callbackTypes.ts";
 
 /**
  * Retrieves the content of multiple files from the given body data object.
+ *
+ * `File` extends `Blob` per the Web API spec (and Deno). The `File` objects
+ * produced by Hono's `parseBody()` are already `Blob`-compatible — no
+ * intermediate `ArrayBuffer` copy is needed.
  *
  * @param {CallbackTypes.bodyDataObject | null} body - The body data object containing the file information.
  * @return {Promise<ContentsTypes.multiFilesContentObject>} A promise that resolves to an object containing the file names and blob data.
@@ -35,20 +38,18 @@ const multiFilesContent = async (
       ),
       filesArray: await Promise.all(
         [...new Array(namesArray.length)].map(
-          async (_i: string, n: number): Promise<FileContent> => {
+          (_i: string, n: number): FileContent => {
             return {
               name: body![
                 (namesArray as string[])[
                   n
                 ] as keyof CallbackTypes.bodyDataObject
               ] as string,
-              blob: await fileToBlob(
-                body![
-                  (filesArray as string[])[
-                    n
-                  ] as keyof CallbackTypes.bodyDataObject
-                ] as File,
-              ),
+              blob: body![
+                (filesArray as string[])[
+                  n
+                ] as keyof CallbackTypes.bodyDataObject
+              ] as unknown as Blob,
             };
           },
         ),
