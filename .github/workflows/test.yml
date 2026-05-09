@@ -41,7 +41,13 @@ jobs:
           } >> "${GITHUB_STEP_SUMMARY}"
       - name: Generate lcov report
         if: ${{ always() }}
-        run: deno coverage coverage --lcov > coverage.lcov
+        shell: bash
+        run: |
+          if [[ -d coverage ]]; then
+            deno coverage coverage --lcov > coverage.lcov
+          else
+            echo "(coverage/ not produced; skipping lcov generation)"
+          fi
       - name: Upload coverage to Codecov
         if: ${{ always() }}
         uses: codecov/codecov-action@v5
