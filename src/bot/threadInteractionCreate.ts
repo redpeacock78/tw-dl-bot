@@ -83,7 +83,11 @@ export const threadInteractionCreate = async (props: {
       });
     },
   ).else(async (): Promise<void> => {
-    if (!props.interaction.channelId) {
+    // Threads can only be created inside a guild text/announcement/forum
+    // channel. `interaction.channelId` is populated for DM interactions too
+    // (it's the DM channel ID), so also gate on `guildId` to ensure we are
+    // running in a guild context before calling `startThreadWithoutMessage`.
+    if (!props.interaction.channelId || !props.interaction.guildId) {
       await props.b.helpers.sendFollowupMessage(props.interaction.token, {
         type: InteractionResponseTypes.ChannelMessageWithSource,
         data: Messages.createErrorMessage({
