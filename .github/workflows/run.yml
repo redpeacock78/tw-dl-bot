@@ -329,11 +329,6 @@ jobs:
         shell: bash
         run: |
           dir=$(pwd) && \
-          run_number=${{ github.run_number }} && \
-          channel=${{ toJSON(github.event.client_payload.channel) }} && \
-          message=${{ toJSON(github.event.client_payload.message) }} && \
-          token=${{ toJSON(github.event.client_payload.token) }} && \
-          link=${{ toJSON(github.event.client_payload.link) }} && \
           cd download && \
           files_num=$(ls -tr | wc -l) && \
           # if (( 26214400 < $(echo $(ls -trl | awk 'NR>1{print $5}' | tr \\n +)0 | bc) )); then
