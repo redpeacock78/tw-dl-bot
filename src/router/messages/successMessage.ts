@@ -30,13 +30,13 @@ const editFollowupMessageTimeLimit = Constants.EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT;
  * names.  If a future discordeno release fixes the naming, revert to
  * `bot.helpers.editMessage`.
  */
-async function editThreadMessageWithFiles(
+const editThreadMessageWithFiles = async (
   channelId: bigint | string,
   messageId: bigint | string,
   content: string | null | undefined,
   embeds: Embed[],
   files: FileContent[],
-): Promise<Message> {
+): Promise<Message> => {
   const form = new FormData();
   // Use `files[N]` bracket notation — required by Discord's PATCH attachment API.
   files.forEach((f, i) => form.append(`files[${i}]`, f.blob, f.name));
@@ -76,7 +76,7 @@ async function editThreadMessageWithFiles(
   // Callers chain .then()/.catch() on the returned Promise but never use the
   // Message value directly, so an empty cast is safe here.
   return {} as unknown as Message;
-}
+};
 
 const successMessage = {
   /**
