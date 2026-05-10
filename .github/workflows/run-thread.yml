@@ -536,6 +536,7 @@ jobs:
                     --retry-all-errors \
                     -F "status=success" \
                     -F 'number=${{ github.run_number }}' \
+                    -F "shardIndex=${{ matrix.index }}" \
                     -F "commandType=${{ toJSON(github.event.client_payload.commandType) }}" \
                     -F "actionType=thread-single" \
                     -F "convert=true" \
