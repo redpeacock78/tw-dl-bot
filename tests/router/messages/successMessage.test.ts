@@ -67,7 +67,7 @@ Deno.test("successMessage.singleFile", async (t) => {
       const fetchStub = stub(
         globalThis,
         "fetch",
-        async () => new Response("{}", { status: 200 }),
+        () => Promise.resolve(new Response("{}", { status: 200 })),
       );
       const editMsg = stub(
         bot.helpers,
@@ -109,9 +109,9 @@ Deno.test("successMessage.singleFile", async (t) => {
       const fetchStub = stub(
         globalThis,
         "fetch",
-        async (_input: unknown, init?: unknown) => {
+        (_input: unknown, init?: unknown) => {
           capturedInit = init as RequestInit;
-          return new Response("{}", { status: 200 });
+          return Promise.resolve(new Response("{}", { status: 200 }));
         },
       );
       const editMsg = stub(
@@ -264,7 +264,7 @@ Deno.test("successMessage.multiFiles", async (t) => {
       const fetchStub = stub(
         globalThis,
         "fetch",
-        async () => new Response("{}", { status: 200 }),
+        () => Promise.resolve(new Response("{}", { status: 200 })),
       );
       const editMsg = stub(
         bot.helpers,
@@ -306,9 +306,9 @@ Deno.test("successMessage.multiFiles", async (t) => {
       const fetchStub = stub(
         globalThis,
         "fetch",
-        async (_input: unknown, init?: unknown) => {
+        (_input: unknown, init?: unknown) => {
           capturedInit = init as RequestInit;
-          return new Response("{}", { status: 200 });
+          return Promise.resolve(new Response("{}", { status: 200 }));
         },
       );
       const editMsg = stub(
@@ -427,7 +427,7 @@ Deno.test("successMessage.multiFiles", async (t) => {
       const fetchStub = stub(
         globalThis,
         "fetch",
-        async () => new Response("{}", { status: 200 }),
+        () => Promise.resolve(new Response("{}", { status: 200 })),
       );
       const editMsg = stub(
         bot.helpers,
