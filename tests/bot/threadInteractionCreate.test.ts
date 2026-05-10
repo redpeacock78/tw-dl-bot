@@ -7,11 +7,8 @@ import {
   MessageComponentTypes,
   TextStyles,
 } from "discordeno";
-import {
-  MAX_NAME_IN_CUSTOM_ID,
-  threadInteractionCreate,
-  URLS_INPUT_CUSTOM_ID,
-} from "../../src/bot/threadInteractionCreate.ts";
+import { Constants } from "@libs";
+import { threadInteractionCreate } from "@bot/threadInteractionCreate.ts";
 
 // deno-lint-ignore no-explicit-any
 type AnySpy = Spy<unknown, any[], any>;
@@ -83,7 +80,7 @@ Deno.test("threadInteractionCreate (Modal opener)", async (t) => {
 
       const input = row.components[0];
       assertEquals(input.type, MessageComponentTypes.InputText);
-      assertEquals(input.customId, URLS_INPUT_CUSTOM_ID);
+      assertEquals(input.customId, Constants.Modal.URLS_INPUT_CUSTOM_ID);
       assertEquals(input.style, TextStyles.Paragraph);
       assertEquals(input.required, true);
       assertEquals(input.minLength, 1);
@@ -133,7 +130,7 @@ Deno.test("threadInteractionCreate (Modal opener)", async (t) => {
       // commandType prefix + separator + truncated name
       assertEquals(
         payload.data.customId,
-        `threaddl|${"A".repeat(MAX_NAME_IN_CUSTOM_ID)}`,
+        `threaddl|${"A".repeat(Constants.Modal.MAX_NAME_IN_CUSTOM_ID)}`,
       );
     },
   );

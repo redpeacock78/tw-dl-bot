@@ -93,4 +93,8 @@ export const Constants = {
     BAD_REQUEST: 400,
     INTERNAL_SERVER_ERROR: 500,
   },
+  Modal: {
+    MAX_NAME_IN_CUSTOM_ID: 80,
+    URLS_INPUT_CUSTOM_ID: "urls",
+  },
 } as const satisfies Readonly<Record<string, unknown>>;
