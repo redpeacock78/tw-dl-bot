@@ -24,7 +24,7 @@ const singleFileContent = (
       fileName: body!.name1,
       blobData: body!.file1 as unknown as Blob,
     });
-  } catch(e: unknown) {
+  } catch (e: unknown) {
     return Promise.reject(e as Error);
   } finally {
     body = null;

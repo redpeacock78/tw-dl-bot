@@ -13,7 +13,7 @@ type CallbackPath = typeof Constants.CALLBACK_PATH;
 type HonoType<T extends string> = CallbackTypes.honoType<T>;
 type ContentType<T extends string> = CallbackTypes.contextType<T>;
 
-const badRequst = Constants.HttpStatus.BAD_REQUEST;
+const badRequest = Constants.HttpStatus.BAD_REQUEST;
 const serverError = Constants.HttpStatus.INTERNAL_SERVER_ERROR;
 
 const callbackPath = Constants.CALLBACK_PATH;
@@ -149,7 +149,7 @@ callback.post(
       )
       .with(
         callbackPattern.InvalidPost,
-        (): Promise<Response> => Promise.resolve(c.body(null, badRequst)),
+        (): Promise<Response> => Promise.resolve(c.body(null, badRequest)),
       )
       .otherwise(
         (): Promise<Response> => Promise.resolve(c.body(null, serverError)),
