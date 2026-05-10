@@ -84,6 +84,19 @@ Use these throughout `src/` (defined in `import_map.json`):
 
 `Constants` (in `src/libs/constants.ts`) is the source of truth for HTTP paths, command-type strings, callback enums, and the 15-min edit window. Avoid hardcoding strings/numbers that already exist there.
 
+## Coding conventions
+
+Full rules are in [`docs/coding-guidelines.md`](./docs/coding-guidelines.md). Key points:
+
+- **Imports** — use `import_map.json` aliases only (no `../` relative paths); prefer barrel `index.ts` targets over leaf files; order: local aliases (`@bot/`, `@libs`, `@router/`, `@utils/`) before external libs (`discordeno`, `functional`, `hono`).
+- **Functions** — `const fn = (...): T => { ... }` everywhere; `function` declarations are prohibited.
+- **Branching** — `Match(...).with(...).exhaustive()` instead of `if/else`; `If(cond, fn).else(fn)` for simple async conditionals.
+- **Constants** — all strings/numbers through `Constants.Namespace.Key`; no inline literals; dot-access only (no destructuring).
+- **JSDoc** — required on every exported function; include `@param {Type} name - desc` with the TypeScript type.
+- **Error handling** — `.then((i) => i).catch(() => null)` for graceful degradation (identity `.then` is intentional); `finally { obj = null; }` for resource cleanup.
+- **Tests** — `Deno.test` + `t.step` hierarchy; `assertEquals` from `@std/assert`; stubs restored in `finally`.
+- **Comments** — block comments explain *why*; inline `//` for edge cases; no section-divider comments.
+
 ## Tests
 
 Tests live under `tests/`, structured as:
