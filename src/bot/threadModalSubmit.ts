@@ -1,7 +1,6 @@
-import { Bot, Interaction } from "discordeno";
 import { Constants } from "@libs";
 import { runThreadFlow } from "@bot/runThreadFlow.ts";
-import { URLS_INPUT_CUSTOM_ID } from "@bot/threadInteractionCreate.ts";
+import { Bot, Interaction } from "discordeno";
 
 type InteractionData = Exclude<Pick<Interaction, "data">["data"], undefined>;
 type InteractionDataComponents = Exclude<
@@ -15,23 +14,24 @@ type InteractionDataComponents = Exclude<
  * the sense that an arbitrary client could submit a forged ModalSubmit, so
  * we never trust the prefix and only match exact known commandTypes.
  */
-const ACCEPTED_COMMAND_TYPES = new Set<string>([
+const acceptedCommandTypes = new Set<string>([
   Constants.Webhook.Json.ClientPayload.CommandType.THREAD_DOWNLOAD,
   Constants.Webhook.Json.ClientPayload.CommandType.THREAD_DOWNLOAD_SPOILER,
 ]);
 
 /**
  * Walks the (ActionRow → InputText) component tree and pulls the `value`
- * field out of the InputText whose `customId === "urls"`. Returns `""` if
- * the tree shape doesn't match (defensive — shouldn't happen with a Modal
- * we built ourselves, but a forged ModalSubmit could).
+ * field out of the InputText whose `customId` matches
+ * `Constants.Modal.URLS_INPUT_CUSTOM_ID`. Returns `""` if the tree shape
+ * doesn't match (defensive — shouldn't happen with a Modal we built
+ * ourselves, but a forged ModalSubmit could).
  */
 const extractUrlsFieldValue = (
   components: InteractionDataComponents | undefined,
 ): string => {
   for (const row of components ?? []) {
     for (const child of row.components ?? []) {
-      if (child.customId === URLS_INPUT_CUSTOM_ID) {
+      if (child.customId === Constants.Modal.URLS_INPUT_CUSTOM_ID) {
         return child.value ?? "";
       }
     }
@@ -69,7 +69,7 @@ export const threadModalSubmit = async (props: {
   if (sepIdx <= 0) return;
 
   const commandType: string = customId.slice(0, sepIdx);
-  if (!ACCEPTED_COMMAND_TYPES.has(commandType)) return;
+  if (!acceptedCommandTypes.has(commandType)) return;
 
   const threadName: string = customId.slice(sepIdx + 1);
   const text: string = extractUrlsFieldValue(props.data.components);
