@@ -51,7 +51,7 @@ async function editThreadMessageWithFiles(
     }),
   );
   const response = await fetch(
-    `https://discord.com/api/v10/channels/${channelId}/messages/${messageId}`,
+    `${Constants.DISCORD_API_BASE}/channels/${channelId}/messages/${messageId}`,
     {
       method: "PATCH",
       headers: { Authorization: `Bot ${bot.token}` },
