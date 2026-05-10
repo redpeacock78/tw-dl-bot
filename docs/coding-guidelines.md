@@ -1,6 +1,6 @@
 # Coding Guidelines
 
-> 日本語版: [./jp/coding-guidelines.md](./jp/coding-guidelines.md)
+> 日本語版: [./jp/coding-guidelines.md](./jp/coding-guidelines.md) *(翻訳準備中 / translation in progress)*
 
 This document codifies the conventions used in **tw-dl-bot**'s `src/` tree.
 Every rule was derived from the original author's patterns; additions by the team are expected to follow these conventions without exception.
@@ -34,17 +34,25 @@ Relative paths (`../../libs/constants.ts`) are fragile — a directory rename si
 - **Never use relative `../` imports** inside `src/`.  Use the aliases defined in `import_map.json`.
 - **Barrel files (index.ts) are the canonical import target** for any directory that has one.
   Import the individual leaf file only when importing a `type` that would cause a circular init if the barrel were used (e.g. `@libs/constants.ts` leaf inside a file that is itself re-exported through the `@libs` barrel).
-- **Import order** (one blank line between each group):
-  1. External libraries — `functional`, `discordeno`, `hono`, `@std/...`
-  2. Local aliases — `@bot/`, `@libs`, `@router/`, `@utils/`
-- Within each group, order is **alphabetical**.
+- **Import order** — local project aliases before external libraries.
+  Within each group, order is **alphabetical**:
+  1. Local aliases — `@bot/`, `@libs`, `@router/`, `@utils/`
+  2. External libraries — `discordeno`, `functional`, `hono`, `@std/...`
+
+  > **Note:** The original codebase has some files that place external imports first
+  > (e.g. `callback.ts`, `interactionCreate.ts`). The ordering above reflects the
+  > dominant pattern in the message-builder and callback-function files and is the
+  > target convention for all new code.
 
 ### Examples
 
 ```ts
-// ✓ barrel alias
-import { Messages, Constants } from "@libs";
-import { Match, If } from "functional";
+// ✓ local aliases first, then external
+import { Constants, Contents } from "@libs";
+import { SendMessages } from "@router/messages/index.ts";
+import { CallbackTypes } from "@router/types/callbackTypes.ts";
+import { Match } from "functional";
+import type { Message } from "discordeno";
 
 // ✓ leaf alias for a type to avoid circular init
 import { Constants } from "@libs/constants.ts";
@@ -62,13 +70,21 @@ import createSuccessMessage from "@libs/messages/createSuccessMessage.ts";
 
 ### Why
 
-Arrow functions bound to `const` are hoisted as variable declarations and make the type signature immediately visible.
-`function` declarations can be called before they are defined, which obscures data flow.
+`const` arrow functions cannot be reassigned after declaration, making the binding stable.
+They also make the full type signature visible at the definition site without requiring
+a separate type annotation.
+`function` declarations are hoisted to the top of their scope — this means they can be
+called before the line they appear on, which hides order-dependent logic and makes data
+flow harder to follow.
 
 ### Rules
 
 - **Use `const fn = (...): ReturnType => { ... }` for all functions** — both exported and module-private.
 - **`function` declarations are prohibited.** Use `const` arrows throughout, including internal helpers.
+
+  > **Known exception (Phase B):** `src/router/messages/successMessage.ts` currently contains
+  > `async function editThreadMessageWithFiles(...)` — a team-added `function` declaration that
+  > predates this guideline. It will be converted to a `const` arrow in the Phase B refactor.
 - **Generic functions** use an inline type parameter on the const: `const fn = <T extends string>(...): Promise<Response> => { ... }`.
 - **Default exports** use `export default identifierName` (never `export default function` or an anonymous arrow).
 - **Async functions** annotate the return type explicitly: `const fn = async (): Promise<void> => { ... }`.

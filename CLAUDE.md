@@ -88,7 +88,7 @@ Use these throughout `src/` (defined in `import_map.json`):
 
 Full rules are in [`docs/coding-guidelines.md`](./docs/coding-guidelines.md). Key points:
 
-- **Imports** — use `import_map.json` aliases only (no `../` relative paths); prefer barrel `index.ts` targets over leaf files; order: external libs → local aliases.
+- **Imports** — use `import_map.json` aliases only (no `../` relative paths); prefer barrel `index.ts` targets over leaf files; order: local aliases (`@bot/`, `@libs`, `@router/`, `@utils/`) before external libs (`discordeno`, `functional`, `hono`).
 - **Functions** — `const fn = (...): T => { ... }` everywhere; `function` declarations are prohibited.
 - **Branching** — `Match(...).with(...).exhaustive()` instead of `if/else`; `If(cond, fn).else(fn)` for simple async conditionals.
 - **Constants** — all strings/numbers through `Constants.Namespace.Key`; no inline literals; dot-access only (no destructuring).
