@@ -1,6 +1,6 @@
-import { FileContent } from "discordeno";
 import { ContentsTypes } from "@libs/types/contentsTypes.ts";
 import { CallbackTypes } from "@router/types/callbackTypes.ts";
+import { FileContent } from "discordeno";
 
 /**
  * Retrieves the content of multiple files from the given body data object.

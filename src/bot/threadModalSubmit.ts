@@ -1,7 +1,7 @@
-import { Bot, Interaction } from "discordeno";
-import { Constants } from "@libs";
 import { runThreadFlow } from "@bot/runThreadFlow.ts";
 import { URLS_INPUT_CUSTOM_ID } from "@bot/threadInteractionCreate.ts";
+import { Constants } from "@libs";
+import { Bot, Interaction } from "discordeno";
 
 type InteractionData = Exclude<Pick<Interaction, "data">["data"], undefined>;
 type InteractionDataComponents = Exclude<
