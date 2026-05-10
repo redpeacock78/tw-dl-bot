@@ -1,13 +1,13 @@
 import bot from "@bot/bot.ts";
+import { Messages, Constants } from "@libs";
+import { CreateMessageTypes } from "@router/types/createMessageTypes.ts";
 import { Match } from "functional";
 import { Message, Embed } from "discordeno";
 import type { FileContent, CreateMessage } from "discordeno";
-import { Messages, Constants } from "@libs";
-import { CreateMessageTypes } from "@router/types/createMessageTypes.ts";
 
-type SingleSuccsessMessageObject =
+type SingleSuccessMessageObject =
   CreateMessageTypes.SendSuccessMessage.singleFileObject | null;
-type MultiSuccsessMessageObject =
+type MultiSuccessMessageObject =
   CreateMessageTypes.SendSuccessMessage.multiFilesObject | null;
 
 const trueOversize = Constants.CallbackObject.Oversize.TRUE;
@@ -30,13 +30,13 @@ const editFollowupMessageTimeLimit = Constants.EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT;
  * names.  If a future discordeno release fixes the naming, revert to
  * `bot.helpers.editMessage`.
  */
-async function editThreadMessageWithFiles(
+const editThreadMessageWithFiles = async (
   channelId: bigint | string,
   messageId: bigint | string,
   content: string | null | undefined,
   embeds: Embed[],
   files: FileContent[],
-): Promise<Message> {
+): Promise<Message> => {
   const form = new FormData();
   // Use `files[N]` bracket notation — required by Discord's PATCH attachment API.
   files.forEach((f, i) => form.append(`files[${i}]`, f.blob, f.name));
@@ -76,28 +76,28 @@ async function editThreadMessageWithFiles(
   // Callers chain .then()/.catch() on the returned Promise but never use the
   // Message value directly, so an empty cast is safe here.
   return {} as unknown as Message;
-}
+};
 
 const successMessage = {
   /**
    * Asynchronously handles a single success message and sends it based on conditions.
    *
-   * @param {SingleSuccsessMessageObject} singleSuccsessMessageObject - The object containing the single success message details.
+   * @param {SingleSuccessMessageObject} singleSuccessMessageObject - The object containing the single success message details.
    * @return {Promise<Message>} A promise that resolves to a message response.
    */
   singleFile: (
-    singleSuccsessMessageObject: SingleSuccsessMessageObject,
+    singleSuccessMessageObject: SingleSuccessMessageObject,
   ): Promise<Message> => {
     const runTime: number =
-      new Date().getTime() - Number(singleSuccsessMessageObject!.startTime);
-    const useThread: boolean = !!singleSuccsessMessageObject!.useThread;
+      new Date().getTime() - Number(singleSuccessMessageObject!.startTime);
+    const useThread: boolean = !!singleSuccessMessageObject!.useThread;
     // editMessage (thread mode) is not bound by the 15-min interaction-token
     // window or the followup oversize fallback, so always edit the
     // placeholder when running in a thread.
     const isEditOriginalMessage: boolean =
       useThread ||
       runTime <= editFollowupMessageTimeLimit ||
-      singleSuccsessMessageObject!.oversize !== trueOversize;
+      singleSuccessMessageObject!.oversize !== trueOversize;
     return Match(isEditOriginalMessage)
       .with(
         true,
@@ -106,13 +106,13 @@ const successMessage = {
             // Thread mode: use manual multipart PATCH to include `attachments`
             // in payload_json (discordeno v18 omits this — see JSDoc above).
             const msgPayload = Messages.createSuccessMessage({
-              runNumber: singleSuccsessMessageObject!.runNumber,
+              runNumber: singleSuccessMessageObject!.runNumber,
               runTime: runTime,
-              totalSize: singleSuccsessMessageObject!.totalSize,
-              fileName: singleSuccsessMessageObject!.fileName,
-              link: singleSuccsessMessageObject!.link,
-              file: singleSuccsessMessageObject!.file,
-              spoiler: singleSuccsessMessageObject!.spoiler,
+              totalSize: singleSuccessMessageObject!.totalSize,
+              fileName: singleSuccessMessageObject!.fileName,
+              link: singleSuccessMessageObject!.link,
+              file: singleSuccessMessageObject!.file,
+              spoiler: singleSuccessMessageObject!.spoiler,
             }) as CreateMessage;
             const rawFile = msgPayload.file;
             const files: FileContent[] = !rawFile
@@ -121,28 +121,28 @@ const successMessage = {
               ? (rawFile as FileContent[])
               : [rawFile as FileContent];
             return editThreadMessageWithFiles(
-              singleSuccsessMessageObject!.channelId,
-              singleSuccsessMessageObject!.messageId,
+              singleSuccessMessageObject!.channelId,
+              singleSuccessMessageObject!.messageId,
               msgPayload.content,
               (msgPayload.embeds ?? []) as Embed[],
               files,
-            ).finally((): null => (singleSuccsessMessageObject = null));
+            ).finally((): null => (singleSuccessMessageObject = null));
           }
           return await bot.helpers
             .editFollowupMessage(
-              singleSuccsessMessageObject!.token,
-              singleSuccsessMessageObject!.messageId,
+              singleSuccessMessageObject!.token,
+              singleSuccessMessageObject!.messageId,
               Messages.createSuccessMessage({
-                runNumber: singleSuccsessMessageObject!.runNumber,
+                runNumber: singleSuccessMessageObject!.runNumber,
                 runTime: runTime,
-                totalSize: singleSuccsessMessageObject!.totalSize,
-                fileName: singleSuccsessMessageObject!.fileName,
-                link: singleSuccsessMessageObject!.link,
-                file: singleSuccsessMessageObject!.file,
-                spoiler: singleSuccsessMessageObject!.spoiler,
+                totalSize: singleSuccessMessageObject!.totalSize,
+                fileName: singleSuccessMessageObject!.fileName,
+                link: singleSuccessMessageObject!.link,
+                file: singleSuccessMessageObject!.file,
+                spoiler: singleSuccessMessageObject!.spoiler,
               }),
             )
-            .finally((): null => (singleSuccsessMessageObject = null));
+            .finally((): null => (singleSuccessMessageObject = null));
         },
       )
       .with(
@@ -150,42 +150,42 @@ const successMessage = {
         async (): Promise<Message> =>
           await bot.helpers
             .sendMessage(
-              singleSuccsessMessageObject!.channelId,
+              singleSuccessMessageObject!.channelId,
               Messages.createSuccessMessage({
-                messageId: singleSuccsessMessageObject!.messageId,
-                channelId: singleSuccsessMessageObject!.channelId,
-                runNumber: singleSuccsessMessageObject!.runNumber,
+                messageId: singleSuccessMessageObject!.messageId,
+                channelId: singleSuccessMessageObject!.channelId,
+                runNumber: singleSuccessMessageObject!.runNumber,
                 runTime: runTime,
-                totalSize: singleSuccsessMessageObject!.totalSize,
-                fileName: singleSuccsessMessageObject!.fileName,
-                link: singleSuccsessMessageObject!.link,
-                file: singleSuccsessMessageObject!.file,
-                spoiler: singleSuccsessMessageObject!.spoiler,
+                totalSize: singleSuccessMessageObject!.totalSize,
+                fileName: singleSuccessMessageObject!.fileName,
+                link: singleSuccessMessageObject!.link,
+                file: singleSuccessMessageObject!.file,
+                spoiler: singleSuccessMessageObject!.spoiler,
               }),
             )
-            .finally((): null => (singleSuccsessMessageObject = null)),
+            .finally((): null => (singleSuccessMessageObject = null)),
       )
       .exhaustive();
   },
   /**
    * Asynchronously handles multiple success messages and sends them based on conditions.
    *
-   * @param {MultiSuccsessMessageObject} multiSuccsessMessageObject - The object containing the multiple success message details.
+   * @param {MultiSuccessMessageObject} multiSuccessMessageObject - The object containing the multiple success message details.
    * @return {Promise<Message>} A promise that resolves to a message response.
    */
   multiFiles: (
-    multiSuccsessMessageObject: MultiSuccsessMessageObject,
+    multiSuccessMessageObject: MultiSuccessMessageObject,
   ): Promise<Message> => {
     const runTime: number =
-      new Date().getTime() - Number(multiSuccsessMessageObject!.startTime);
-    const useThread: boolean = !!multiSuccsessMessageObject!.useThread;
+      new Date().getTime() - Number(multiSuccessMessageObject!.startTime);
+    const useThread: boolean = !!multiSuccessMessageObject!.useThread;
     // editMessage (thread mode) is not bound by the 15-min interaction-token
     // window or the followup oversize fallback, so always edit the
     // placeholder when running in a thread.
     const isEditOriginalMessage: boolean =
       useThread ||
       runTime <= editFollowupMessageTimeLimit ||
-      multiSuccsessMessageObject!.oversize !== trueOversize;
+      multiSuccessMessageObject!.oversize !== trueOversize;
     return Match(isEditOriginalMessage)
       .with(
         true,
@@ -194,13 +194,13 @@ const successMessage = {
             // Thread mode: use manual multipart PATCH to include `attachments`
             // in payload_json (discordeno v18 omits this — see JSDoc above).
             const msgPayload = Messages.createSuccessMessage({
-              runNumber: multiSuccsessMessageObject!.runNumber,
+              runNumber: multiSuccessMessageObject!.runNumber,
               runTime: runTime,
-              totalSize: multiSuccsessMessageObject!.totalSize,
-              fileNamesArray: multiSuccsessMessageObject!.fileNamesArray,
-              link: multiSuccsessMessageObject!.link,
-              filesArray: multiSuccsessMessageObject!.filesArray,
-              spoiler: multiSuccsessMessageObject!.spoiler,
+              totalSize: multiSuccessMessageObject!.totalSize,
+              fileNamesArray: multiSuccessMessageObject!.fileNamesArray,
+              link: multiSuccessMessageObject!.link,
+              filesArray: multiSuccessMessageObject!.filesArray,
+              spoiler: multiSuccessMessageObject!.spoiler,
             }) as CreateMessage;
             const rawFile = msgPayload.file;
             const files: FileContent[] = !rawFile
@@ -209,28 +209,28 @@ const successMessage = {
               ? (rawFile as FileContent[])
               : [rawFile as FileContent];
             return editThreadMessageWithFiles(
-              multiSuccsessMessageObject!.channelId,
-              multiSuccsessMessageObject!.messageId,
+              multiSuccessMessageObject!.channelId,
+              multiSuccessMessageObject!.messageId,
               msgPayload.content,
               (msgPayload.embeds ?? []) as Embed[],
               files,
-            ).finally((): null => (multiSuccsessMessageObject = null));
+            ).finally((): null => (multiSuccessMessageObject = null));
           }
           return await bot.helpers
             .editFollowupMessage(
-              multiSuccsessMessageObject!.token,
-              multiSuccsessMessageObject!.messageId,
+              multiSuccessMessageObject!.token,
+              multiSuccessMessageObject!.messageId,
               Messages.createSuccessMessage({
-                runNumber: multiSuccsessMessageObject!.runNumber,
+                runNumber: multiSuccessMessageObject!.runNumber,
                 runTime: runTime,
-                totalSize: multiSuccsessMessageObject!.totalSize,
-                fileNamesArray: multiSuccsessMessageObject!.fileNamesArray,
-                link: multiSuccsessMessageObject!.link,
-                filesArray: multiSuccsessMessageObject!.filesArray,
-                spoiler: multiSuccsessMessageObject!.spoiler,
+                totalSize: multiSuccessMessageObject!.totalSize,
+                fileNamesArray: multiSuccessMessageObject!.fileNamesArray,
+                link: multiSuccessMessageObject!.link,
+                filesArray: multiSuccessMessageObject!.filesArray,
+                spoiler: multiSuccessMessageObject!.spoiler,
               }),
             )
-            .finally((): null => (multiSuccsessMessageObject = null));
+            .finally((): null => (multiSuccessMessageObject = null));
         },
       )
       .with(
@@ -238,20 +238,20 @@ const successMessage = {
         async (): Promise<Message> =>
           await bot.helpers
             .sendMessage(
-              multiSuccsessMessageObject!.channelId,
+              multiSuccessMessageObject!.channelId,
               Messages.createSuccessMessage({
-                messageId: multiSuccsessMessageObject!.messageId,
-                channelId: multiSuccsessMessageObject!.channelId,
-                runNumber: multiSuccsessMessageObject!.runNumber,
+                messageId: multiSuccessMessageObject!.messageId,
+                channelId: multiSuccessMessageObject!.channelId,
+                runNumber: multiSuccessMessageObject!.runNumber,
                 runTime: runTime,
-                totalSize: multiSuccsessMessageObject!.totalSize,
-                fileNamesArray: multiSuccsessMessageObject!.fileNamesArray,
-                link: multiSuccsessMessageObject!.link,
-                filesArray: multiSuccsessMessageObject!.filesArray,
-                spoiler: multiSuccsessMessageObject!.spoiler,
+                totalSize: multiSuccessMessageObject!.totalSize,
+                fileNamesArray: multiSuccessMessageObject!.fileNamesArray,
+                link: multiSuccessMessageObject!.link,
+                filesArray: multiSuccessMessageObject!.filesArray,
+                spoiler: multiSuccessMessageObject!.spoiler,
               }),
             )
-            .finally((): null => (multiSuccsessMessageObject = null)),
+            .finally((): null => (multiSuccessMessageObject = null)),
       )
       .exhaustive();
   },

@@ -1,3 +1,4 @@
+import { Messages, Constants, isUrl, webhookThread } from "@libs";
 import { If } from "functional";
 import { KyResponse } from "ky";
 import {
@@ -8,7 +9,6 @@ import {
   InteractionResponseTypes,
   Message,
 } from "discordeno";
-import { Messages, Constants, isUrl, webhookThread } from "@libs";
 
 /**
  * Pure "do the thread thing" flow shared by:

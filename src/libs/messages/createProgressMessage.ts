@@ -1,7 +1,7 @@
 import { Constants } from "@libs";
+import { CreateMessageTypes } from "@router/types/createMessageTypes.ts";
 import { millisecondChangeFormat } from "@utils";
 import { CreateMessage, InteractionCallbackData } from "discordeno";
-import { CreateMessageTypes } from "@router/types/createMessageTypes.ts";
 
 type ProgressMessageInfo = CreateMessageTypes.progressMessageInfo | null;
 
