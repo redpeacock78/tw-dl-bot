@@ -60,10 +60,15 @@ const makeMultiObj = (
 // ---------------------------------------------------------------------------
 
 Deno.test("successMessage.singleFile", async (t) => {
-  // ── Case 1: useThread=true → editMessage (short-circuits all other gates) ──
+  // ── Case 1: useThread=true → bot.rest.runMethod (not editMessage) ──
   await t.step(
-    "useThread=true → calls editMessage regardless of runtime/oversize",
+    "useThread=true → calls bot.rest.runMethod regardless of runtime/oversize",
     async () => {
+      const runMethod = stub(
+        bot.rest,
+        "runMethod",
+        () => Promise.resolve({}),
+      );
       const editMsg = stub(
         bot.helpers,
         "editMessage",
@@ -83,10 +88,58 @@ Deno.test("successMessage.singleFile", async (t) => {
         await successMessage.singleFile(
           makeSingleObj(true, "true", String(Date.now() - (LIMIT + 60_000))),
         );
-        assertSpyCalls(editMsg, 1);
+        assertSpyCalls(runMethod, 1);
+        assertSpyCalls(editMsg, 0);
         assertSpyCalls(editFollowup, 0);
         assertSpyCalls(sendMsg, 0);
       } finally {
+        runMethod.restore();
+        editMsg.restore();
+        editFollowup.restore();
+        sendMsg.restore();
+      }
+    },
+  );
+
+  // ── Case 1b: useThread=true → payload_json contains attachments ──
+  await t.step(
+    "useThread=true → runMethod body includes attachments: [{id:0, filename}]",
+    async () => {
+      let capturedBody: unknown;
+      const runMethod = stub(
+        bot.rest,
+        "runMethod",
+        (_rest: unknown, _method: unknown, _route: unknown, body: unknown) => {
+          capturedBody = body;
+          return Promise.resolve({});
+        },
+      );
+      const editMsg = stub(
+        bot.helpers,
+        "editMessage",
+        () => Promise.resolve(fakeMsg),
+      );
+      const editFollowup = stub(
+        bot.helpers,
+        "editFollowupMessage",
+        () => Promise.resolve(fakeMsg),
+      );
+      const sendMsg = stub(
+        bot.helpers,
+        "sendMessage",
+        () => Promise.resolve(fakeMsg),
+      );
+      try {
+        await successMessage.singleFile(makeSingleObj(true, "false"));
+        assertSpyCalls(runMethod, 1);
+        const body = capturedBody as {
+          attachments?: { id: number; filename: string }[];
+        };
+        assertEquals(Array.isArray(body.attachments), true);
+        assertEquals(body.attachments?.[0]?.id, 0);
+        assertEquals(body.attachments?.[0]?.filename, "video.mp4");
+      } finally {
+        runMethod.restore();
         editMsg.restore();
         editFollowup.restore();
         sendMsg.restore();
@@ -201,10 +254,15 @@ Deno.test("successMessage.singleFile", async (t) => {
 // ---------------------------------------------------------------------------
 
 Deno.test("successMessage.multiFiles", async (t) => {
-  // ── Case 5: useThread=true → editMessage ──
+  // ── Case 5: useThread=true → bot.rest.runMethod (not editMessage) ──
   await t.step(
-    "useThread=true → calls editMessage regardless of runtime/oversize",
+    "useThread=true → calls bot.rest.runMethod regardless of runtime/oversize",
     async () => {
+      const runMethod = stub(
+        bot.rest,
+        "runMethod",
+        () => Promise.resolve({}),
+      );
       const editMsg = stub(
         bot.helpers,
         "editMessage",
@@ -224,10 +282,59 @@ Deno.test("successMessage.multiFiles", async (t) => {
         await successMessage.multiFiles(
           makeMultiObj(true, "true", String(Date.now() - (LIMIT + 60_000))),
         );
-        assertSpyCalls(editMsg, 1);
+        assertSpyCalls(runMethod, 1);
+        assertSpyCalls(editMsg, 0);
         assertSpyCalls(editFollowup, 0);
         assertSpyCalls(sendMsg, 0);
       } finally {
+        runMethod.restore();
+        editMsg.restore();
+        editFollowup.restore();
+        sendMsg.restore();
+      }
+    },
+  );
+
+  // ── Case 5b: useThread=true, multi-file → attachments has 2 entries ──
+  await t.step(
+    "useThread=true, multi-file → attachments: [{id:0},{id:1}] with correct filenames",
+    async () => {
+      let capturedBody: unknown;
+      const runMethod = stub(
+        bot.rest,
+        "runMethod",
+        (_rest: unknown, _method: unknown, _route: unknown, body: unknown) => {
+          capturedBody = body;
+          return Promise.resolve({});
+        },
+      );
+      const editMsg = stub(
+        bot.helpers,
+        "editMessage",
+        () => Promise.resolve(fakeMsg),
+      );
+      const editFollowup = stub(
+        bot.helpers,
+        "editFollowupMessage",
+        () => Promise.resolve(fakeMsg),
+      );
+      const sendMsg = stub(
+        bot.helpers,
+        "sendMessage",
+        () => Promise.resolve(fakeMsg),
+      );
+      try {
+        await successMessage.multiFiles(makeMultiObj(true, "false"));
+        assertSpyCalls(runMethod, 1);
+        const body = capturedBody as {
+          attachments?: { id: number; filename: string }[];
+        };
+        assertEquals(Array.isArray(body.attachments), true);
+        assertEquals(body.attachments?.length, 2);
+        assertEquals(body.attachments?.[0], { id: 0, filename: "clip1.mp4" });
+        assertEquals(body.attachments?.[1], { id: 1, filename: "clip2.mp4" });
+      } finally {
+        runMethod.restore();
         editMsg.restore();
         editFollowup.restore();
         sendMsg.restore();
@@ -301,10 +408,15 @@ Deno.test("successMessage.multiFiles", async (t) => {
     },
   );
 
-  // ── Case 8: useThread=true, runTime > LIMIT, oversize=true → editMessage ──
+  // ── Case 8: useThread=true, runTime > LIMIT, oversize=true → runMethod ──
   await t.step(
-    "useThread=true, runTime > 15 min, oversize=true → editMessage (useThread wins all)",
+    "useThread=true, runTime > 15 min, oversize=true → bot.rest.runMethod (useThread wins all)",
     async () => {
+      const runMethod = stub(
+        bot.rest,
+        "runMethod",
+        () => Promise.resolve({}),
+      );
       const editMsg = stub(
         bot.helpers,
         "editMessage",
@@ -324,10 +436,12 @@ Deno.test("successMessage.multiFiles", async (t) => {
         await successMessage.multiFiles(
           makeMultiObj(true, "true", String(Date.now() - (LIMIT + 60_000))),
         );
-        assertSpyCalls(editMsg, 1);
+        assertSpyCalls(runMethod, 1);
+        assertSpyCalls(editMsg, 0);
         assertSpyCalls(editFollowup, 0);
         assertSpyCalls(sendMsg, 0);
       } finally {
+        runMethod.restore();
         editMsg.restore();
         editFollowup.restore();
         sendMsg.restore();
