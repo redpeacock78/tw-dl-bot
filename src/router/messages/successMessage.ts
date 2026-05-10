@@ -54,10 +54,17 @@ async function editThreadMessageWithFiles(
     `https://discord.com/api/v10/channels/${channelId}/messages/${messageId}`,
     {
       method: "PATCH",
-      headers: { Authorization: `Bot ${bot.rest.token}` },
+      headers: { Authorization: `Bot ${bot.token}` },
       body: form,
+      signal: AbortSignal.timeout(30_000),
     },
   );
+  if (response.status === 429) {
+    const retryAfter = response.headers.get("retry-after") ?? "unknown";
+    throw new Error(
+      `Discord editMessage rate limited; retry-after=${retryAfter}s`,
+    );
+  }
   if (!response.ok) {
     const err = await response
       .json()
