@@ -260,7 +260,7 @@ External code imports `{ Messages }` and is shielded from internal renames.
 
 ### Examples
 
-```
+```text
 src/
   libs/
     index.ts              ← re-exports Contents, Messages, Constants, Custom, …
