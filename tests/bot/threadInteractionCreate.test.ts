@@ -7,8 +7,8 @@ import {
   MessageComponentTypes,
   TextStyles,
 } from "discordeno";
-import { Constants } from "../../src/libs/constants.ts";
-import { threadInteractionCreate } from "../../src/bot/threadInteractionCreate.ts";
+import { Constants } from "@libs";
+import { threadInteractionCreate } from "@bot/threadInteractionCreate.ts";
 
 // deno-lint-ignore no-explicit-any
 type AnySpy = Spy<unknown, any[], any>;
