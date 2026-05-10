@@ -92,14 +92,14 @@ Deno.test("callbackSuccessFunctions — handleSingleSuccess", async (t) => {
     },
   );
 
-  // ── Case 2: threadDl (useThread=true) → bot.rest.runMethod (not editMessage) ──
+  // ── Case 2: threadDl (useThread=true) → fetch called (not editMessage) ──
   await t.step(
-    "threadDl + no shardIndex → bot.rest.runMethod called (not editMessage), returns 204",
+    "threadDl + no shardIndex → fetch called (not editMessage), returns 204",
     async () => {
-      const runMethod = stub(
-        bot.rest,
-        "runMethod",
-        () => Promise.resolve({}),
+      const fetchStub = stub(
+        globalThis,
+        "fetch",
+        async () => new Response("{}", { status: 200 }),
       );
       const editMsg = stub(
         bot.helpers,
@@ -117,11 +117,11 @@ Deno.test("callbackSuccessFunctions — handleSingleSuccess", async (t) => {
           body: makeBody("threaddl") as never,
         });
         assertEquals(res.status, 204);
-        assertSpyCalls(runMethod, 1);
+        assertSpyCalls(fetchStub, 1);
         assertSpyCalls(editMsg, 0);
         assertSpyCalls(editFollowup, 0);
       } finally {
-        runMethod.restore();
+        fetchStub.restore();
         editMsg.restore();
         editFollowup.restore();
       }
@@ -130,20 +130,15 @@ Deno.test("callbackSuccessFunctions — handleSingleSuccess", async (t) => {
 
   // ── Case 3: threadDl + shardIndex → runNumber is "#N-XX" in embed ──
   await t.step(
-    "threadDl + shardIndex=02 → runMethod called with runNumber '1-02' in embed",
+    "threadDl + shardIndex=02 → fetch called with runNumber '1-02' in payload_json embed",
     async () => {
-      let capturedBody: unknown;
-      const runMethod = stub(
-        bot.rest,
-        "runMethod",
-        (
-          _rest: unknown,
-          _method: unknown,
-          _route: unknown,
-          body: unknown,
-        ) => {
-          capturedBody = body;
-          return Promise.resolve({});
+      let capturedInit: RequestInit | undefined;
+      const fetchStub = stub(
+        globalThis,
+        "fetch",
+        async (_input: unknown, init?: unknown) => {
+          capturedInit = init as RequestInit;
+          return new Response("{}", { status: 200 });
         },
       );
       const editMsg = stub(
@@ -162,16 +157,18 @@ Deno.test("callbackSuccessFunctions — handleSingleSuccess", async (t) => {
           body: makeBody("threaddl", { shardIndex: "02" }) as never,
         });
         assertEquals(res.status, 204);
-        assertSpyCalls(runMethod, 1);
+        assertSpyCalls(fetchStub, 1);
         assertSpyCalls(editMsg, 0);
-        // The RUN_NUMBER embed field should contain "1-02" (Discord wire format)
-        const embed = (
-          capturedBody as { embeds?: { fields?: { value: string }[] }[] }
-        )?.embeds?.[0];
+        // The RUN_NUMBER embed field should contain "1-02" (in payload_json)
+        const form = capturedInit!.body as FormData;
+        const payloadJson = JSON.parse(form.get("payload_json") as string) as {
+          embeds?: { fields?: { value: string }[] }[];
+        };
+        const embed = payloadJson?.embeds?.[0];
         const runField = embed?.fields?.find((f) => f.value.includes("1-02"));
         assertEquals(runField !== undefined, true);
       } finally {
-        runMethod.restore();
+        fetchStub.restore();
         editMsg.restore();
         editFollowup.restore();
       }
@@ -242,22 +239,17 @@ Deno.test("callbackSuccessFunctions — handleSingleSuccess", async (t) => {
     }
   });
 
-  // ── Case 6: threadDlSpoiler + shardIndex → runMethod (spoiler+thread) ──
+  // ── Case 6: threadDlSpoiler + shardIndex → fetch (spoiler+thread) ──
   await t.step(
-    "threadDlSpoiler + shardIndex=03 → runMethod called with '1-03' in embed",
+    "threadDlSpoiler + shardIndex=03 → fetch called with '1-03' in payload_json embed",
     async () => {
-      let capturedBody: unknown;
-      const runMethod = stub(
-        bot.rest,
-        "runMethod",
-        (
-          _rest: unknown,
-          _method: unknown,
-          _route: unknown,
-          body: unknown,
-        ) => {
-          capturedBody = body;
-          return Promise.resolve({});
+      let capturedInit: RequestInit | undefined;
+      const fetchStub = stub(
+        globalThis,
+        "fetch",
+        async (_input: unknown, init?: unknown) => {
+          capturedInit = init as RequestInit;
+          return new Response("{}", { status: 200 });
         },
       );
       const editMsg = stub(
@@ -277,15 +269,17 @@ Deno.test("callbackSuccessFunctions — handleSingleSuccess", async (t) => {
             body: makeBody("threaddl-spoiler", { shardIndex: "03" }) as never,
           });
         assertEquals(res.status, 204);
-        assertSpyCalls(runMethod, 1);
+        assertSpyCalls(fetchStub, 1);
         assertSpyCalls(editMsg, 0);
-        const embed = (
-          capturedBody as { embeds?: { fields?: { value: string }[] }[] }
-        )?.embeds?.[0];
+        const form = capturedInit!.body as FormData;
+        const payloadJson = JSON.parse(form.get("payload_json") as string) as {
+          embeds?: { fields?: { value: string }[] }[];
+        };
+        const embed = payloadJson?.embeds?.[0];
         const runField = embed?.fields?.find((f) => f.value.includes("1-03"));
         assertEquals(runField !== undefined, true);
       } finally {
-        runMethod.restore();
+        fetchStub.restore();
         editMsg.restore();
         editFollowup.restore();
       }
@@ -323,22 +317,17 @@ Deno.test("callbackSuccessFunctions — handleMultiSuccess", async (t) => {
     },
   );
 
-  // ── Case 8: threadDl multi + shardIndex → runMethod with "#N-XX" ──
+  // ── Case 8: threadDl multi + shardIndex → fetch with "#N-XX" ──
   await t.step(
-    "threadDl.multi + shardIndex=01 → runMethod called with '1-01' in embed",
+    "threadDl.multi + shardIndex=01 → fetch called with '1-01' in payload_json embed",
     async () => {
-      let capturedBody: unknown;
-      const runMethod = stub(
-        bot.rest,
-        "runMethod",
-        (
-          _rest: unknown,
-          _method: unknown,
-          _route: unknown,
-          body: unknown,
-        ) => {
-          capturedBody = body;
-          return Promise.resolve({});
+      let capturedInit: RequestInit | undefined;
+      const fetchStub = stub(
+        globalThis,
+        "fetch",
+        async (_input: unknown, init?: unknown) => {
+          capturedInit = init as RequestInit;
+          return new Response("{}", { status: 200 });
         },
       );
       const editMsg = stub(
@@ -357,15 +346,17 @@ Deno.test("callbackSuccessFunctions — handleMultiSuccess", async (t) => {
           body: makeMultiBody("threaddl", { shardIndex: "01" }) as never,
         });
         assertEquals(res.status, 204);
-        assertSpyCalls(runMethod, 1);
+        assertSpyCalls(fetchStub, 1);
         assertSpyCalls(editMsg, 0);
-        const embed = (
-          capturedBody as { embeds?: { fields?: { value: string }[] }[] }
-        )?.embeds?.[0];
+        const form = capturedInit!.body as FormData;
+        const payloadJson = JSON.parse(form.get("payload_json") as string) as {
+          embeds?: { fields?: { value: string }[] }[];
+        };
+        const embed = payloadJson?.embeds?.[0];
         const runField = embed?.fields?.find((f) => f.value.includes("1-01"));
         assertEquals(runField !== undefined, true);
       } finally {
-        runMethod.restore();
+        fetchStub.restore();
         editMsg.restore();
         editFollowup.restore();
       }

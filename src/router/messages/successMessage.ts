@@ -15,23 +15,19 @@ const editFollowupMessageTimeLimit = Constants.EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT;
 
 /**
  * Edits a thread placeholder message with an embed and file attachments via
- * direct multipart PATCH.
+ * direct multipart PATCH using `fetch`.
  *
- * **Why not `bot.helpers.editMessage`?**
- * discordeno v18's `editMessage` helper builds the multipart body in
- * `createRequestBody.ts` as:
- * ```
- * form.append("payload_json", JSON.stringify({ ...body, file: undefined }));
- * ```
- * It spreads the body but does **not** inject an `attachments` array.
- * Discord's PATCH /channels/{id}/messages/{id} endpoint (updated 2022)
- * requires new file attachments to be referenced by zero-based index in
- * `payload_json.attachments`; without this, file data arrives at Discord
- * but is silently discarded.
+ * **Why not `bot.helpers.editMessage` or `bot.rest.runMethod`?**
+ * discordeno v18's `createRequestBody.ts` names each multipart file part as
+ * `file${i}` (e.g. `file0`, `file1`).  Discord's PATCH
+ * /channels/{id}/messages/{id} endpoint (updated 2022) requires the
+ * bracket-notation `files[0]`, `files[1]`, ... so the server can match each
+ * part to its `payload_json.attachments[].id` reference.  The name mismatch
+ * causes Discord to return a 4xx, which propagates back as a 500 from the
+ * Hono callback endpoint.
  *
- * This function calls `bot.rest.runMethod` directly so we can add the
- * correct `attachments: [{id: N, filename}]` entries.  If a future
- * discordeno release fixes the upstream behaviour, revert to
+ * Calling `fetch` directly lets us build the FormData with the correct field
+ * names.  If a future discordeno release fixes the naming, revert to
  * `bot.helpers.editMessage`.
  */
 async function editThreadMessageWithFiles(
@@ -41,23 +37,38 @@ async function editThreadMessageWithFiles(
   embeds: Embed[],
   files: FileContent[],
 ): Promise<Message> {
-  const result = await bot.rest.runMethod<Record<string, unknown>>(
-    bot.rest,
-    "PATCH",
-    bot.constants.routes.CHANNEL_MESSAGE(channelId, messageId),
-    {
+  const form = new FormData();
+  // Use `files[N]` bracket notation — required by Discord's PATCH attachment API.
+  files.forEach((f, i) => form.append(`files[${i}]`, f.blob, f.name));
+  form.append(
+    "payload_json",
+    JSON.stringify({
       content,
       embeds: embeds.map((e) => bot.transformers.reverse.embed(bot, e)),
-      file: files.length === 1 ? files[0] : files,
-      // Discord API (2022+): multipart PATCH requires `attachments[].id` in
-      // payload_json to reference each uploaded file by its zero-based index
-      // in the `files[N]` parts.  Without this, Discord ignores the files.
+      // Each attachment entry maps the zero-based index to the corresponding
+      // `files[N]` part so Discord links the uploaded file to the message.
       attachments: files.map((f, i) => ({ id: i, filename: f.name })),
+    }),
+  );
+  const response = await fetch(
+    `https://discord.com/api/v10/channels/${channelId}/messages/${messageId}`,
+    {
+      method: "PATCH",
+      headers: { Authorization: `Bot ${bot.rest.token}` },
+      body: form,
     },
   );
-  // Callers chain .then()/.catch() on the Promise but never use the Message
-  // value directly, so casting the raw response is safe here.
-  return result as unknown as Message;
+  if (!response.ok) {
+    const err = await response
+      .json()
+      .catch(() => ({})) as Record<string, unknown>;
+    throw new Error(
+      `Discord editMessage PATCH ${response.status}: ${JSON.stringify(err)}`,
+    );
+  }
+  // Callers chain .then()/.catch() on the returned Promise but never use the
+  // Message value directly, so an empty cast is safe here.
+  return {} as unknown as Message;
 }
 
 const successMessage = {
