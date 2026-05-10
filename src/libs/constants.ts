@@ -3,6 +3,7 @@ export const Constants = {
   BASE_PATH: "/api",
   PING_PATH: "/ping",
   CALLBACK_PATH: "/callback",
+  DISCORD_API_BASE: "https://discord.com/api/v10",
   EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT: 900000,
   UPDATE_BOT_STATUS_INTERVAL: 10000,
   SECRETS: ["DISPATCH_URL", "GITHUB_TOKEN", "DISCORD_TOKEN"],
