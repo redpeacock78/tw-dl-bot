@@ -6,7 +6,8 @@
   "tasks": {
     "dev": "denon dev",
     "cache": "deno cache --import-map import_map.json src/main.ts",
-    "lint": "deno lint && deno run --allow-env --allow-read --allow-sys tools/textlint.ts *",
+    "lint": "deno lint && deno run --allow-env --allow-read --allow-sys tools/textlint.ts docs/jp/",
+    "lint:fix": "deno run --allow-env --allow-read --allow-sys --allow-write tools/textlint.ts --fix docs/jp/",
     "lint:watch": "denon lint",
     "run": "deno run -A --no-check --import-map import_map.json src/main.ts",
     "build": "deno compile -A --import-map import_map.json -o build/main src/main.ts && chmod +x ./build/main",

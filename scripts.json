@@ -6,7 +6,7 @@
       "desc": "run my main.ts file"
     },
     "lint": {
-      "cmd": "deno lint && deno run --allow-env --allow-read --allow-sys tools/textlint.ts *"
+      "cmd": "deno lint && deno run --allow-env --allow-read --allow-sys tools/textlint.ts docs/jp/"
     }
   }
 }

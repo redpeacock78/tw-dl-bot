@@ -32,7 +32,7 @@
 ### ルール
 
 - **`src/` 内で相対 `../` インポートを使用しない。** `import_map.json` で定義されたエイリアスを使用してください。
-- **Barrel ファイル（index.ts）は、任意のディレクトリの正規のインポート対象です。** Barrel 使用時に循環初期化が発生する `type` をインポートする場合のみ、個別のリーフファイルをインポートしてください（例：`@libs` Barrel を通じて再エクスポートされるファイル内の `@libs/constants.ts` リーフ）。
+- **Barrel ファイル（index.ts）は、任意のディレクトリの正規のインポート対象です。** Barrel使用時に循環初期化が発生する `type` をインポートする場合のみ、個別のリーフファイルをインポートしてください（例：`@libs` Barrelを通じて再エクスポートされるファイル内の `@libs/constants.ts` リーフ）。
 - **インポート順序** — ローカルプロジェクトエイリアスの後に外部ライブラリ。各グループ内で順序は**アルファベット順**です：
   1. ローカルエイリアス — `@bot/`、`@libs`、`@router/`、`@utils/`
   2. 外部ライブラリ — `discordeno`、`functional`、`hono`、`@std/...`
@@ -69,17 +69,17 @@ import createSuccessMessage from "@libs/messages/createSuccessMessage.ts";
 
 `const` アロー関数は宣言後に再割り当てできません。バインディングが安定します。
 また、型シグネチャ全体を定義サイトで表示するため、別の型アノテーションが不要です。
-`function` 宣言は scope の top に hoisted されます。これは、スコープに表示される行の前に呼び出せることを意味します。これにより、order-dependent ロジックが隠蔽され、データフロー追跡が困難になります。
+`function` 宣言はscopeのtopにhoistedされます。これは、スコープに表示される行の前に呼び出せることを意味します。これにより、order-dependentロジックが隠蔽され、データフロー追跡が困難になります。
 
 ### ルール
 
 - **すべての関数に `const fn = (...): ReturnType => { ... }` を使用します。** エクスポート有無を問わず。
-- **`function` 宣言は禁止です。** 内部ヘルパーを含めて、すべてを `const` arrow で記述してください。
+- **`function` 宣言は禁止です。** 内部ヘルパーを含めて、すべてを `const` arrowで記述してください。
 > **既知の例外（Phase B）：** `src/router/messages/successMessage.ts` は現在
 > `async function editThreadMessageWithFiles(...)` を含みます — このガイドラインが制定される前の
 > team-added `function` 宣言。Phase B refactor で `const` arrow に変換されます。
-- **Generic 関数** は `const` に inline 型パラメータを使用します：`const fn = <T extends string>(...): Promise<Response> => { ... }`。
-- **Default エクスポート** は `export default identifierName` を使用します（`export default function` や anonymous arrow ではなく）。
+- **Generic 関数** は `const` にinline型パラメータを使用します：`const fn = <T extends string>(...): Promise<Response> => { ... }`。
+- **Default エクスポート** は `export default identifierName` を使用します（`export default function` やanonymous arrowではなく）。
 - **非同期関数** は戻り値型を明示的にアノテートします：`const fn = async (): Promise<void> => { ... }`。
 
 ### 例
@@ -112,13 +112,13 @@ export default async function () { ... }
 
 ### 理由
 
-Pattern matching（`Match`）と関数型 conditional（`If`）は exhaustive な type-safe branches を生成します。
-これらは `if/else` チェーンが silent に miss する unhandled case の可能性を排除します。
+Pattern matching（`Match`）と関数型conditional（`If`）はexhaustiveなtype-safe branchesを生成します。
+これらは `if/else` チェーンがsilentにmissするunhandled caseの可能性を排除します。
 
 ### ルール
 
 - **`if/else` branching を `Match(...).with(...).exhaustive()` または `.otherwise()` で置き換えてください。** (`ts-pattern` 由来で `functional` エイリアス経由)
-- **Union 型をカバーする `Match` では必ず `.exhaustive()` を呼び出します。** fallback 値が必要な場合は `.otherwise()` を呼び出します。
+- **Union 型をカバーする `Match` では必ず `.exhaustive()` を呼び出します。** fallback値が必要な場合は `.otherwise()` を呼び出します。
 - **単純な非同期 conditional には** `expressionify` の `If(condition, asyncFn).else(asyncFn)` を使用してください（`functional` にもあります）。
 - **エラーハンドリングパイプラインでは** `fp-ts` の `TaskEither.tryCatch / Either.isRight / Function.pipe` を使用してください（`functional` にもあります）。
 - **fp-ts 型エイリアス shorthand**（`O<A>` for `Option.Option<A>`、`E<E, A>` for `Either.Either<E, A>`）は **ファイルスコープで**ファイル内の説明コメント付きで `type` エイリアスとして許可されています。
@@ -149,16 +149,16 @@ if (isEditOriginalMessage) { ... } else { ... }
 
 ### 理由
 
-Inline の string/number literal は grep で見えず、タイプミスしやすく、安全に rename できません。
-単一の `Constants` オブジェクトはコードベースが気にかけるすべての値に対して 1 つの authoritative location を提供します。
+Inlineのstring/number literalはgrepで見えず、タイプミスしやすく、安全にrenameできません。
+単一の `Constants` オブジェクトはコードベースが気にかけるすべての値に対して1つのauthoritative locationを提供します。
 
 ### ルール
 
-- **既存する（または属する）値に対する inline string または number literal を使用しないでください。** これには HTTP status codes、command-type strings、Discord API paths、embed colours、ファイル prefix が含まれます。
-- **ドット記号でのアクセスのみ。** `Constants` を destructure しないでください。
+- **既存する（または属する）値に対する inline string または number literal を使用しないでください。** これにはHTTP status codes、command-type strings、Discord API paths、embed colours、ファイルprefixが含まれます。
+- **ドット記号でのアクセスのみ。** `Constants` をdestructureしないでください。
 - **同じ `Constants.*` 式がファイル内に複数回出現する場合、モジュールレベルの `const` に抽出してください：** `const noContent = Constants.HttpStatus.NO_CONTENT;`
 - **新しい値を使用する前に `Constants` に追加してください。** オブジェクトを `as const satisfies Readonly<Record<string, unknown>>` で型付けしたままにしてください。
-- **Nested structure は問題ありません。** related な値を namespace の下でグループ化してください（`Constants.Message.Color.SUCCESS`、`Constants.HttpStatus.BAD_REQUEST`）。
+- **Nested structure は問題ありません。** relatedな値をnamespaceの下でグループ化してください（`Constants.Message.Color.SUCCESS`、`Constants.HttpStatus.BAD_REQUEST`）。
 
 ### 例
 
@@ -186,19 +186,19 @@ const url = `https://discord.com/api/v10/channels/${id}/messages/${mid}`;
 
 ### 理由
 
-JSDoc コメントはすべての TypeScript aware エディターで hover 時に surfaced されます。
-`@param` に型を含めることで、エディターは呼び出しサイトで full signature を表示できます。
+JSDocコメントはすべてのTypeScript awareエディターでhover時にsurfacedされます。
+`@param` に型を含めることで、エディターは呼び出しサイトでfull signatureを表示できます。
 
 ### ルール
 
-- **すべてのエクスポート関数に JSDoc ブロックが必要です** （`/** ... */`）。
-- **形式**（順序、説明とタグ間の blank line で分離）：
-  1. 散文的説明 — 関数の*何を*するかを説明し、non-obvious 関数の場合、*なぜ*その方法で構造化されているかを説明してください。
+- **すべてのエクスポート関数に JSDoc ブロックが必要です**（`/** ... */`）。
+- **形式**（順序、説明とタグ間のblank lineで分離）：
+  1. 散文的説明 — 関数の*何を*するかを説明し、non-obvious関数の場合、*なぜ*その方法で構造化されているかを説明してください。
   2. `@param {Type} name - Description.`
   3. `@return {Type} Description.`
-  4. `@throws {Error} Description.`（関数が明示的に throw する場合）
-- **TypeScript 型を `@param {Type}` に含めてください。** エディターは呼び出しサイトが型 context を持たないときでも hover で表示します。
-- **Internal helpers**（モジュールの Barrel から exported されていない）は JSDoc を省略できます。*ただし*non-obvious ロジックまたは workaround を含む場合、*なぜ*を説明するブロックコメントが必要です。
+  4. `@throws {Error} Description.`（関数が明示的にthrowする場合）
+- **TypeScript 型を `@param {Type}` に含めてください。** エディターは呼び出しサイトが型contextを持たないときでもhoverで表示します。
+- **Internal helpers**（モジュールのBarrelからexportedされていない）はJSDocを省略できます。*ただし*non-obviousロジックまたはworkaroundを含む場合、*なぜ*を説明するブロックコメントが必要です。
 
 ### 例
 
@@ -236,16 +236,16 @@ export const registerCommands = async (bot: Bot): Promise<void> => { ... };
 
 ### 理由
 
-Barrel ファイル（`index.ts`）は安定した public API surface を作成します。
-外部コードは `{ Messages }` をインポートし、internal rename から shielded されます。
+Barrelファイル（`index.ts`）は安定したpublic API surfaceを作成します。
+外部コードは `{ Messages }` をインポートし、internal renameからshieldedされます。
 
 ### ルール
 
-- **複数のモジュールを含む `src/` subdirectory にはすべて `index.ts` が必要です** これは public exports を named object に集約します：
+- **複数のモジュールを含む `src/` subdirectory にはすべて `index.ts` が必要です** これはpublic exportsをnamed objectに集約します：
   `export const Messages = { createSuccessMessage, createErrorMessage, ... };`
 - **型は `types/` subdirectory に存在します** 。TypeScript `namespace` ブロックで構成されます。
-- **ファイルあたり 1 つの concern** — メッセージビルダー、content extractor、コールバックハンドラー、utility 関数はそれぞれ separate ファイルに存在します。
-- **concerns を cross しないでください** — 例：メッセージビルダーは `@router/` から import してはいけません。router 関数は `@bot/` から import してはいけません。
+- **ファイルあたり 1 つの concern** — メッセージビルダー、content extractor、コールバックハンドラー、utility関数はそれぞれseparateファイルに存在します。
+- **concerns を cross しないでください** — 例：メッセージビルダーは `@router/` からimportしてはいけません。router関数は `@bot/` からimportしてはいけません。
 
 ### 例
 
@@ -275,7 +275,7 @@ src/
 
 ### 理由
 
-一貫した命名は認知負荷を低減し、grep を信頼できるものにします。
+一貫した命名は認知負荷を低減し、grepを信頼できるものにします。
 
 ### ルール
 
@@ -289,8 +289,8 @@ src/
 | `Constants` 内の定数 | nested objects 内の leaf 値に対して `SCREAMING_SNAKE_CASE` | `NO_CONTENT`、`SUCCESS` |
 | `Constants` 内の Namespace キー | `PascalCase` | `HttpStatus`、`CallbackObject` |
 
-- **`snake_case` は TypeScript source で禁止です。** Discord JSON payloads 内のみで出現します。
-- **繰り返される `Constants.*` アクセスを extract してください** 。関数またはモジュールの top で `const` に：
+- **`snake_case` は TypeScript source で禁止です。** Discord JSON payloads内のみで出現します。
+- **繰り返される `Constants.*` アクセスを extract してください** 。関数またはモジュールのtopで `const` に：
   ```ts
   const noContent = Constants.HttpStatus.NO_CONTENT;
   const serverError = Constants.HttpStatus.INTERNAL_SERVER_ERROR;
@@ -302,19 +302,19 @@ src/
 
 ### 理由
 
-Sub-steps（`t.step`）は関連 assertion を 1 つの named suite の下でグループ化します。失敗は self-describing になります。
-Inline state（shared fixture なし）は test-order coupling を防止します。
+Sub-steps（`t.step`）は関連assertionを1つのnamed suiteの下でグループ化します。失敗はself-describingになります。
+Inline state（shared fixtureなし）はtest-order couplingを防止します。
 
 ### ルール
 
-- **Top-level structure**：`Deno.test("suite name", async (t) => { ... })` と、内部に 1 つ以上の `await t.step("case description", async () => { ... })` があります。
+- **Top-level structure**：`Deno.test("suite name", async (t) => { ... })` と、内部に1つ以上の `await t.step("case description", async () => { ... })` があります。
 - **Assertion**：`@std/assert` からの `assertEquals()` のみ。
-  `assertStrictEquals`、`assert`、または Node-style matchers を使用しないでください。
+  `assertStrictEquals`、`assert`、またはNode-style matchersを使用しないでください。
 - **Spies & stubs**：`@std/testing/mock` からの `stub()` / `spy()` / `assertSpyCalls()`。
-  `finally` ブロック内で常に restore してください。
-- **Fixture data は inline です。** 各 `t.step` 内 — shared setup 関数または fixture ファイルはありません。
-  Helper factories（例：`makeBody()`）を test ファイルの top で定義することは、repetition を削減する場合に受け入れ可能です。ただし、shared mutable state を carry してはいけません。
-- **各 step は完全に independent です。** step 間で shared state はありません。
+  `finally` ブロック内で常にrestoreしてください。
+- **Fixture data は inline です。** 各 `t.step` 内 — shared setup関数またはfixtureファイルはありません。
+  Helper factories（例：`makeBody()`）をtestファイルのtopで定義することは、repetitionを削減する場合に受け入れ可能です。ただし、shared mutable stateをcarryしてはいけません。
+- **各 step は完全に independent です。** step間でshared stateはありません。
 - **Test ファイル location は source をミラーします**：`tests/router/messages/successMessage.test.ts` は `src/router/messages/successMessage.ts` をテストします。
 
 ### 例
@@ -350,19 +350,19 @@ Deno.test("bad test", async (t) => {
 
 ### 理由
 
-`.then(i => i).catch(() => null)` idiom は deliberately **graceful-degradation パターン**です：identity `.then` は resolved value の型を保存し、`.catch` は任意の rejection を `null` に変換します。呼び出し元は単純な `if (!value)` guard でチェックできます。
-`finally` null-assignment は、次の GC cycle を待つのではなく、large objects（file blob、multi-file array）を prompt に release します。
+`.then(i => i).catch(() => null)` idiomはdeliberately **graceful-degradation パターン**です：identity `.then` はresolved valueの型を保存し、`.catch` は任意のrejectionを `null` に変換します。呼び出し元は単純な `if (!value)` guardでチェックできます。
+`finally` null-assignmentは、次のGC cycleを待つのではなく、large objects（file blob、multi-file array）をpromptにreleaseします。
 
 ### ルール
 
-- **Graceful degradation**：失敗した Promise が throw の代わりに `null` を返すべき場合、`.then((i) => i).catch(() => null)` を使用してください。
-  identity `.then((i) => i)` は intentional です — 戻り値型 inference を consistent に保ち、"happy path" が pass-through であることを signal します。
+- **Graceful degradation**：失敗したPromiseがthrowの代わりに `null` を返すべき場合、`.then((i) => i).catch(() => null)` を使用してください。
+  identity `.then((i) => i)` はintentionalです — 戻り値型inferenceをconsistentに保ち、"happy path" がpass-throughであることをsignalします。
 - **リソースクリーンアップ**：関数本体を `try { ... } catch (e: unknown) { ... } finally { obj = null; }` でラップしてください。
-  `finally` で large objects を `null` に割り当てます。`catch` で既に `null` に設定されている場合でも。
-- **エラー casting**：`(e as Error).message` — `instanceof` guard のない direct cast は受け入れ可能です。
-- **Null-guard early return**：関数の top で `null` inputs をチェックし、直ちに error response を return します：
+  `finally` でlarge objectsを `null` に割り当てます。`catch` で既に `null` に設定されている場合でも。
+- **エラー casting**：`(e as Error).message` — `instanceof` guardのないdirect castは受け入れ可能です。
+- **Null-guard early return**：関数のtopで `null` inputsをチェックし、直ちにerror responseをreturnします：
   `if (!infoObject.body) return infoObject.c.body(null, { status: serverError });`
-- **エラーメッセージ** は失敗した内容を説明する descriptive な英語文字列です。
+- **エラーメッセージ** は失敗した内容を説明するdescriptiveな英語文字列です。
 
 ### 例
 
@@ -405,17 +405,17 @@ try {
 ### 理由
 
 コードは*何が*起こっているかを表示します。コメントは*なぜ*決定が下されたかを説明します。
-単にコードを restate するコメントは value を追加することなくノイズを追加します。
+単にコードをrestateするコメントはvalueを追加することなくノイズを追加します。
 
 ### ルール
 
-- **ブロックコメント（`/* ... */`）**：architectural decisions、non-obvious constraints、または workarounds の複数行説明に使用。説明するコードの直上に配置。
-- **Inline コメント（`// ...`）**：edge cases、non-obvious values、または important caveats の単一行ノートに使用。関連する statement の上（または場合によっては end）に配置。
-- **section-divider コメントはありません。** （`// ===`、`// ---`、`// *** SECTION ***`）。関数グループ化とファイル構造でコードを organize してください。
-- **`NOTE:` prefix** 既知の constraint または obvious approach からの intentional deviation をフラグするコメント用：
+- **ブロックコメント（`/* ... */`）**：architectural decisions、non-obvious constraints、またはworkaroundsの複数行説明に使用。説明するコードの直上に配置。
+- **Inline コメント（`// ...`）**：edge cases、non-obvious values、またはimportant caveatsの単一行ノートに使用。関連するstatementの上（または場合によってはend）に配置。
+- **section-divider コメントはありません。**（`// ===`、`// ---`、`// *** SECTION ***`）。関数グループ化とファイル構造でコードをorganizeしてください。
+- **`NOTE:` prefix** 既知のconstraintまたはobvious approachからのintentional deviationをフラグするコメント用：
   `// NOTE: slash command registration was moved to registerCommands.ts to keep bot.ts side-effect-free for tests.`
-- **obvious なことをコメント化しないでください。** コードが self-explanatory なら、コメントは不要です。
-- **JSDoc は実装コメントとは別です。** JSDoc は関数シグネチャに存在します。inline コメントは本体内に存在します。
+- **obvious なことをコメント化しないでください。** コードがself-explanatoryなら、コメントは不要です。
+- **JSDoc は実装コメントとは別です。** JSDocは関数シグネチャに存在します。inlineコメントは本体内に存在します。
 
 ### 例
 

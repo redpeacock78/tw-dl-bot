@@ -10,7 +10,8 @@ All tasks live in `deno.json`. Run via `deno task <name>`:
 - `deno task run` — start the bot once (`deno run -A`)
 - `deno task build` — compile to `build/main` binary
 - `deno task cache` — pre-cache imports against `import_map.json`
-- `deno task lint` — runs both `deno lint` and `tools/textlint.ts` (Markdown text lint)
+- `deno task lint` — runs both `deno lint` and `tools/textlint.ts` over `docs/jp/` (Japanese Markdown text lint)
+- `deno task lint:fix` — auto-fix textlint findings in `docs/jp/`
 - `deno task test` — Deno test suite under `tests/` (test env vars are inlined in the task — see "Test env footgun" below)
 - `deno task test:watch` — same with `--watch`
 - `deno task test:coverage` — generates `coverage/` directory; CI publishes coverage to Codecov
@@ -119,7 +120,7 @@ Tests run with permissions `--allow-env`, `--allow-read`, `--allow-run`, `--allo
 
 - `.github/workflows/test.yml` — lint → test → coverage → upload to Codecov (`codecov/codecov-action@v5`, tokenless via the installed Codecov GitHub App). `Generate lcov report` step guards on `[[ -d coverage ]]` to stay green when prior steps skip.
 - `codecov.yml` — `project: auto` / `patch: 70%`, ignores `tools/`, `tests/`, `docker/`, `**/*.test.ts`.
-- `tools/` is excluded from `deno lint` (`deno.json` `lint.exclude`) — `tools/textlint.ts` uses `npm:` prefixes and unversioned imports that trip default lint rules. Don't try to "fix" these unless you're rewriting that file.
+- `tools/` is excluded from `deno lint` (`deno.json` `lint.exclude`) — `tools/textlint.ts` uses `npm:` prefixes that trip default lint rules. Don't try to "fix" these unless you're rewriting that file. `npm:textlint`, `textlint-plugin-jsx`, `textlint-rule-preset-ja-*` are pinned to major versions to avoid a Deno node-compat regression from older `typed-array-byte-offset`.
 
 ## Discord constraints worth knowing
 

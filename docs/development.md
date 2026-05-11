@@ -59,8 +59,11 @@ deno task run
 # Cache imports declared in import_map.json
 deno task cache
 
-# Lint TypeScript and run textlint over root files
+# Lint TypeScript and run textlint over docs/jp/
 deno task lint
+
+# Auto-fix textlint findings in docs/jp/
+deno task lint:fix
 
 # Compile a self-contained binary into ./build/main
 deno task build
@@ -80,8 +83,10 @@ deno task test:coverage
 
 `deno task lint` runs:
 
-1. `deno lint` over all TypeScript sources. The `tools/` directory is excluded via the `lint.exclude` field in `deno.json` (the textlint runner intentionally pulls in unversioned `npm:` specifiers).
-2. `deno run --allow-env --allow-read --allow-sys tools/textlint.ts *` — a custom runner that loads `.textlintrc` and lints the files passed as arguments. The shell glob `*` expands to top-level files only.
+1. `deno lint` over all TypeScript sources. The `tools/` directory is excluded via the `lint.exclude` field in `deno.json` (`tools/textlint.ts` uses `npm:` specifiers that the lint defaults reject).
+2. `deno run --allow-env --allow-read --allow-sys tools/textlint.ts docs/jp/` — a custom runner that loads `.textlintrc` and lints the files passed as arguments. The runner recursively scans `docs/jp/` for Markdown files. `deno task lint:fix` re-invokes the runner with `--fix` (and `--allow-write`) to apply auto-fixable rules in place.
+
+The `npm:textlint`, `npm:textlint-plugin-jsx`, and the `npm:textlint-rule-preset-ja-*` imports are pinned to major versions in `tools/textlint.ts` — unpinned, Deno's npm resolver fetched an older `typed-array-byte-offset@1.0.2` that throws `TypeError: Cannot convert undefined or null to object` during init under Deno 2.x.
 
 ### Tests
 
