@@ -96,7 +96,7 @@ interaction handlerは `/dl` と共有されます（`src/bot/interactionCreate.
 | Modal field | Value |
 | --- | --- |
 | `title` | `Add URLs to "<threadName-truncated-to-40>"` |
-| `customId` | `threaddl|<threadName-truncated-to-80>` |
+| `customId` | `` `threaddl|<threadName-truncated-to-80>` `` |
 
 Modalには単一のParagraph（複数行）`InputText` componentが含まれます。
 
@@ -178,7 +178,7 @@ URL抽出はdelimiter-agnosticです。送信されたテキストはregex **`/h
 | Modal field | Value |
 | --- | --- |
 | `title` | `Add URLs to "<threadName-truncated-to-40>"` |
-| `customId` | `threaddl-spoiler|<threadName-truncated-to-80>` |
+| `customId` | `` `threaddl-spoiler|<threadName-truncated-to-80>` `` |
 
 （InputText component形状は同じです — 上記の `/threaddl` を参照）
 
