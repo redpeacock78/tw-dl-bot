@@ -59,8 +59,11 @@ deno task run
 # Cache imports declared in import_map.json
 deno task cache
 
-# Lint TypeScript and run textlint over root files
+# Lint TypeScript and run textlint over docs/jp/
 deno task lint
+
+# Auto-fix textlint findings in docs/jp/
+deno task lint:fix
 
 # Compile a self-contained binary into ./build/main
 deno task build
@@ -80,8 +83,10 @@ deno task test:coverage
 
 `deno task lint` runs:
 
-1. `deno lint` over all TypeScript sources. The `tools/` directory is excluded via the `lint.exclude` field in `deno.json` (the textlint runner intentionally pulls in unversioned `npm:` specifiers).
-2. `deno run --allow-env --allow-read --allow-sys tools/textlint.ts *` — a custom runner that loads `.textlintrc` and lints the files passed as arguments. The shell glob `*` expands to top-level files only.
+1. `deno lint` over all TypeScript sources. The `tools/` directory is excluded via the `lint.exclude` field in `deno.json` (`tools/textlint.ts` uses `npm:` specifiers that the lint defaults reject).
+2. `deno run --allow-env --allow-read --allow-sys tools/textlint.ts docs/jp/` — a custom runner that loads `.textlintrc` and lints the files passed as arguments. The runner recursively scans `docs/jp/` for Markdown files. `deno task lint:fix` re-invokes the runner with `--fix` (and `--allow-write`) to apply auto-fixable rules in place.
+
+The `npm:textlint`, `npm:textlint-plugin-jsx`, and the `npm:textlint-rule-preset-ja-*` imports are pinned to major versions in `tools/textlint.ts` — unpinned, Deno's npm resolver fetched an older `typed-array-byte-offset@1.0.2` that throws `TypeError: Cannot convert undefined or null to object` during init under Deno 2.x.
 
 ### Tests
 
@@ -129,7 +134,7 @@ The dashboard is at <https://app.codecov.io/gh/redpeacock78/tw-dl-bot>; the badg
 `src/main.ts`:
 
 1. Loads `Secrets` (fails fast on missing env vars; this happens implicitly via the `import` chain, since `bot.ts` reads `Secrets.DISCORD_TOKEN` when constructing the discordeno client).
-2. Calls `await registerCommands(bot)` (`src/bot/registerCommands.ts`) to register `dl`, `dl-spoiler`, and `threaddl` as global slash commands. This was previously a top-level `await` inside `bot.ts`; it was extracted so that importing `bot.ts` is side-effect-free for unit tests.
+2. Calls `await registerCommands(bot)` (`src/bot/registerCommands.ts`) to register `dl`, `dl-spoiler`, `threaddl`, and `threaddl-spoiler` as global slash commands. This was previously a top-level `await` inside `bot.ts`; it was extracted so that importing `bot.ts` is side-effect-free for unit tests.
 3. Calls `startBot(bot)` to open the Discord gateway connection.
 4. Mounts the Hono app at `/api` and serves it via the `serve` helper from `std/http/server`.
 5. Starts a periodic RAM-usage update on the bot status (`Bot.updateRAMUsage2BotStatus`, every 10 seconds).
@@ -140,7 +145,7 @@ The HTTP server listens on `0.0.0.0:8000` by default (the `serve` from `https://
 
 - **`Not all secrets are set.`** — One of `DISCORD_TOKEN`, `DISPATCH_URL`, `GITHUB_TOKEN` is missing or empty.
 - **No interactions received** — Ensure the bot has the `applications.commands` and `bot` scopes when invited to the guild.
-- **`repository_dispatch` returns 404** — The `DISPATCH_URL` is wrong, the PAT lacks scope, or the workflow file does not declare a matching `on.repository_dispatch.types` (`download` for `/dl` & `/dl-spoiler`, `thread-download` for `/threaddl`).
+- **`repository_dispatch` returns 404** — The `DISPATCH_URL` is wrong, the PAT lacks scope, or the workflow file does not declare a matching `on.repository_dispatch.types` (`download` for `/dl` & `/dl-spoiler`, `thread-download` for `/threaddl` & `/threaddl-spoiler`).
 - **`/threaddl` replies "This command must be used in a guild text channel."** — The interaction came from a DM. Threads can only be created in a guild text/announcement/forum channel; the bot enforces this by checking `interaction.guildId` before calling `startThreadWithoutMessage`.
 - **Callbacks never reach the bot** — `ENDPOINT_URL` (a GH Actions secret) does not point at a publicly reachable `/api/callback`. Check tunnel logs.
 - **`/dl` follow-up edits stop after 15 minutes** — Discord rate-limits follow-up message edits past the original interaction's lifetime; the bot enforces this via `Constants.EDIT_FOLLOWUP_MESSAGE_TIME_LIMIT`. `/threaddl` is unaffected because thread placeholders are edited via `editMessage`, which is not bound by that window.
