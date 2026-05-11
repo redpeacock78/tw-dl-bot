@@ -2,10 +2,10 @@
 
 # スラッシュコマンド リファレンス
 
-すべてのコマンド定義は `src/bot/commands.ts` に格納されており、その名前は `src/libs/constants.ts` の `Constants.Webhook.Json.ClientPayload.CommandType` から取得されます。Discordへの登録は `src/bot/registerCommands.ts` で行われ、`startBot` の前に `src/main.ts` から一度呼び出されます。4つのコマンド — `dl`、`dl-spoiler`、`threaddl`、`threaddl-spoiler` — はすべて**グローバル** application commandとして登録され、`src/bot/bot.ts` の `interactionCreate` handlerでディスパッチされます。ディスパッチャーは `interaction.type` で分岐します：
+すべてのコマンド定義は `src/bot/commands.ts` に格納されています。その名前は `src/libs/constants.ts` の `Constants.Webhook.Json.ClientPayload.CommandType` から取得されます。Discordへの登録は `src/bot/registerCommands.ts` で行われます。`startBot` の前に `src/main.ts` から一度呼び出されます。4つのコマンド — `dl`、`dl-spoiler`、`threaddl`、`threaddl-spoiler` — はすべて**グローバル** application commandとして登録されます。`src/bot/bot.ts` の `interactionCreate` handlerでディスパッチされます。ディスパッチャーは `interaction.type` で分岐します。
 
-- `ApplicationCommand` → コマンド名で `interactionCreate`（`/dl`、`/dl-spoiler`）または `threadInteractionCreate`（`/threaddl`、`/threaddl-spoiler`）にルーティング。
-- `ModalSubmit` → `threadModalSubmit` に渡され、`customId` を検証し、URLを抽出し、共有の `runThreadFlow` を実行。
+- `ApplicationCommand` → コマンド名で振り分けます。`/dl`、`/dl-spoiler` は `interactionCreate` にルーティングします。`/threaddl`、`/threaddl-spoiler` は `threadInteractionCreate` にルーティングします。
+- `ModalSubmit` → `threadModalSubmit` に渡され、`customId` を検証し、URLを抽出します。共有の `runThreadFlow` を実行します。
 
 ## `/dl`
 
@@ -53,7 +53,7 @@
 
 ### Options
 
-`/dl` と同じ：
+`/dl` と同じです。
 
 | Option | Type | Required | Discord description (literal) | Purpose |
 | --- | --- | --- | --- | --- |
@@ -61,7 +61,7 @@
 
 ### Behaviour
 
-interaction handlerは `/dl` と共有されます（`src/bot/interactionCreate.ts` を参照）。ディスパッチされるペイロードの `commandType`（`dl-spoiler`）のみが異なります。成功時、callback handlerはメッセージを構築する際に `spoiler: true` を設定し、これによってファイル名が `SPOILER_` prefixされる（`Constants.Message.File.Name.SPOILER_PREFIX`）。
+interaction handlerは `/dl` と共有されます（`src/bot/interactionCreate.ts` を参照）。ディスパッチされるペイロードの `commandType`（`dl-spoiler`）のみが異なります。成功時、callback handlerはメッセージを構築する際に `spoiler: true` を設定します。これによりファイル名に `SPOILER_` prefixが付きます（`Constants.Message.File.Name.SPOILER_PREFIX`）。
 
 ### Example
 
@@ -91,14 +91,14 @@ interaction handlerは `/dl` と共有されます（`src/bot/interactionCreate.
 
 ### Modal input
 
-`/threaddl` が呼び出されると、Botの最初の応答はdeferred follow-upではなくModalです：
+`/threaddl` が呼び出されると、Botの最初の応答はdeferred follow-upではなくModalです。
 
 | Modal field | Value |
 | --- | --- |
 | `title` | `Add URLs to "<threadName-truncated-to-40>"` |
 | `customId` | `threaddl|<threadName-truncated-to-80>` |
 
-Modalには単一のParagraph（複数行）`InputText` componentが含まれます：
+Modalには単一のParagraph（複数行）`InputText` componentが含まれます。
 
 | InputText field | Value |
 | --- | --- |
@@ -110,25 +110,25 @@ Modalには単一のParagraph（複数行）`InputText` componentが含まれま
 | `minLength` | `1` |
 | `maxLength` | `4000` |
 
-URL抽出はdelimiter-agnosticです。送信されたテキストはregex **`/https?:\/\/[^\s,;]+/g`** と照合され、whitespace、comma、semicolonで区切られた `http://` または `https://` tokenをキャプチャします。newline、space、comma、semicolon、またはそれらの任意の組み合わせがseparatorsとして機能します。末尾の `,` / `;` は文字クラスが意図的にそれらを除外しているため削除されます。
+URL抽出はdelimiter-agnosticです。送信されたテキストはregex **`/https?:\/\/[^\s,;]+/g`** と照合されます。whitespace、comma、semicolonで区切られた `http://` や `https://` tokenをキャプチャします。newline、space、comma、semicolon、またはそれらの任意の組み合わせがseparatorsとして機能します。末尾の `,` / `;` は文字クラスが意図的にそれらを除外しているため削除されます。
 
 ### Behaviour
 
-1. **ApplicationCommand interaction（スラッシュコマンド）。** `threadInteractionCreate` は `name` optionを読み取り、80文字に切り詰め、**直ちに Modal で応答します**（`InteractionResponseTypes.Modal`）。`customId` は `threaddl|<truncated-threadName>` です。`defer` は送信されません — Modalはinteractionへの最初の応答である必要があり、deferred ACKは応答スロットを消費してしまいます。
-2. **ModalSubmit interaction（ユーザーが Modal を送信）。** `threadModalSubmit` は実行します：
-   - **`customId` allowlist。** 最初の `|` は `customId` を `<commandType>` と `<threadName>` に分割します。handlerは `commandType` が `Set<string>` allowlist `{ "threaddl", "threaddl-spoiler" }` 内にない限り、interactionをsilentにdropします（任意の `customId` prefixを持つforged ModalSubmit interactionsはembedなしにdropされます）。
-   - **URL 抽出。** `(ActionRow → InputText)` component treeをウォークして `customId === "urls"` 値を見つけ、その上で `/https?:\/\/[^\s,;]+/g` regexを実行します。URLでないtoken（および任意のleading or trailing punctuation）はsilentに破棄されます。
+1. **ApplicationCommand interaction（スラッシュコマンド）。** `threadInteractionCreate` は `name` optionを読み取り、80文字に切り詰めます。続けて**直ちに Modal で応答します**（`InteractionResponseTypes.Modal`）。`customId` は `threaddl|<truncated-threadName>` です。`defer` は送信されません。Modalはinteractionへの最初の応答である必要があり、deferred ACKは応答スロットを消費してしまうためです。
+2. **ModalSubmit interaction（ユーザーが Modal を送信）。** `threadModalSubmit` は以下を実行します。
+   - **`customId` allowlist。** 最初の `|` で `customId` を `<commandType>` と `<threadName>` に分割します。`Set<string>` allowlistは `{ "threaddl", "threaddl-spoiler" }` です。handlerは `commandType` がこのallowlist内にない限り、interactionをsilentにdropします。任意の `customId` prefixを持つforged ModalSubmit interactionsはembedなしにdropされます。
+   - **URL 抽出。** `(ActionRow → InputText)` component treeをウォークします。`customId === "urls"` 値を見つけ、その上で `/https?:\/\/[^\s,;]+/g` regexを実行します。URLでないtoken（および任意のleading or trailing punctuation）はsilentに破棄されます。
    - **`runThreadFlow` に引き渡し**。`{ b, interaction (the ModalSubmit one), commandType, threadName, contents }`。
-3. **`runThreadFlow`（`/threaddl-spoiler` と共有）。** フロー：
+3. **`runThreadFlow`（`/threaddl-spoiler` と共有）。** フローは次のとおりです。
    1. ModalSubmit interactionをdeferします（`DeferredChannelMessageWithSource`）。
    2. **Validation gate。** `contents.length > 0`、`every(isUrl)`、`threadName.length > 0` の場合のみ受け入れます。rejection error embedは抽出されたtokenをリストするか、何も抽出されなかった場合は `"No valid URL was found in the input."` を表示します。
-   3. **Guild-only guard。** DM内のDiscord interactionsは `channelId`（DM channel）を持ちますが、threadはguild text/announcement/forum channel内でのみ作成できます。`runThreadFlow` は `interaction.guildId` も要求します。これが失われた場合、Botは `"This command must be used in a guild text channel."` と読むerror embedで応答して停止します。
-   4. `startThreadWithoutMessage(channelId, { name: threadName, autoArchiveDuration: 1440, type: 11 })` を呼び出します。rejection時、`Failed to create thread: <reason>` error embedを投稿して停止します。（`1440` 分 = 24時間自動アーカイブ、`type: 11` = public thread。）
-   5. Follow-upをoriginal（Modal）interactionに投稿：`🧵 Created thread <#thread-id> for N URL(s).`
-   6. 新しいthread内で、`sendMessage` でURLごとに1つの `🕑Queuing...` placeholderを投稿します。失敗した `sendMessage` callsはsilentにdropされます（`.catch((): null => null)`）。すべてのplaceholderが失敗した場合（0件残存）、フロー は何もディスパッチせずに停止します（embed表示なし — **Send Messages in Threads** が欠けている場合のオペレーター含意については [deployment.md](./deployment.md#bot-permissions-in-discord) を参照）。
-   7. **単一の** `repository_dispatch`（`thread-download` type）を火します。`{ commandType: "threaddl" | "threaddl-spoiler", channel: <thread-id>, token, startTime, links: [{ link, message }, ...] }`。dispatch自体がrejectionされた場合、すべてのplaceholderがfailureを説明するerror embedに編集されます。
-4. **Runner。** `.github/workflows/run-thread.yml` は `links` からmatrixを構築し、URLごとに1つのジョブを並列で実行します（`max-parallel: 16`、`fail-fast: false`）。各shardはoriginal `commandType` と `actionType: "thread-single"` または `"thread-multi"` を付けて `/api/callback` にprogress、success、failure callbacksを投稿します。Discord embedのrun numberは `#N-XX` 形式でフォーマットされます（N = `github.run_number`、XX = zero-padded shard index：`01`、`02` など）。どのshardがどのURLを処理したかをidentifyするため。
-5. **`useThread` short-circuit。** placeholderはthread内に存在するため（interaction follow-upとしてではなく）、すべてのcallback handler — `progress`、`failure`、および `successMessage.singleFile` / `multiFiles` builders — は `commandType` が `"threaddl"` または `"threaddl-spoiler"`（または `handleSingleSuccess` / `handleMultiSuccess` に渡された `useThread` flag）であるかを確認し、`editFollowupMessage` の代わりに `bot.helpers.editMessage(channelId, messageId, ...)` 経由でplaceholderを編集します。このバイパスにより、15分のinteraction-token windowは適用されず、non-thread modeでは別のmessageを投稿するようにフォールバックするoversize fallbackもshort-circuitされるため、messageはthread内にin-placeのままになります。
+   3. **Guild-only guard。** DM内のDiscord interactionsは `channelId`（DM channel）を持ちます。threadはguild text/announcement/forum channel内でのみ作成できます。そのため `runThreadFlow` は `interaction.guildId` も要求します。これが失われた場合、Botは `"This command must be used in a guild text channel."` と読むerror embedで応答して停止します。
+   4. `startThreadWithoutMessage` を呼び出します。引数は `(channelId, { name: threadName, autoArchiveDuration: 1440, type: 11 })` です。rejection時、`Failed to create thread: <reason>` error embedを投稿して停止します。`1440` 分は24時間の自動アーカイブを意味し、`type: 11` はpublic threadを表します。
+   5. Follow-upをoriginal（Modal）interactionに投稿します。本文は `🧵 Created thread <#thread-id> for N URL(s).` です。
+   6. 新しいthread内で、`sendMessage` でURLごとに1つの `🕑Queuing...` placeholderを投稿します。失敗した `sendMessage` callsはsilentにdropされます（`.catch((): null => null)`）。すべてのplaceholderが失敗した場合（0件残存）、フローは何もディスパッチせずに停止します（embed表示なし）。**Send Messages in Threads** が欠けている場合のオペレーター含意については [deployment.md](./deployment.md#bot-permissions-in-discord) を参照してください。
+   7. **単一の** `repository_dispatch`（`thread-download` type）を火します。ペイロードのキーは `commandType`、`channel`、`token`、`startTime`、`links` です。各値の型は `commandType: "threaddl" | "threaddl-spoiler"`、`channel: <thread-id>` です。残りは `token`、`startTime`、`links: [{ link, message }, ...]` となります。dispatch自体がrejectionされた場合、すべてのplaceholderがfailureを説明するerror embedに編集されます。
+4. **Runner。** `.github/workflows/run-thread.yml` は `links` からmatrixを構築します。URLごとに1つのジョブを並列で実行します（`max-parallel: 16`、`fail-fast: false`）。各shardは付加情報を `/api/callback` にprogress、success、failure callbacksとして投稿します。付加情報はoriginal `commandType` と `actionType: "thread-single"` または `"thread-multi"` です。Discord embedのrun numberは `#N-XX` 形式でフォーマットされます。Nは `github.run_number` を、XXはzero-padded shard index（`01`、`02` など）を表します。これによりどのshardがどのURLを処理したかをidentifyできます。
+5. **`useThread` short-circuit。** placeholderはthread内（interaction follow-upとしてではない）に存在します。そのためすべてのcallback handlerは特別なパスを取ります。対象は `progress`、`failure`、および `successMessage.singleFile` / `multiFiles` buildersです。callbackは `commandType` が `"threaddl"` または `"threaddl-spoiler"` であるかを確認します。あるいは `handleSingleSuccess` / `handleMultiSuccess` に渡された `useThread` flagでも判定できます。`editFollowupMessage` の代わりに `bot.helpers.editMessage(channelId, messageId, ...)` 経由でplaceholderを編集します。このバイパスにより15分のinteraction-token windowは適用されません。non-thread modeで別のmessageを投稿するようにフォールバックするoversize fallbackもshort-circuitされます。そのためmessageはthread内にin-placeのままになります。
 
 ### Example flow（ユーザー視点）
 
@@ -150,7 +150,7 @@ URL抽出はdelimiter-agnosticです。送信されたテキストはregex **`/h
    ```
 
 4. ユーザーが**Submit**をクリック。
-5. Botは `weekly-faves` threadを作成し、その内部の各URLごとに1つの `🕑Queuing...` placeholderを投稿し、単一のmatrix workflowをディスパッチします。
+5. Botは `weekly-faves` threadを作成します。その内部の各URLごとに1つの `🕑Queuing...` placeholderを投稿します。さらに単一のmatrix workflowをディスパッチします。
 6. 各shardが終了すると、そのplaceholderはsuccess / failure embedに編集されます（成功時はファイルがアタッチされます）。
 
 ## `/threaddl-spoiler`
@@ -173,7 +173,7 @@ URL抽出はdelimiter-agnosticです。送信されたテキストはregex **`/h
 
 ### Modal input
 
-`/threaddl` と同じ形状ですが、Modal `customId` は `threaddl-spoiler|<threadName>` です。ModalSubmit handlerがspoiler path経由でそれをルーティングできるようにします：
+`/threaddl` と同じ形状ですが、Modal `customId` は `threaddl-spoiler|<threadName>` です。ModalSubmit handlerがspoiler path経由でそれをルーティングできるようにします。
 
 | Modal field | Value |
 | --- | --- |
@@ -184,17 +184,17 @@ URL抽出はdelimiter-agnosticです。送信されたテキストはregex **`/h
 
 ### Behaviour
 
-`/threaddl` と同一。両コマンドは `threadInteractionCreate`（Modalを開く）と `threadModalSubmit` → `runThreadFlow`（作業を行う）を共有します。唯一の違いは：
+`/threaddl` と同一です。両コマンドは `threadInteractionCreate`（Modalを開く）と `threadModalSubmit` → `runThreadFlow`（作業する処理）を共有します。唯一の違いは以下のとおりです。
 
 - スラッシュコマンド名（`threaddl-spoiler` vs `threaddl`）、
-- `customId`、`repository_dispatch` payload、および各callbackで運ばれる `commandType`（`"threaddl-spoiler"` vs `"threaddl"`）、
-- success-callback handlers `success.threadDlSpoiler.{single,multi}` は `spoiler: true` を設定し、これがファイル名が `SPOILER_` prefixされる原因です（`Constants.Message.File.Name.SPOILER_PREFIX`）。
+- `customId`、`repository_dispatch` payload、各callbackで運ばれる `commandType`（`"threaddl-spoiler"` vs `"threaddl"`）、
+- success-callback handlers `success.threadDlSpoiler.{single,multi}` は `spoiler: true` を設定します。これがファイル名へ `SPOILER_` prefixが付く原因です（`Constants.Message.File.Name.SPOILER_PREFIX`）。
 
-`threaddl-spoiler` `commandType` は `threaddl` と同じ `Set` allowlistにあり、同じ `runThreadFlow` が実行され、同じ `run-thread.yml` workflowがディスパッチを処理します（`commandType` は単にcallbackに渡されます）。
+`threaddl-spoiler` の `commandType` は `threaddl` と同じ `Set` allowlistに属します。同じ `runThreadFlow` が実行され、同じ `run-thread.yml` workflowがディスパッチを処理します（`commandType` は単にcallbackへ渡されます）。
 
 ## Command type tokens
 
-dispatch payloadとcallbackで使用される文字列値は一度定義され、Bot、router、workflowを通じて再利用されます：
+dispatch payloadとcallbackで使用される文字列値は一度定義され、Bot、router、workflowを通じて再利用されます。
 
 | Constant | Value |
 | --- | --- |

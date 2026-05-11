@@ -2,7 +2,7 @@
 
 # GitHub Actions Integration
 
-Botはすべての `yt-dlp` 作業をGitHub Actionsにオフロード。4つのワークフローが関係：
+Botはすべての `yt-dlp` 作業をGitHub Actionsにオフロードします。4つのワークフローが関係します。
 
 | Workflow | File | Purpose |
 | --- | --- | --- |
@@ -73,17 +73,17 @@ Content-Type: application/json
 }
 ```
 
-`channel` ここは **thread** ID。`startThreadWithoutMessage` によって返された、original source channelではなく。各 `links[i].message` はthread内に投稿されたplaceholderのID。同じworkflowが両方の `commandType` valuesを処理 — `commandType` はcallbackごとにecho backされ、Botのrouterがspoiler vs. non-spoiler success handlerをピックするために使用。
+`channel` は **thread** IDを指します。`startThreadWithoutMessage` によって返されたもので、original source channelではありません。各 `links[i].message` はthread内に投稿されたplaceholderのIDです。同じworkflowが両方の `commandType` valuesを処理します。`commandType` はcallbackごとにecho backされます。Botのrouterがspoiler vs. non-spoiler success handlerをピックするために使用されます。
 
-interaction.tokenここは **ModalSubmit** interaction token（original ApplicationCommand tokenではなく）。`runThreadFlow` はModal handshakeの2番目のハーフで実行するため。
+interaction.tokenは **ModalSubmit** interaction token（original ApplicationCommand tokenではない）を指します。`runThreadFlow` はModal handshakeの2番目のハーフで実行するためです。
 
-`DISPATCH_URL` はconventionally `https://api.github.com/repos/<owner>/<repo>/dispatches`。
+`DISPATCH_URL` はconventionally `https://api.github.com/repos/<owner>/<repo>/dispatches` です。
 
-`run.yml` と `run-thread.yml` の両方は `${{ github.event.client_payload.* }}` 経由でこれらのフィールドをconsumeし、user-controlled valuesを `::add-mask::` でマスク。public logの外に。`run-thread.yml` はshardごとに `matrix.link` と `matrix.message` もmask。
+`run.yml` と `run-thread.yml` の両方は `${{ github.event.client_payload.* }}` 経由でこれらのフィールドをconsumeします。user-controlled valuesを `::add-mask::` でマスクしてpublic logの外に置きます。`run-thread.yml` はshardごとに `matrix.link` と `matrix.message` もmaskします。
 
 ## Callback: `POST /api/callback`
 
-runnerは `ENDPOINT_URL` Actions secretのURLに投稿（Botのpublic `/api/callback` にresolveされる）。両方のワークフローは同じendpointに同じbody schemaで投稿。`CallbackTypes.bodyDataObject` in `src/router/types/callbackTypes.ts` で定義：
+runnerは `ENDPOINT_URL` Actions secretのURLに投稿します（Botのpublic `/api/callback` にresolveされます）。両方のワークフローは同じendpointに同じbody schemaで投稿します。schema定義は `CallbackTypes.bodyDataObject` in `src/router/types/callbackTypes.ts` です。
 
 | Field | Type | Notes |
 | --- | --- | --- |
@@ -108,12 +108,12 @@ Progress callbacksは `application/json` としてship。Success callbacks with 
 
 ### Status routing
 
-routerは `Custom.CallbackPattern`（`src/libs/custom.ts`）を使用して `[status, commandType, actionType]` に基づいてhandlerをピック。
+routerは `Custom.CallbackPattern`（`src/libs/custom.ts`）を使用します。`[status, commandType, actionType]` に基づいてhandlerをピックします。
 
 **Routing structure:**
 
-- **Success callbacks** use a union of two disjoint sub-products: (`dl` / `dl-spoiler` × `single` / `multi`) ∪ (`threaddl` / `threaddl-spoiler` × `thread-single` / `thread-multi`) = 4 + 4 = 8 entries。各々がuniquely routed。`status` は常に `"success"`。
-- **Progress and failure callbacks** use a subset-first match: thread-specific patterns（`commandType === "threaddl"` または `commandType === "threaddl-spoiler"`、`actionType` nullish）はgeneric patterns（`commandType` nullish、`actionType` nullish）**の前に** checkedされる必要があります。なぜならorderが反対なら両方のパターンがthread-mode callbackにマッチ。`actionType` はrunnerからのprogress / failure callbacksで省略されるため、matchingは `status` と `commandType` のみに依存。
+- **Success callbacks** はa union of two disjoint sub-productsを使用します。組み合わせは2つあります。1つ目は `dl` / `dl-spoiler` × `single` / `multi` です。2つ目は `threaddl` / `threaddl-spoiler` × `thread-single` / `thread-multi` です。合計4 + 4 = 8 entriesになり、各々がuniquely routedされます。`status` は常に `"success"` です。
+- **Progress and failure callbacks** はa subset-first matchを使用します。先にthread-specific patternsをchecksする必要があります。条件は `commandType === "threaddl"` または `"threaddl-spoiler"`、`actionType` nullishです。次にgeneric patterns（`commandType` nullish、`actionType` nullish）です。orderが反対なら両方のパターンがthread-mode callbackにマッチしてしまうためです。`actionType` はrunnerからのprogress / failure callbacksで省略されます。そのためmatchingは `status` と `commandType` のみに依存します。
 
 Thread-mode patternsは `Custom.CallbackPattern` でnon-thread patternsの **前に** list：
 
@@ -137,11 +137,11 @@ Thread-mode patternsは `Custom.CallbackPattern` でnon-thread patternsの **前
 
 その他はすべて `500 Internal Server Error` を返す。
 
-handler implementation自体はshared：`callbackSuccessFunctions.ts` は `dl`、`dlSpoiler`、`threadDl`、`threadDlSpoiler` を2つのprivate helpersの周りのthin wrappersとしてエクスポート。`handleSingleSuccess(infoObject, spoiler, useThread)` と `handleMultiSuccess(infoObject, spoiler, useThread)`。`spoiler` と `useThread` flagsのみが8つのentry points（`{single, multi} × {dl, dlSpoiler, threadDl, threadDlSpoiler`）で異なります。`useThread === true` はmessage builders in `successMessage.ts` を `editFollowupMessage` の代わりに `bot.helpers.editMessage(channel, message)` を使用させ、oversize / 15分fallback gatesをshort-circuit。
+handler implementation自体はsharedです。`callbackSuccessFunctions.ts` は4つのexportを提供します。exportは `dl`、`dlSpoiler`、`threadDl`、`threadDlSpoiler` です。これらは2つのprivate helpersの周りのthin wrappersです。helpersは `handleSingleSuccess` と `handleMultiSuccess` です。両者ともシグネチャは `(infoObject, spoiler, useThread)` です。`spoiler` と `useThread` flagsのみが8つのentry pointsで異なります。entry pointsは `{single, multi} × {dl, dlSpoiler, threadDl, threadDlSpoiler}` です。`useThread === true` は `successMessage.ts` のmessage buildersに別のメソッドを使用させます。`editFollowupMessage` の代わりに `bot.helpers.editMessage(channel, message)` を使用します。これによりoversize / 15分fallback gatesをshort-circuitします。
 
 ### Response codes
 
-bodyはparseされ、`[status, commandType, actionType]` tripletは `Custom.CallbackPattern` に対してmatchedされた後に `src/router/callback.ts` で決定：
+bodyはparseされます。`[status, commandType, actionType]` tripletが `Custom.CallbackPattern` に対してmatchedされます。その結果は `src/router/callback.ts` で決定されます。
 
 | Code | When |
 | --- | --- |
@@ -151,7 +151,7 @@ bodyはparseされ、`[status, commandType, actionType]` tripletは `Custom.Call
 
 ## Runner processing pipeline
 
-Runner workflows（`run.yml` と `run-thread.yml`）はDocker container内で実行され、shell scriptsとcomposite GitHub Actionsを使用してdownload、encoding、upload workflowを管理。
+Runner workflows（`run.yml` と `run-thread.yml`）はDocker container内で実行されます。shell scriptsとcomposite GitHub Actionsを使用してdownload、encoding、upload workflowを管理します。
 
 ### Shell scripts（`.github/scripts/`）
 
@@ -166,7 +166,7 @@ Runner workflows（`run.yml` と `run-thread.yml`）はDocker container内で実
 
 **Name:** `Check and Convert Files`
 
-**Purpose:** Total download sizeをvalidateし、Discordの10 MB per-attachment limitに収まるようにtwo-pass HEVC（H.265）+ Opus encodingでoversized filesをre-encode。
+**Purpose:** Total download sizeをvalidateします。oversized filesをre-encodeします。encodingはtwo-pass HEVC（H.265）+ Opusで、Discordの10 MB per-attachment limitに収まるよう調整します。
 
 **Inputs:**
 - `endpoint_url` — Bot callback URL（progress updates用）
@@ -201,60 +201,69 @@ Runner workflows（`run.yml` と `run-thread.yml`）はDocker container内で実
 
 ## Runner workflow steps（`run.yml`、単一 URL）
 
-`.github/workflows/run.yml` はentirely within prebuilt runner containerで実行。主要ステップ：
+`.github/workflows/run.yml` はentirely within prebuilt runner containerで実行されます。主要ステップは以下のとおりです。
 
-1. **Masking Secrets** — `commandType`、`link`、`channel`、`message`、`token` を `::add-mask::` でマスク。logsに決して出現しない。
-2. **Start Steps / Setup** — `progress` callbacksを `⏳Starting...`、`🛠Setup...` などを投稿。`yt-dlp` がlatest nightlyであることをensure。
-3. **Confirmation of link survival** — supplied URLに対して `GET` を発行（`curl -siL`、headers + follow redirects、body discard）。dead linksで早期bail。
-4. **Start Download** — earlier stepsが記述したbash/awk scriptsで定義されたstreaming progress hooksを付けて `yt-dlp` を実行。
-5. **Check and Convert Files** — needed時ffmpeg経由でre-encode。
-6. **Upload files** — multipart parts（`actionType: single` または `multi`）としてアタッチされた結果のファイルを `/api/callback` にsuccess callbackを送信。
-7. **Failure paths** — "Link has expired"、"Video file not found"、"Uploaded file size exceeded"、"Download timed out" のexplicit `failure` callbacks。
-8. **Cleanup temp files** — always runs。
+1. **Masking Secrets** — `commandType`、`link`、`channel`、`message`、`token` を `::add-mask::` でマスクします。logsに決して出現しません。
+2. **Start Steps / Setup** — `progress` callbacksとして `⏳Starting...`、`🛠Setup...` などを投稿します。`yt-dlp` がlatest nightlyであることをensureします。
+3. **Confirmation of link survival** — supplied URLに対して `GET` を発行します。詳細は `curl -siL`、headers + follow redirects、body discardです。dead linksで早期bailします。
+4. **Start Download** — earlier stepsが記述したbash/awk scriptsで定義されたstreaming progress hooksを付けて `yt-dlp` を実行します。
+5. **Check and Convert Files** — needed時ffmpeg経由でre-encodeします。
+6. **Upload files** — 結果のファイルをmultipart parts（`actionType: single` または `multi`）としてアタッチします。`/api/callback` にsuccess callbackを送信します。
+7. **Failure paths** — explicit `failure` callbacksを送信します。種類は "Link has expired"、"Video file not found"、"Uploaded file size exceeded"、"Download timed out" です。
+8. **Cleanup temp files** — always runsします。
 
 ## Runner workflow steps（`run-thread.yml`、matrix fan-out）
 
-`.github/workflows/run-thread.yml` は2つのjobsで実行：
+`.github/workflows/run-thread.yml` は2つのjobsで実行されます。
 
 ### `prepare` job
 
-`client_payload.links` からstrategy matrixを構築：
+`client_payload.links` からstrategy matrixを構築します。
 
 ```bash
 matrix="$(jq -c '{include: [.client_payload.links | to_entries[] | {index: ((.key + 1) | tostring | if length < 2 then ("0" + .) else . end), link: .value.link, message: .value.message}]}' "${GITHUB_EVENT_PATH}")"
 count="$(jq -r '.client_payload.links | length' "${GITHUB_EVENT_PATH}")"
 ```
 
-outputはnext jobの `strategy.matrix` でconsumedされる `{"include": [{"index": "01", "link": "...", "message": "..."}, {"index": "02", "link": "...", "message": "..."}, ...]}` 形式のJSON object。各エントリーは `index` フィールドを含みます。array positionから導出されたzero-padded 2桁のshard number（01、02、…）。shared thread channel ID、`commandType`、`token`、`startTime` はtop-level event payloadから来し、すべてのshardsによって読み込まれます。
+outputはJSON objectです。形式の例は以下のとおりです。
+
+```json
+{"include": [
+  {"index": "01", "link": "...", "message": "..."},
+  {"index": "02", "link": "...", "message": "..."}
+]}
+```
+
+このoutputはnext jobの `strategy.matrix` でconsumedされます。各エントリーは `index` フィールドを含みます。`index` はarray positionから導出されたzero-padded 2桁のshard numberです（01、02、…）。shared thread channel ID、`commandType`、`token`、`startTime` はtop-level event payloadから来ます。これらの値はすべてのshardsによって読み込まれます。
 
 ### `run-with-container` job
 
-`if: ${{ fromJson(needs.prepare.outputs.count) > 0 }}` で実行。`strategy.matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}`、`fail-fast: false`、`max-parallel: 16` を付けて。job名は `Download #${{ matrix.index }}`（例：`Download #01`、`Download #02`）。Tweet URLsがpublicなGitHub Actions job listに表示されないようsecurity/privacy layerとして機能します。Discord interactions（links、channel IDs）は既に `::add-mask::` via step-levelでmaskedですが、GitHubのmatrix expansionはmaskingより前に起こるため、numeric indexが代わりに使用されます。
+`if: ${{ fromJson(needs.prepare.outputs.count) > 0 }}` で実行されます。設定として `strategy.matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}` を指定します。さらに `fail-fast: false`、`max-parallel: 16` を付けます。job名は `Download #${{ matrix.index }}` です（例：`Download #01`、`Download #02`）。Tweet URLsがpublicなGitHub Actions job listに表示されないようsecurity/privacy layerとして機能します。Discord interactions（links、channel IDs）は既にstep-levelで `::add-mask::` 経由maskedです。GitHubのmatrix expansionはmaskingより前に起こるため、numeric indexが代わりに使用されます。
 
-各shardは `matrix.link`、`matrix.message`、`matrix.index` を受け取ります。そうでなければstepsは `run.yml` をミラー：
+各shardは `matrix.link`、`matrix.message`、`matrix.index` を受け取ります。そうでなければstepsは `run.yml` をミラーします。
 
-1. **Masking Secrets** — `commandType`、`channel`、`token`、`matrix.link`、`matrix.message` をマスク。
-2. **Start Steps / Setup** — `progress` callbacksはoriginal `commandType`（`"threaddl"` または `"threaddl-spoiler"`）を含むため、Botがper-shard placeholderを `editMessage` で編集するために `ProgressThread` / `ProgressThreadSpoiler` 経由でそれらをルーティング。
-3. **Confirmation of link survival → Start Download → Check and Convert Files → Upload files** — identical pipeline。`actionType=thread-single` または `thread-multi` をsuccess callbackでset。
-4. **Failure paths** — `run.yml` と同じexplicit `failure` callbacks。original `commandType` echo back。
+1. **Masking Secrets** — `commandType`、`channel`、`token`、`matrix.link`、`matrix.message` をマスクします。
+2. **Start Steps / Setup** — `progress` callbacksは元の `commandType` を含みます。値は `"threaddl"` または `"threaddl-spoiler"` です。これにより `ProgressThread` / `ProgressThreadSpoiler` 経由でルーティングされます。Botはper-shard placeholderを `editMessage` で編集します。
+3. **Confirmation → Download → Convert → Upload** — identical pipelineです。link survival、`yt-dlp`、ffmpeg、`/api/callback` への送信を実施します。success callbackで `actionType` を `thread-single` または `thread-multi` にsetします。
+4. **Failure paths** — `run.yml` と同じexplicit `failure` callbacksを送信します。original `commandType` をecho backします。
 5. **Cleanup temp files**.
 
-各shardは独自の `matrix.message` をknowするため、すべてのcallbacksは他のshardsに対してindependentlyにthread内のright placeholderを編集。workflow自体は **commandType-agnostic** — `commandType` はopaquelyに渡される。spoiler vs. non-spoiler branchingはentirelyにBot sideでsuccess-handler routing table経由で起こります。
+各shardは独自の `matrix.message` をknowします。そのためすべてのcallbacksは他のshardsに対してindependentlyにthread内のright placeholderを編集します。workflow自体は **commandType-agnostic** です。`commandType` はopaquelyに渡されます。spoiler vs. non-spoiler branchingはentirelyにBot side内のsuccess-handler routing table経由で起こります。
 
 ## CI workflow（`test.yml`）
 
-`pull_request` および `master` への `push` 時にトリガー。ステップ：
+`pull_request` および `master` への `push` 時にトリガーされます。ステップは以下のとおりです。
 
 1. `actions/checkout@v6`
 2. `denoland/setup-deno@v2`（Deno `v2.x`）
 3. `deno lint`
-4. `deno task test`（env vars `DISCORD_TOKEN` / `DISPATCH_URL` / `GITHUB_TOKEN` はtask definition内のplaceholdersとして事前設定）
+4. `deno task test`（env varsの `DISCORD_TOKEN` / `DISPATCH_URL` / `GITHUB_TOKEN` は事前設定されたplaceholdersです）
 5. `deno task test:coverage | tee coverage.txt`
-6. Always：`coverage.txt` のcontentsをGitHub Step Summaryにappend。reviewersがworkflow run pageでcoverage reportを直接見るために。
+6. Always：`coverage.txt` のcontentsをGitHub Step Summaryにappendします。reviewersがworkflow run pageでcoverage reportを直接見るためです。
 
 ## When you change the schema
 
-pipelineの各エンドをupdate：
+pipelineの各エンドをupdateしてください。
 
 - `src/libs/webhook.ts`（GitHubに行くrequest shape）、
 - `src/router/types/callbackTypes.ts`（戻ってくるresponse shape）、

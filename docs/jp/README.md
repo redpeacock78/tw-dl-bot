@@ -6,11 +6,11 @@
 
 ## 内容
 
-- [Architecture（アーキテクチャ）](./architecture.md) — 高レベルなシステム概要、Discord、Bot、GitHub Actions（`run.yml` + `run-thread.yml`）、yt-dlp間のデータフロー。
+- [Architecture（アーキテクチャ）](./architecture.md) — 高レベルなシステム概要。Discord、Bot、GitHub Actions（`run.yml` + `run-thread.yml`）、yt-dlp間のデータフロー。
 - [Commands（コマンド）](./commands.md) — `/dl`、`/dl-spoiler`、`/threaddl` スラッシュコマンドのリファレンス。
 - [Development（開発）](./development.md) — ローカル開発環境のセットアップ、環境変数、GitHubトークンスコープ、Denoテストスイート。
 - [Deployment（デプロイ）](./deployment.md) — デプロイメント流れ、Runnerイメージのビルド・公開、ランタイム環境。
-- [GitHub Actions](./github-actions.md) — `repository_dispatch` ペイロードスキーマ（`download` 型と `thread-download` 型）、callback API、status routing（thread mode含む）、必要なsecrets。
+- [GitHub Actions](./github-actions.md) — `repository_dispatch` ペイロードスキーマ（`download` 型と `thread-download` 型）の解説。callback API、status routing（thread mode含む）、必要なsecretsもまとめています。
 
 ## 関連リンク
 

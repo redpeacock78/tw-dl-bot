@@ -2,14 +2,14 @@
 
 # アーキテクチャ
 
-`tw-dl-bot` は2つの協調プロセスに分割されています：
+`tw-dl-bot` は2つの協調プロセスに分割されています。
 
-1. **Bot service** — Discord（gateway + REST）と通信し、[Hono](https://hono.dev/) で構築されたHTTP callback endpointを公開するlong-running Deno process。
-2. **Runner workflows** — 事前構築されたDocker image（`ghcr.io/<owner>/tw-dl-runner:latest`）をプルし、リクエストされたURLに対して `yt-dlp` を実行し、progress / success / failure callbacksをBotにPOSTする2つのGitHub Actions workflows：
-   - `.github/workflows/run.yml` — `repository_dispatch` type `download` によってトリガーされた単一URLパイプライン（`/dl`、`/dl-spoiler` で使用）。
-   - `.github/workflows/run-thread.yml` — `repository_dispatch` type `thread-download` によってトリガーされたthread / parallelパイプライン。`prepare` jobは `links` payloadからstrategy matrixを構築し、`run-with-container` jobはURLごとに1つのshardをファンアウトします。`/threaddl` と `/threaddl-spoiler` の両方で共有（`commandType` はopaquelyに渡され、Botのcallback routerがそれを使用してspoiler vs. non-spoilerを決定）。
+1. **Bot service** — long-running Deno process。Discord（gateway + REST）と通信し、[Hono](https://hono.dev/) で構築されたHTTP callback endpointを公開します。
+2. **Runner workflows** — 2つのGitHub Actions workflows。事前構築されたDocker image（`ghcr.io/<owner>/tw-dl-runner:latest`）をプルし、リクエストされたURLに対して `yt-dlp` を実行します。progress / success / failure callbacksをBotにPOSTします。
+   - `.github/workflows/run.yml` — 単一URLパイプラインです。`repository_dispatch` type `download` によってトリガーされます（`/dl`、`/dl-spoiler` で使用）。
+   - `.github/workflows/run-thread.yml` — thread / parallelパイプラインです。`repository_dispatch` type `thread-download` によってトリガーされます。`prepare` jobは `links` payloadからstrategy matrixを構築します。`run-with-container` jobはURLごとに1つのshardをファンアウトします。`/threaddl` と `/threaddl-spoiler` の両方で共有されます。`commandType` はopaquelyに渡されます。Botのcallback routerがそれを使用してspoiler vs. non-spoilerを決定します。
 
-2つのハーフは2つのHTTP boundaryによってdecoupledされます：
+2つのハーフは2つのHTTP boundaryによってdecoupledされます。
 
 - Bot → GitHub：runner workflowsの1つをトリガーする `repository_dispatch` URLへの `POST`。
 - GitHub Actions → Bot：status updatesと結果のmedia fileをBotの `/api/callback` endpointに `POST`。
@@ -40,7 +40,7 @@ sequenceDiagram
 
 ## End-to-end flow（`/threaddl`、`/threaddl-spoiler`）
 
-両方のthreadコマンドはDiscord **Modal** を通じてURLを収集するため、ユーザーはquoteなしで多くのリンクを貼り付けることができます。スラッシュコマンドの最初の応答はModal自体です。実際の作業はfollow-up `ModalSubmit` interactionで実行されます。URLが抽出されると、Botはthreadを作成し、URLごとに1つのplaceholderを投稿し、すべてのURLを運ぶ単一の `thread-download` eventをディスパッチします。runner workflowはURLごとに1つのmatrix shardをファンアウトします。各shardはzero-padded `index`（01、02、…）を受け取り、`editMessage` 経由で独自のplaceholderを編集します（これは15分のinteraction-token windowにboundedされません）。`shardIndex` はcallback pipelineを通じてforwardedされるため、BotがDiscord embedsで `#N-XX`（N = `github.run_number`、XX = `shardIndex`）形式のrun numbersをフォーマットでき、どのshardがどのURLを処理したかをidentifyできます。2つのコマンドは同じhandler（`runThreadFlow`）と同じworkflow（`run-thread.yml`）を共有します。唯一の違いはpipelineを通じて運ばれる `commandType`（`threaddl` vs `threaddl-spoiler`）です。これはBotのcallback routerが成功時に `SPOILER_` filename prefixを適用するかどうかを決定するために使用されます。
+両方のthreadコマンドはDiscord **Modal** を通じてURLを収集します。ユーザーはquoteなしで多くのリンクを貼り付けることができます。スラッシュコマンドの最初の応答はModal自体です。実際の作業はfollow-up `ModalSubmit` interactionで実行されます。URLが抽出されると、Botはthreadを作成し、URLごとに1つのplaceholderを投稿します。すべてのURLを運ぶ単一の `thread-download` eventをディスパッチします。runner workflowはURLごとに1つのmatrix shardをファンアウトします。各shardはzero-padded `index`（01、02、…）を受け取ります。`editMessage` 経由で独自のplaceholderを編集します（これは15分のinteraction-token windowにboundedされません）。`shardIndex` はcallback pipelineを通じてforwardedされます。これによりBotはDiscord embedsで `#N-XX`（N = `github.run_number`、XX = `shardIndex`）形式のrun numbersをフォーマットできます。どのshardがどのURLを処理したかをidentifyできます。2つのコマンドは同じhandler（`runThreadFlow`）と同じworkflow（`run-thread.yml`）を共有します。唯一の違いはpipelineを通じて運ばれる `commandType`（`threaddl` vs `threaddl-spoiler`）です。これはBotのcallback routerが成功時に `SPOILER_` filename prefixを適用するかどうかを決定するために使用されます。
 
 ```mermaid
 sequenceDiagram
@@ -152,7 +152,7 @@ flowchart LR
 
 ## Status lifecycle
 
-runnerは3つのstatusの1つを `/api/callback` にpush：
+runnerは3つのstatusの1つを `/api/callback` にpushします。
 
 | `status` | Meaning | Non-thread（`dl`、`dl-spoiler`） | Thread（`threaddl`、`threaddl-spoiler`） |
 | --- | --- | --- | --- |
@@ -160,11 +160,11 @@ runnerは3つのstatusの1つを `/api/callback` にpush：
 | `success` | yt-dlp が終了し、1 つ以上のファイルを返した。 | follow-up を success embed に編集し、ファイルをアタッチ。`commandType` が `dl-spoiler` の場合は `SPOILER_` prefix を適用。ファイルが oversized な場合は fresh `sendMessage` に fallback。 | thread 内の placeholder を success embed に編集し、ファイルをアタッチ。`commandType` が `threaddl-spoiler` の場合は `SPOILER_` prefix を適用。15 分 window と oversize fallback の両方が short-circuit されるため、message は thread 内に in-place のままになります。 |
 | `failure` | yt-dlp または runner steps の 1 つが失敗した。 | 15 分の window 内では follow-up を failure embed に編集、それ以外の場合は新しい message を送信。 | thread 内の placeholder を failure embed に編集（time limit なし）。 |
 
-`status`、`commandType`（`dl` / `dl-spoiler` / `threaddl` / `threaddl-spoiler`）、`actionType`（`single` / `multi` / `thread-single` / `thread-multi`）の組み合わせは `src/libs/custom.ts`（`Custom.CallbackPattern`）のhandlerを選択します。
+これらの組み合わせから `src/libs/custom.ts`（`Custom.CallbackPattern`）のhandlerが選択されます。組み合わせは次の3要素から決まります。`status`、`commandType`、`actionType` です。`commandType` は `dl` / `dl-spoiler` / `threaddl` / `threaddl-spoiler` のいずれかです。`actionType` は `single` / `multi` / `thread-single` / `thread-multi` のいずれかです。
 
 ### Modal `customId` round-trip とセキュリティ
 
-ModalベースのthreadコマンドはModal `customId` に依存して、2つのinteraction handshakeを介してcontextを運びます。Discordは `customId` を100文字でキャップするため、Botは意図的なbudgetを使用します：
+ModalベースのthreadコマンドはModal `customId` に依存して、2つのinteraction handshakeを介してcontextを運びます。Discordは `customId` を100文字でキャップするため、Botは意図的なbudgetを使用します。
 
 ```text
 <commandType>|<threadName-truncated-to-MAX_NAME_IN_CUSTOM_ID>
@@ -180,4 +180,4 @@ ModalベースのthreadコマンドはModal `customId` に依存して、2つの
 
 ## Why GitHub Actions?
 
-Bot process内で `yt-dlp` を実行すると、egress IP、CPU、diskがBot hostにcoupledされます。GitHub Actionsに仕事をpushすれば、Botはsmallでstatelessのままになり、各downloadは最新の `yt-dlp` nightlyを備えたfresh containerで実行でき、`/threaddl` ではBotに追加のorchestrationなしで `strategy.matrix` 経由でcheap horizontal fan-outを提供します。
+Bot process内で `yt-dlp` を実行すると、egress IP、CPU、diskがBot hostにcoupledされます。GitHub Actionsに仕事をpushすれば、Botはsmallでstatelessのままになります。各downloadは最新の `yt-dlp` nightlyを備えたfresh containerで実行できます。`/threaddl` ではBotに追加のorchestrationなしで `strategy.matrix` 経由でcheap horizontal fan-outを提供します。
