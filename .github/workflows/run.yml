@@ -7,315 +7,47 @@ on:
 jobs:
   run-with-container:
     runs-on: ubuntu-latest
-    # name: Run
     container:
       image: ghcr.io/${{ github.repository_owner }}/tw-dl-runner:latest
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      ENDPOINT_URL: ${{ secrets.ENDPOINT_URL }}
+      RUN_NUMBER: ${{ github.run_number }}
+      COMMAND_TYPE: ${{ github.event.client_payload.commandType }}
+      START_TIME: ${{ github.event.client_payload.startTime }}
+      CHANNEL: ${{ github.event.client_payload.channel }}
+      MESSAGE: ${{ github.event.client_payload.message }}
+      TOKEN: ${{ github.event.client_payload.token }}
+      LINK: ${{ github.event.client_payload.link }}
+      TWITTER_COOKIES: ${{ secrets.TWITTER_COOKIES }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
       - name: Masking Secrets
-        shell: bash
-        run: |
-          echo -n '::add-mask::' >> secrets.txt && \
-          jq -r .client_payload.commandType < "${GITHUB_EVENT_PATH}" >> secrets.txt && \
-          echo -n '::add-mask::' >> secrets.txt && \
-          jq -r .client_payload.link < "${GITHUB_EVENT_PATH}" >> secrets.txt && \
-          echo -n '::add-mask::' >> secrets.txt && \
-          jq -r .client_payload.channel < "${GITHUB_EVENT_PATH}" >> secrets.txt && \
-          echo -n '::add-mask::' >> secrets.txt && \
-          jq -r .client_payload.message < "${GITHUB_EVENT_PATH}" >> secrets.txt && \
-          echo -n '::add-mask::' >> secrets.txt && \
-          jq -r .client_payload.token < "${GITHUB_EVENT_PATH}" >> secrets.txt && \
-          cat secrets.txt && \
-          rm -rf secrets.txt
+        run: bash .github/scripts/run.sh mask
       - name: Start Steps
-        shell: bash
-        run: |
-          {
-            curl -s -X POST \
-              ${{ secrets.ENDPOINT_URL }} \
-              -H "Accept: application/json" \
-              -H "Content-type: application/json" \
-              -m 18000 \
-              --retry 100 \
-              --retry-all-errors \
-              -o /dev/null \
-              -d @- <<EOF
-            {
-              "status": "progress",
-              "number": ${{ github.run_number }},
-              "startTime": ${{ toJSON(github.event.client_payload.startTime) }},
-              "channel": ${{ toJSON(github.event.client_payload.channel) }},
-              "message": ${{ toJSON(github.event.client_payload.message) }},
-              "token": ${{ toJSON(github.event.client_payload.token) }},
-              "link": ${{ toJSON(github.event.client_payload.link) }},
-              "content": "⏳Starting..."
-            }
-          EOF
-          } || :
+        run: bash .github/scripts/run.sh start
       - name: Setup latest yt-dlp
         if: ${{ success() }}
-        shell: bash
-        run: |
-          {
-            curl -s -X POST \
-              ${{ secrets.ENDPOINT_URL }} \
-              -H "Accept: application/json" \
-              -H "Content-type: application/json" \
-              -m 18000 \
-              --retry 100 \
-              --retry-all-errors \
-              -o /dev/null \
-              -d @- <<EOF
-            {
-              "status": "progress",
-              "number": ${{ github.run_number }},
-              "startTime": ${{ toJSON(github.event.client_payload.startTime) }},
-              "channel": ${{ toJSON(github.event.client_payload.channel) }},
-              "message": ${{ toJSON(github.event.client_payload.message) }},
-              "token": ${{ toJSON(github.event.client_payload.token) }},
-              "link": ${{ toJSON(github.event.client_payload.link) }},
-              "content": "🛠Setup..."
-            }
-          EOF
-          } || :
-          type yt-dlp > /dev/null 2>&1 && \
-          {
-            retry=0 && \
-            flag=false && \
-            until "${flag}" || (( "${retry}" == 1000 )); do
-              echo "Retry count: ${retry}" && \
-              echo "Flag status: ${flag}" && \
-              nightly_url="https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/latest/download/yt-dlp" && \
-              version="$(curl -sI -m 18000 --retry 100 --retry-all-errors "${nightly_url}" | grep 'location: ' | awk -F '/' '{print $8}')" && \
-              yt-dlp --update-to "nightly@${version}" && \
-              {
-                flag=true
-              } || \
-              {
-                ((retry++)) || true
-              }
-            done
-          }
+        run: bash .github/scripts/run.sh setup
       - name: Install scripts
         if: ${{ success() }}
-        shell: bash
-        run: |
-          cp .github/scripts/progress.awk ./progress.awk && \
-          cp .github/scripts/conv_progress.sh /usr/local/bin/conv_progress.sh && \
-          cp .github/scripts/retry_curl.sh /usr/local/bin/retry_curl.sh && \
-          cp .github/scripts/post_process.sh /usr/local/bin/post_process.sh && \
-          chmod +x /usr/local/bin/conv_progress.sh /usr/local/bin/retry_curl.sh /usr/local/bin/post_process.sh
+        run: bash .github/scripts/run.sh install
       - name: Confirmation of link survival
         if: ${{ success() }}
         id: link_status
         timeout-minutes: 10
-        shell: bash
-        run: |
-          if [[ ${{ toJSON(github.event.client_payload.link) }} =~ ^http.*$ ]]; then
-            {
-              retry_curl.sh 15 2 -- \
-                -X POST \
-                ${{ secrets.ENDPOINT_URL }} \
-                -H "Accept: application/json" \
-                -H "Content-type: application/json" \
-                -m 18000 \
-                --retry 100 \
-                --retry-all-errors \
-                -d @- <<EOF
-              {
-                "status": "progress",
-                "number": ${{ github.run_number }},
-                "startTime": ${{ toJSON(github.event.client_payload.startTime) }},
-                "channel": ${{ toJSON(github.event.client_payload.channel) }},
-                "message": ${{ toJSON(github.event.client_payload.message) }},
-                "token": ${{ toJSON(github.event.client_payload.token) }},
-                "link": ${{ toJSON(github.event.client_payload.link) }},
-                "content": "🔍Checking link status..."
-              }
-          EOF
-            } || :
-            retry=0 && \
-            flag=false && \
-            status="" && \
-            until "${flag}" || (( "${retry}" == 1000 )); do
-              if (( "${retry}" > 0 )); then
-                {
-                  retry_curl.sh 15 2 -- \
-                    -X POST \
-                    ${{ secrets.ENDPOINT_URL }} \
-                    -H "Accept: application/json" \
-                    -H "Content-type: application/json" \
-                    -m 18000 \
-                    --retry 100 \
-                    --retry-all-errors \
-                    -d @- <<EOF
-                  {
-                    "status": "progress",
-                    "number": ${{ github.run_number }},
-                    "startTime": ${{ toJSON(github.event.client_payload.startTime) }},
-                    "channel": ${{ toJSON(github.event.client_payload.channel) }},
-                    "message": ${{ toJSON(github.event.client_payload.message) }},
-                    "token": ${{ toJSON(github.event.client_payload.token) }},
-                    "link": ${{ toJSON(github.event.client_payload.link) }},
-                    "content": "🔍Checking link status...(Retry ${retry} / 1000)"
-                  }
-          EOF
-                } || :
-              fi
-              echo "Retry count: ${retry}"
-              echo "Flag status: ${flag}"
-              status="$(curl -siL -m 18000 --retry 100 --retry-all-errors ${{ toJSON(github.event.client_payload.link) }} -o /dev/null -w '%{http_code}\n';:)"
-              if [[ "${status}" == "200" || "${status}" == "302" || "${status}" == "307" ]]; then
-                flag=true
-              else
-                ((retry++)) || true
-                sleep 1
-              fi
-            done
-            if [[ "${status}" != "200" && "${status}" != "302" && "${status}" != "307" ]]; then
-              status="notfound" && \
-              echo "status=${status}" >> "${GITHUB_OUTPUT}" && \
-              exit 2
-            fi
-          fi
+        run: bash .github/scripts/run.sh check-link
       - name: Start Download
         if: ${{ success() }}
         id: download
         timeout-minutes: 10
-        shell: bash
-        run: |
-          {
-            retry_curl.sh 15 2 -- \
-              -X POST \
-              ${{ secrets.ENDPOINT_URL }} \
-              -H "Accept: application/json" \
-              -H "Content-type: application/json" \
-              -m 18000 \
-              --retry 100 \
-              --retry-all-errors \
-              -d @- <<EOF
-            {
-              "status": "progress",
-              "number": ${{ github.run_number }},
-              "startTime": ${{ toJSON(github.event.client_payload.startTime) }},
-              "channel": ${{ toJSON(github.event.client_payload.channel) }},
-              "message": ${{ toJSON(github.event.client_payload.message) }},
-              "token": ${{ toJSON(github.event.client_payload.token) }},
-              "link": ${{ toJSON(github.event.client_payload.link) }},
-              "content": "⏬Downloading..."
-            }
-          EOF
-          } || :
-          retry=0 && \
-          flag=false && \
-          not_video=false && \
-          cookie_path="$(pwd)/cookie.txt" && \
-          url="$(echo ${{ toJSON(github.event.client_payload.link) }} | awk -F '/' '{OFS="/";sub(/^x.com$/,"twitter.com",$3);print $0}')" && \
-          mkdir -p download && \
-          cd download && \
-          IFS=$'\n' && \
-          until "${flag}" || (( "${retry}" == 1000 )); do
-            echo "Retry count: ${retry}"
-            echo "Flag status: ${flag}"
-            if (( "${retry}" > 0 )); then
-              {
-                retry_curl.sh 15 2 -- \
-                  -X POST \
-                  ${{ secrets.ENDPOINT_URL }} \
-                  -H "Accept: application/json" \
-                  -H "Content-type: application/json" \
-                  -m 18000 \
-                  --retry 100 \
-                  --retry-all-errors \
-                  -d @- <<EOF
-                {
-                  "status": "progress",
-                  "number": ${{ github.run_number }},
-                  "startTime": ${{ toJSON(github.event.client_payload.startTime) }},
-                  "channel": ${{ toJSON(github.event.client_payload.channel) }},
-                  "message": ${{ toJSON(github.event.client_payload.message) }},
-                  "token": ${{ toJSON(github.event.client_payload.token) }},
-                  "link": ${{ toJSON(github.event.client_payload.link) }},
-                  "content": "⏬Downloading...(Retry ${retry} / 1000)"
-                }
-          EOF
-              } || :
-            fi
-            yt_result="$(mktemp)"
-            options=()
-            if [[ "${url}" =~ "/twitter.com/" ]]; then
-              if [[ ! -f "${cookie_path}" ]]; then
-                echo "${{ secrets.TWITTER_COOKIES }}" >> "${cookie_path}"
-              fi
-              options+=(--cookies "${cookie_path}")
-            fi
-            yt-dlp \
-              -R 1000 \
-              --force-overwrites \
-              --downloader aria2c \
-              --external-downloader-args "--listen-port=5502 --dht-listen-port=5502 -s20 -j20 -x16 -k20M --disable-ipv6=true --continue=true --seed-time=0 --max-tries=0 --retry-wait=10 --summary-interval=0 --file-allocation=none --console-log-level=error --download-result=hide" \
-              --exec "post_process:post_process.sh {}" \
-              -o "%(id).150B_%(autonumber)s.%(ext)s" \
-              "${options[@]}" \
-              "${url}" > "${yt_result}" 2>&1 && \
-              {
-                yt_status="0"
-                true
-              } || \
-              {
-                yt_status="1"
-                true
-              }
-            if [[ "${yt_status}" == "0" ]]; then
-              if [[ "$(cat ${yt_result} | tail -n1 | grep 'No video')" == "" ]]; then
-                for file_name in $(ls -tr); do
-                  if ffprobe -v error -f lavfi movie="${file_name}" > /dev/null 2>&1; then
-                    flag=true
-                  else
-                    :
-                  fi
-                done
-              else
-                :
-              fi
-            elif [[ "${yt_status}" == "1" ]]; then
-              if [[ "$(cat ${yt_result} | tail -n1 | grep 'No video')" != "" ]]; then
-                flag=true
-                not_video=true
-              elif [[ "$(cat ${yt_result} | tail -n1 | grep 'Finished downloading playlist')" != "" ]]; then
-                if (( "$(ls -tr | wc -l )" > 0 )); then
-                  for file_name in $(ls -tr); do
-                    if ffprobe -v error -f lavfi movie="${file_name}" > /dev/null 2>&1; then
-                      flag=true
-                    else
-                      :
-                    fi
-                  done
-                else
-                  not_video=true
-                fi
-              else
-                :
-              fi
-            else
-              not_video=true
-            fi
-            if "${flag}"; then
-              :
-            else
-              ((retry++)) || true
-              sleep 1
-            fi
-          done
-          if "${not_video}"; then
-            status="notvideo" && \
-            echo "status=${status}" >> "${GITHUB_OUTPUT}" && \
-            exit 2
-          fi
+        run: bash .github/scripts/run.sh download
       - name: Check and Convert Files
         if: ${{ success() }}
         uses: ./.github/actions/check-and-convert-files
@@ -330,197 +62,7 @@ jobs:
       - name: Upload files
         if: ${{ success() }}
         id: upload
-        shell: bash
-        run: |
-          {
-            retry_curl.sh 15 2 -- \
-              -X POST \
-              ${{ secrets.ENDPOINT_URL }} \
-              -H "Accept: application/json" \
-              -H "Content-type: application/json" \
-              -m 18000 \
-              --retry 100 \
-              --retry-all-errors \
-              -d @- <<EOF
-            {
-              "status": "progress",
-              "number": ${{ github.run_number }},
-              "startTime": ${{ toJSON(github.event.client_payload.startTime) }},
-              "channel": ${{ toJSON(github.event.client_payload.channel) }},
-              "message": ${{ toJSON(github.event.client_payload.message) }},
-              "token": ${{ toJSON(github.event.client_payload.token) }},
-              "link": ${{ toJSON(github.event.client_payload.link) }},
-              "content": "⏫Uploading..."
-            }
-          EOF
-          } || :
-          dir=$(pwd) && \
-          cd download && \
-          IFS=$'\n' && \
-          files_num="$(ls | wc -l)" && \
-          if (( "${files_num}" > 1 )); then
-            for file_name in $(ls -tr); do
-              # if (( "$(wc -c < "${file_name}")" <= 26214400 )); then
-              if (( "$(wc -c < "${file_name}")" <= 10485760 )); then
-                :
-              # elif (( "$(wc -c < "${dir}/conv/${file_name%.*}.webm")" <= 26214400 )); then
-              # elif (( "$(wc -c < "${dir}/conv/${file_name%.*}.webm")" <= 10485760 )); then
-              elif (( "$(wc -c < "${dir}/conv/${file_name%.*}.mp4")" <= 10485760 )); then
-                :
-              else
-                status="sizeover" && \
-                echo "status=${status}" >> "${GITHUB_OUTPUT}" && \
-                exit 2
-              fi
-            done
-            options=()
-            options+=(-F 'status=success')
-            options+=(-F 'number=${{ github.run_number }}')
-            options+=(-F 'commandType=${{ toJSON(github.event.client_payload.commandType) }}')
-            options+=(-F 'actionType=multi')
-            options+=(-F 'channel=${{ toJSON(github.event.client_payload.channel) }}')
-            options+=(-F 'message=${{ toJSON(github.event.client_payload.message) }}')
-            options+=(-F 'token=${{ toJSON(github.event.client_payload.token) }}')
-            options+=(-F 'link=${{ toJSON(github.event.client_payload.link) }}')
-            options+=(-F 'startTime=${{ toJSON(github.event.client_payload.startTime) }}')
-            # if (( "$(echo $(ls -l | awk 'NR>1{print $5}' | tr \\n +)0 | bc)" <= 26214400 )); then
-            if (( "$(echo $(ls -l | awk 'NR>1{print $5}' | tr \\n +)0 | bc)" <= $(( 10485760 * "${files_num}" )) )); then
-              options+=(-F "convert=false")
-            else
-              options+=(-F "convert=true")
-            fi
-            index=0
-            list=()
-            for file_name in $(ls -tr); do
-              num=$((index++))
-              # if (( "$(echo $(ls -l | awk 'NR>1{print $5}' | tr \\n +)0 | bc)" <= 26214400 )); then
-              if (( "$(echo $(ls -l | awk 'NR>1{print $5}' | tr \\n +)0 | bc)" <= $(( 10485760 * "${files_num}" )) )); then
-                options+=(-F "name${num}=${file_name}")
-                options+=(-F "file${num}=@${file_name}")
-                list+=("${file_name}")
-              else
-                # if (( "$(wc -c < "${file_name}")" <= $(( 26214400 / "$(ls|wc -l)" )) )); then
-                if (( "$(wc -c < "${file_name}")" <= 10485760 )); then
-                  options+=(-F "name${num}=${file_name}")
-                  options+=(-F "file${num}=@${file_name}")
-                  list+=("${file_name}")
-                else
-                  # options+=(-F "name${num}=${file_name%.*}.webm")
-                  options+=(-F "name${num}=${file_name%.*}.mp4")
-                  # options+=(-F "file${num}=@${dir}/conv/${file_name%.*}.webm")
-                  options+=(-F "file${num}=@${dir}/conv/${file_name%.*}.mp4")
-                  # list+=("${dir}/conv/${file_name%.*}.webm")
-                  list+=("${dir}/conv/${file_name%.*}.mp4")
-                fi
-              fi
-            done
-            total_size=$(echo $(echo "${list[@]}" | tr ' ' \\n | grep -v '^$' | xargs -I@ bash -c 'ls -l @' | awk '{print $5}' | grep -v '^$' | tr \\n '+')0 | bc)
-            echo "Total size: ${total_size}"
-            options+=(-F "size=${total_size}")
-            # if (( "${total_size}" <= 26214400 )); then
-            if (( "${total_size}" <= $(( 10485760 * "${files_num}" )) )); then
-              options+=(-F "oversize=false")
-            else
-              options+=(-F "oversize=true")
-            fi
-            retry=0 && \
-            flag=false && \
-            until "${flag}" || (( "${retry}" == 1000 )); do
-              echo "Retry count: ${retry}"
-              echo "Flag status: ${flag}"
-              retry_curl.sh 15 2 -- \
-                -X POST \
-                -H "Content-type: multipart/form-data" \
-                -m 18000 \
-                --retry 100 \
-                --retry-all-errors \
-                "${options[@]}" \
-                ${{ secrets.ENDPOINT_URL }} && \
-              flag=true || \
-              {
-                ((retry++)) || true
-              }
-            done
-          else
-            file_name="$(ls)" && \
-            # if (( "$(wc -c < "${file_name}")" <= 26214400 )); then
-            if (( "$(wc -c < "${file_name}")" <= 10485760 )); then
-              echo "Total size: $(wc -c < "${file_name}")"
-              retry=0 && \
-              flag=false && \
-              until "${flag}" || (( "${retry}" == 1000 )); do
-                echo "Retry count: ${retry}"
-                echo "Flag status: ${flag}"
-                retry_curl.sh 15 2 -- \
-                  -X POST \
-                  -H "Content-type: multipart/form-data" \
-                  -m 18000 \
-                  --retry 100 \
-                  --retry-all-errors \
-                  -F "status=success" \
-                  -F 'number=${{ github.run_number }}' \
-                  -F "commandType=${{ toJSON(github.event.client_payload.commandType) }}" \
-                  -F "actionType=single" \
-                  -F "convert=false" \
-                  -F "oversize=false" \
-                  -F "size=$(wc -c < "${file_name}")" \
-                  -F 'startTime=${{ toJSON(github.event.client_payload.startTime) }}' \
-                  -F 'channel=${{ toJSON(github.event.client_payload.channel) }}' \
-                  -F 'message=${{ toJSON(github.event.client_payload.message) }}' \
-                  -F 'token=${{ toJSON(github.event.client_payload.token) }}' \
-                  -F 'link=${{ toJSON(github.event.client_payload.link) }}' \
-                  -F "name1=${file_name}" \
-                  -F "file1=@${file_name}" \
-                  ${{ secrets.ENDPOINT_URL }} && \
-                flag=true || \
-                {
-                  ((retry++)) || true
-                }
-              done
-            else
-              # total_size=$(wc -c < "${dir}/conv/${file_name%.*}.webm")
-              total_size=$(wc -c < "${dir}/conv/${file_name%.*}.mp4")
-              echo "Total size: ${total_size}"
-              # if (( "${total_size}" <= 26214400 )); then
-              if (( "${total_size}" <= 10485760 )); then
-                retry=0 && \
-                flag=false && \
-                until "${flag}" || (( "${retry}" == 1000 )); do
-                  echo "Retry count: ${retry}"
-                  echo "Flag status: ${flag}"
-                  retry_curl.sh 15 2 -- \
-                    -X POST \
-                    -H "Content-type: multipart/form-data" \
-                    -m 18000 \
-                    --retry 100 \
-                    --retry-all-errors \
-                    -F "status=success" \
-                    -F 'number=${{ github.run_number }}' \
-                    -F "commandType=${{ toJSON(github.event.client_payload.commandType) }}" \
-                    -F "actionType=single" \
-                    -F "convert=true" \
-                    -F "oversize=false" \
-                    -F "size=${total_size}" \
-                    -F 'startTime=${{ toJSON(github.event.client_payload.startTime) }}' \
-                    -F 'channel=${{ toJSON(github.event.client_payload.channel) }}' \
-                    -F 'message=${{ toJSON(github.event.client_payload.message) }}' \
-                    -F 'token=${{ toJSON(github.event.client_payload.token) }}' \
-                    -F 'link=${{ toJSON(github.event.client_payload.link) }}' \
-                    -F "name1=${file_name%.*}.mp4" \
-                    -F "file1=@${dir}/conv/${file_name%.*}.mp4" \
-                    ${{ secrets.ENDPOINT_URL }} && \
-                  flag=true || \
-                  {
-                    ((retry++)) || true
-                  }
-                done
-              else
-                status="sizeover" && \
-                echo "status=${status}" >> "${GITHUB_OUTPUT}" && \
-                exit 2
-              fi
-            fi
-          fi
+        run: bash .github/scripts/run.sh upload
       - name: Link has expired
         if: >-
           ${{
@@ -529,28 +71,7 @@ jobs:
             steps.download.outputs.status == '' &&
             steps.upload.outputs.status == ''
           }}
-        shell: bash
-        run: |
-          retry_curl.sh 15 2 -- \
-            -X POST \
-            ${{ secrets.ENDPOINT_URL }} \
-            -H "Accept: application/json" \
-            -H "Content-type: application/json" \
-            -m 18000 \
-            --retry 100 \
-            --retry-all-errors \
-            -d @- <<EOF
-          {
-            "status": "failure",
-            "number": ${{ github.run_number }},
-            "startTime": ${{ toJSON(github.event.client_payload.startTime) }},
-            "channel": ${{ toJSON(github.event.client_payload.channel) }},
-            "message": ${{ toJSON(github.event.client_payload.message) }},
-            "token": ${{ toJSON(github.event.client_payload.token) }},
-            "link": ${{ toJSON(github.event.client_payload.link) }},
-            "content": "Sorry! This link has expired."
-          }
-          EOF
+        run: bash .github/scripts/run.sh failure expired
       - name: Video file not found
         if: >-
           ${{
@@ -559,28 +80,7 @@ jobs:
             steps.download.outputs.status == 'notvideo' &&
             steps.upload.outputs.status == ''
           }}
-        shell: bash
-        run: |
-          retry_curl.sh 15 2 -- \
-            -X POST \
-            ${{ secrets.ENDPOINT_URL }} \
-            -H "Accept: application/json" \
-            -H "Content-type: application/json" \
-            -m 18000 \
-            --retry 100 \
-            --retry-all-errors \
-            -d @- <<EOF
-          {
-            "status": "failure",
-            "number": ${{ github.run_number }},
-            "startTime": ${{ toJSON(github.event.client_payload.startTime) }},
-            "channel": ${{ toJSON(github.event.client_payload.channel) }},
-            "message": ${{ toJSON(github.event.client_payload.message) }},
-            "token": ${{ toJSON(github.event.client_payload.token) }},
-            "link": ${{ toJSON(github.event.client_payload.link) }},
-            "content": "Sorry, The video file did not exist at this link!"
-          }
-          EOF
+        run: bash .github/scripts/run.sh failure notvideo
       - name: Uploaded file size exceeded
         if: >-
           ${{
@@ -589,41 +89,7 @@ jobs:
             steps.download.outputs.status == '' &&
             steps.upload.outputs.status == 'sizeover'
           }}
-        shell: bash
-        run: |
-          dir=$(pwd) && \
-          cd download && \
-          if (( "$(ls | wc -l)" == 1 )); then
-            original_size="$(ls -trlh | awk 'NR>1{printf "%sB", $5}')"
-          else
-            original_size="$(ls -trlh | awk 'NR==1{printf "%sB", $2}')"
-          fi && \
-          cd ${dir}/conv && \
-          if (( "$(ls | wc -l)" == 1 )); then
-            converted_size="$(ls -trlh | awk 'NR>1{printf "%sB", $5}')"
-          else
-            converted_size="$(ls -trlh | awk 'NR==1{printf "%sB", $2}')"
-          fi && \
-          retry_curl.sh 15 2 -- \
-            -X POST \
-            ${{ secrets.ENDPOINT_URL }} \
-            -H "Accept: application/json" \
-            -H "Content-type: application/json" \
-            -m 18000 \
-            --retry 100 \
-            --retry-all-errors \
-            -d @- <<EOF
-          {
-            "status": "failure",
-            "number": ${{ github.run_number }},
-            "startTime": ${{ toJSON(github.event.client_payload.startTime) }},
-            "channel": ${{ toJSON(github.event.client_payload.channel) }},
-            "message": ${{ toJSON(github.event.client_payload.message) }},
-            "token": ${{ toJSON(github.event.client_payload.token) }},
-            "link": ${{ toJSON(github.event.client_payload.link) }},
-            "content": "Sorry, The file could not be uploaded because its size exceeds 10MB!\nFile Size: ${original_size} -> ${converted_size}"
-          }
-          EOF
+        run: bash .github/scripts/run.sh failure sizeover
       - name: Download timed out
         if: >-
           ${{
@@ -632,40 +98,7 @@ jobs:
             steps.download.outputs.status == '' &&
             steps.upload.outputs.status == ''
           }}
-        shell: bash
-        run: |
-          sleep 5 && \
-          retry_curl.sh 15 2 -- \
-            -X POST \
-            ${{ secrets.ENDPOINT_URL }} \
-            -H "Accept: application/json" \
-            -H "Content-type: application/json" \
-            -m 18000 \
-            --retry 100 \
-            --retry-all-errors \
-            -d @- <<EOF
-          {
-            "status": "failure",
-            "number": ${{ github.run_number }},
-            "startTime": ${{ toJSON(github.event.client_payload.startTime) }},
-            "channel": ${{ toJSON(github.event.client_payload.channel) }},
-            "message": ${{ toJSON(github.event.client_payload.message) }},
-            "token": ${{ toJSON(github.event.client_payload.token) }},
-            "link": ${{ toJSON(github.event.client_payload.link) }},
-            "content": "Sorry! Processing time exceeded 10 minutes and timed out."
-          }
-          EOF
+        run: bash .github/scripts/run.sh failure timeout
       - name: Cleanup temp files
         if: ${{ always() && !cancelled() }}
-        shell: bash
-        run: |
-          echo "🧹 Cleaning up temporary files..."
-          rm -rf ./download
-          rm -rf ./conv
-          rm -rf ./analyze
-          rm -f ./cookie.txt
-          rm -f ./secrets.txt
-          rm -f ./progress.awk
-          rm -f /usr/local/bin/conv_progress.sh
-          rm -f /usr/local/bin/retry_curl.sh
-          rm -f /usr/local/bin/post_process.sh
+        run: bash .github/scripts/run.sh cleanup

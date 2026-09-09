@@ -161,6 +161,7 @@ Runner workflows（`run.yml` と `run-thread.yml`）はDocker container内で実
 | `retry_curl.sh` | Bash script。`curl` を exponential backoff retry logic でラップ。Transient errors（5xx、429、408）に対して configurable limit（最大遅延 60s）までリトライ。Bot の `/api/callback` への robust callback delivery に使用。 |
 | `post_process.sh` | Bash script。Video ファイルを validate し、必要に応じて libx264 single-pass encoding を使用して H.264/MP4 format に変換。FFprobe を使用して format/codec/pixel format をチェックし、まだ H.264 + yuv420p でない場合は FFmpeg 経由で re-encode。Discord と downstream processing との互換性を ensure。 |
 | `conv_progress.sh` | Bash script。Progress log file の変更を監視し、Bot へ real-time progress callbacks を送信。Environment variables（`ENDPOINT_URL`、`COMMAND_TYPE`、`SHARD_INDEX` など）を読み込み、ffmpeg/awk pipeline によって生成された log file を watch。JSON payloads を callback endpoint に POST。`SHARD_INDEX` が設定されている場合（thread mode）、それは callback payload に含まれるため、Bot が run numbers を `#N-XX` にレンダリングできます。non-thread runs では省略。Encoding 中に background process として実行。 |
+| `run.sh` | `run.yml` の Bash entry point。masking、callback、yt-dlp setup、link check、download/upload、failure notification、cleanup を subcommand で処理。Workflow の値は environment variables 経由で受け取り、callback JSON は `jq` で生成。 |
 
 ### Composite Action（`.github/actions/check-and-convert-files/`）
 
