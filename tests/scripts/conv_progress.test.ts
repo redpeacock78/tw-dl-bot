@@ -105,7 +105,7 @@ function startScript(opts: RunOpts): Deno.ChildProcess {
 
 /** Wait for bodyPromise with a timeout (ms). */
 async function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
-  let timer!: number;
+  let timer!: ReturnType<typeof setTimeout>;
   const timeout = new Promise<never>((_, reject) => {
     timer = setTimeout(() => reject(new Error(`timed out after ${ms}ms`)), ms);
   });
