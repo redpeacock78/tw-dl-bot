@@ -15,25 +15,19 @@ jobs:
     defaults:
       run:
         shell: bash
-    env:
-      ENDPOINT_URL: ${{ secrets.ENDPOINT_URL }}
-      RUN_NUMBER: ${{ github.run_number }}
-      COMMAND_TYPE: ${{ github.event.client_payload.commandType }}
-      START_TIME: ${{ github.event.client_payload.startTime }}
-      CHANNEL: ${{ github.event.client_payload.channel }}
-      MESSAGE: ${{ github.event.client_payload.message }}
-      TOKEN: ${{ github.event.client_payload.token }}
-      LINK: ${{ github.event.client_payload.link }}
-      TWITTER_COOKIES: ${{ secrets.TWITTER_COOKIES }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
       - name: Masking Secrets
         run: bash .github/scripts/run.sh mask
       - name: Start Steps
+        env:
+          ENDPOINT_URL: ${{ secrets.ENDPOINT_URL }}
         run: bash .github/scripts/run.sh start
       - name: Setup latest yt-dlp
         if: ${{ success() }}
+        env:
+          ENDPOINT_URL: ${{ secrets.ENDPOINT_URL }}
         run: bash .github/scripts/run.sh setup
       - name: Install scripts
         if: ${{ success() }}
@@ -42,11 +36,16 @@ jobs:
         if: ${{ success() }}
         id: link_status
         timeout-minutes: 10
+        env:
+          ENDPOINT_URL: ${{ secrets.ENDPOINT_URL }}
         run: bash .github/scripts/run.sh check-link
       - name: Start Download
         if: ${{ success() }}
         id: download
         timeout-minutes: 10
+        env:
+          ENDPOINT_URL: ${{ secrets.ENDPOINT_URL }}
+          TWITTER_COOKIES: ${{ secrets.TWITTER_COOKIES }}
         run: bash .github/scripts/run.sh download
       - name: Check and Convert Files
         if: ${{ success() }}
@@ -62,6 +61,8 @@ jobs:
       - name: Upload files
         if: ${{ success() }}
         id: upload
+        env:
+          ENDPOINT_URL: ${{ secrets.ENDPOINT_URL }}
         run: bash .github/scripts/run.sh upload
       - name: Link has expired
         if: >-
@@ -71,6 +72,8 @@ jobs:
             steps.download.outputs.status == '' &&
             steps.upload.outputs.status == ''
           }}
+        env:
+          ENDPOINT_URL: ${{ secrets.ENDPOINT_URL }}
         run: bash .github/scripts/run.sh failure expired
       - name: Video file not found
         if: >-
@@ -80,6 +83,8 @@ jobs:
             steps.download.outputs.status == 'notvideo' &&
             steps.upload.outputs.status == ''
           }}
+        env:
+          ENDPOINT_URL: ${{ secrets.ENDPOINT_URL }}
         run: bash .github/scripts/run.sh failure notvideo
       - name: Uploaded file size exceeded
         if: >-
@@ -89,6 +94,8 @@ jobs:
             steps.download.outputs.status == '' &&
             steps.upload.outputs.status == 'sizeover'
           }}
+        env:
+          ENDPOINT_URL: ${{ secrets.ENDPOINT_URL }}
         run: bash .github/scripts/run.sh failure sizeover
       - name: Download timed out
         if: >-
@@ -98,6 +105,8 @@ jobs:
             steps.download.outputs.status == '' &&
             steps.upload.outputs.status == ''
           }}
+        env:
+          ENDPOINT_URL: ${{ secrets.ENDPOINT_URL }}
         run: bash .github/scripts/run.sh failure timeout
       - name: Cleanup temp files
         if: ${{ always() && !cancelled() }}

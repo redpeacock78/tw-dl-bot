@@ -96,21 +96,45 @@ Deno.test("run.sh", async (t) => {
   });
 
   await t.step(
+    "run.yml does not initialize a job-wide secret environment",
+    async () => {
+      const workflow = await Deno.readTextFile(
+        new URL("../../.github/workflows/run.yml", import.meta.url),
+      );
+
+      assertEquals(/^ {4}env:/m.test(workflow), false);
+      assertStringIncludes(
+        workflow,
+        "- name: Masking Secrets\n        run: bash .github/scripts/run.sh mask",
+      );
+    },
+  );
+
+  await t.step(
     "start builds valid JSON without shell interpolation",
     async () => {
       const tempDirectory = await Deno.makeTempDir();
       try {
         const fakeCurl = await makeFakeCurl(tempDirectory);
+        const eventPath = `${tempDirectory}/event.json`;
+        await Deno.writeTextFile(
+          eventPath,
+          JSON.stringify({
+            client_payload: {
+              startTime: "1700000000000",
+              channel: "channel-1",
+              message: 'message with "quotes"',
+              token: "token-1",
+              link: "https://example.test/a?x=1&y=2",
+            },
+          }),
+        );
         const result = await runScript(["start"], {
           PATH: fakeCurl.path,
           CAPTURE_FILE: fakeCurl.capturePath,
           ENDPOINT_URL: "http://callback.test",
-          RUN_NUMBER: "42",
-          START_TIME: "1700000000000",
-          CHANNEL: "channel-1",
-          MESSAGE: 'message with "quotes"',
-          TOKEN: "token-1",
-          LINK: "https://example.test/a?x=1&y=2",
+          GITHUB_EVENT_PATH: eventPath,
+          GITHUB_RUN_NUMBER: "42",
         });
 
         assertEquals(result.code, 0);

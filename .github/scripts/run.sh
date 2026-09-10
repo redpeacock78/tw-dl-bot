@@ -9,6 +9,28 @@ readonly CALLBACK_DELAY=2
 readonly CALLBACK_TIMEOUT=18000
 readonly RETRY_CURL="${WORKSPACE}/.github/scripts/retry_curl.sh"
 
+event_payload_value() {
+  local key="${1}"
+  jq -r --arg key "${key}" '.client_payload[$key] // empty' "${GITHUB_EVENT_PATH}"
+}
+
+load_event_payload() {
+  local event_path="${GITHUB_EVENT_PATH:-}"
+  if [[ -z "${event_path}" || ! -f "${event_path}" ]]; then
+    return 0
+  fi
+
+  RUN_NUMBER="${RUN_NUMBER:-${GITHUB_RUN_NUMBER:-0}}"
+  COMMAND_TYPE="$(event_payload_value commandType)"
+  START_TIME="$(event_payload_value startTime)"
+  CHANNEL="$(event_payload_value channel)"
+  MESSAGE="$(event_payload_value message)"
+  TOKEN="$(event_payload_value token)"
+  LINK="$(event_payload_value link)"
+}
+
+load_event_payload
+
 set_output() {
   local name="${1}"
   local value="${2}"
