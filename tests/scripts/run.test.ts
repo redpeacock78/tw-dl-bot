@@ -13,7 +13,10 @@ const runScript = async (
 ): Promise<{ code: number; stdout: string; stderr: string }> => {
   const command = new Deno.Command("bash", {
     args: [SCRIPT, ...args],
-    env,
+    env: {
+      GITHUB_EVENT_PATH: "",
+      ...env,
+    },
     stdout: "piped",
     stderr: "piped",
   });
