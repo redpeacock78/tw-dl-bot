@@ -33,32 +33,44 @@ callback_json() {
     '{status: $status, number: $number, startTime: $startTime, channel: $channel, message: $message, token: $token, link: $link, content: $content}'
 }
 
-post_json() {
-  local payload="${1}"
-  local mode="${2:-retry}"
+post_callback() {
+  local mode="${1:-retry}"
+  local max_attempts="${2:-1}"
+  shift 2
+
+  local -a curl_args=(
+    -X POST
+    -m "${CALLBACK_TIMEOUT}"
+    --retry 100
+    --retry-all-errors
+    "${@}"
+    "${ENDPOINT_URL:-}"
+  )
 
   if [[ "${mode}" == "best-effort" ]]; then
-    curl -s -X POST \
-      "${ENDPOINT_URL:-}" \
-      -H "Accept: application/json" \
-      -H "Content-type: application/json" \
-      -m "${CALLBACK_TIMEOUT}" \
-      --retry 100 \
-      --retry-all-errors \
-      -o /dev/null \
-      -d "${payload}" || true
+    curl -s -o /dev/null "${curl_args[@]}" || true
     return 0
   fi
 
-  bash "${RETRY_CURL}" "${CALLBACK_RETRIES}" "${CALLBACK_DELAY}" -- \
-    -X POST \
-    "${ENDPOINT_URL:-}" \
+  local retry=0
+  while (( retry < max_attempts )); do
+    if (( max_attempts > 1 )); then
+      echo "Retry count: ${retry}"
+    fi
+    if bash "${RETRY_CURL}" "${CALLBACK_RETRIES}" "${CALLBACK_DELAY}" -- \
+      "${curl_args[@]}"; then
+      return 0
+    fi
+    retry=$((retry + 1))
+  done
+  return 1
+}
+
+post_json() {
+  post_callback "${2:-retry}" 1 \
     -H "Accept: application/json" \
     -H "Content-type: application/json" \
-    -m "${CALLBACK_TIMEOUT}" \
-    --retry 100 \
-    --retry-all-errors \
-    -d "${payload}"
+    -d "${1}"
 }
 
 post_progress() {
@@ -245,24 +257,33 @@ download_files() {
 }
 
 post_form() {
-  local -a options=("${@}")
-  local retry=0
+  post_callback retry "${MAX_RETRIES}" \
+    -H "Content-type: multipart/form-data" \
+    "${@}"
+}
 
-  while (( retry < MAX_RETRIES )); do
-    echo "Retry count: ${retry}"
-    if bash "${RETRY_CURL}" "${CALLBACK_RETRIES}" "${CALLBACK_DELAY}" -- \
-      -X POST \
-      -H "Content-type: multipart/form-data" \
-      -m "${CALLBACK_TIMEOUT}" \
-      --retry 100 \
-      --retry-all-errors \
-      "${options[@]}" \
-      "${ENDPOINT_URL:-}"; then
-      return 0
-    fi
-    retry=$((retry + 1))
-  done
-  return 1
+callback_form_options() {
+  local action_type="${1}"
+  local converted="${2}"
+  local oversize="${3}"
+  local size="${4}"
+  local -n options_ref="${5}"
+
+  # shellcheck disable=SC2034
+  options_ref=(
+    -F "status=success"
+    -F "number=${RUN_NUMBER:-0}"
+    -F "commandType=${COMMAND_TYPE:-}"
+    -F "actionType=${action_type}"
+    -F "convert=${converted}"
+    -F "oversize=${oversize}"
+    -F "size=${size}"
+    -F "startTime=${START_TIME:-}"
+    -F "channel=${CHANNEL:-}"
+    -F "message=${MESSAGE:-}"
+    -F "token=${TOKEN:-}"
+    -F "link=${LINK:-}"
+  )
 }
 
 upload_single() {
@@ -270,19 +291,9 @@ upload_single() {
   local file_name="${2}"
   local converted="${3}"
   local size="${4}"
-  local options=(
-    -F "status=success"
-    -F "number=${RUN_NUMBER:-0}"
-    -F "commandType=${COMMAND_TYPE:-}"
-    -F "actionType=single"
-    -F "convert=${converted}"
-    -F "oversize=false"
-    -F "size=${size}"
-    -F "startTime=${START_TIME:-}"
-    -F "channel=${CHANNEL:-}"
-    -F "message=${MESSAGE:-}"
-    -F "token=${TOKEN:-}"
-    -F "link=${LINK:-}"
+  local -a options=()
+  callback_form_options single "${converted}" false "${size}" options
+  options+=(
     -F "name1=${file_name}"
     -F "file1=@${file_path}"
   )
@@ -383,20 +394,8 @@ upload_files() {
   fi
   echo "Total size: ${selected_total}"
 
-  local options=(
-    -F "status=success"
-    -F "number=${RUN_NUMBER:-0}"
-    -F "commandType=${COMMAND_TYPE:-}"
-    -F "actionType=multi"
-    -F "convert=${converted_used}"
-    -F "startTime=${START_TIME:-}"
-    -F "channel=${CHANNEL:-}"
-    -F "message=${MESSAGE:-}"
-    -F "token=${TOKEN:-}"
-    -F "link=${LINK:-}"
-    -F "size=${selected_total}"
-    -F "oversize=${oversize}"
-  )
+  local -a options=()
+  callback_form_options multi "${converted_used}" "${oversize}" "${selected_total}" options
   local index=0
   while (( index < files_num )); do
     options+=(

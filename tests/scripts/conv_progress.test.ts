@@ -49,7 +49,10 @@ async function makeCaptureSrv(): Promise<{
   return {
     url: `http://127.0.0.1:${port}/callback`,
     bodyPromise,
-    close: () => { ac.abort(); server.finished.catch(() => {}); },
+    close: () => {
+      ac.abort();
+      server.finished.catch(() => {});
+    },
   };
 }
 
@@ -69,6 +72,7 @@ interface RunOpts {
   fileIndex?: string;
   totalFiles?: string;
   phase?: string;
+  message?: string;
   commandType?: string;
   shardIndex?: string;
 }
@@ -80,6 +84,7 @@ function startScript(opts: RunOpts): Deno.ChildProcess {
     ENDPOINT_URL: opts.url,
     PATH: Deno.env.get("PATH") ?? "/usr/bin:/bin",
   };
+  if (opts.message !== undefined) env.MESSAGE = opts.message;
   if (opts.commandType !== undefined) env.COMMAND_TYPE = opts.commandType;
   if (opts.shardIndex !== undefined) env.SHARD_INDEX = opts.shardIndex;
 
@@ -296,7 +301,11 @@ Deno.test("conv_progress.sh", async (t) => {
       const srv = await makeCaptureSrv();
       // SHARD_INDEX is set but COMMAND_TYPE is absent (non-thread path).
       // The script omits both fields from the payload in this case.
-      const proc = startScript({ url: srv.url, progressFile, shardIndex: "02" });
+      const proc = startScript({
+        url: srv.url,
+        progressFile,
+        shardIndex: "02",
+      });
 
       try {
         await new Promise((r) => setTimeout(r, 1200));
@@ -307,6 +316,38 @@ Deno.test("conv_progress.sh", async (t) => {
 
         assertEquals("commandType" in json, false);
         assertEquals("shardIndex" in json, false);
+      } finally {
+        proc.kill("SIGKILL");
+        await proc.status.catch(() => {});
+        srv.close();
+        await Deno.remove(tmpDir, { recursive: true });
+      }
+    },
+  );
+
+  await t.step(
+    "quotes and newlines in callback fields produce valid JSON",
+    async () => {
+      const tmpDir = await Deno.makeTempDir();
+      const progressFile = `${tmpDir}/progress.log`;
+      await Deno.writeTextFile(progressFile, "initial");
+
+      const srv = await makeCaptureSrv();
+      const proc = startScript({
+        url: srv.url,
+        progressFile,
+        message: 'message with "quotes"\ncontinued',
+      });
+
+      try {
+        await new Promise((r) => setTimeout(r, 1200));
+        await Deno.writeTextFile(progressFile, "line 2");
+
+        const body = await withTimeout(srv.bodyPromise, 10_000);
+        const json = JSON.parse(body);
+
+        assertEquals(json.message, 'message with "quotes"\ncontinued');
+        assertEquals(json.content.endsWith("line 2"), true);
       } finally {
         proc.kill("SIGKILL");
         await proc.status.catch(() => {});
