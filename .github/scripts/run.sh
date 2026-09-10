@@ -6,7 +6,9 @@ readonly MAX_RETRIES=1000
 readonly MAX_FILE_SIZE=10485760
 readonly CALLBACK_RETRIES=15
 readonly CALLBACK_DELAY=2
-readonly CALLBACK_TIMEOUT=18000
+readonly CALLBACK_TIMEOUT=60
+readonly BEST_EFFORT_TIMEOUT=10
+readonly CALLBACK_CONNECT_TIMEOUT=10
 readonly RETRY_CURL="${WORKSPACE}/.github/scripts/retry_curl.sh"
 
 event_payload_value() {
@@ -62,6 +64,10 @@ set_output() {
 callback_json() {
   local status="${1}"
   local content="${2}"
+  local is_thread=false
+  case "${COMMAND_TYPE:-}" in
+    threaddl|threaddl-spoiler) is_thread=true ;;
+  esac
 
   jq -cn \
     --arg status "${status}" \
@@ -73,10 +79,11 @@ callback_json() {
     --arg link "${LINK:-}" \
     --arg commandType "${COMMAND_TYPE:-}" \
     --arg shardIndex "${SHARD_INDEX:-}" \
+    --argjson isThread "${is_thread}" \
     --arg content "${content}" \
     '{status: $status, number: $number, startTime: $startTime, channel: $channel, message: $message, token: $token, link: $link, content: $content}
-     + (if $commandType != "" then {commandType: $commandType} else {} end)
-     + (if ($commandType != "" and $shardIndex != "") then {shardIndex: $shardIndex} else {} end)'
+     + (if $isThread then {commandType: $commandType} else {} end)
+     + (if ($isThread and $shardIndex != "") then {shardIndex: $shardIndex} else {} end)'
 }
 
 post_callback() {
@@ -84,19 +91,23 @@ post_callback() {
   local max_attempts="${2:-1}"
   shift 2
 
+  if [[ "${mode}" == "best-effort" ]]; then
+    curl -s -o /dev/null \
+      --connect-timeout "${CALLBACK_CONNECT_TIMEOUT}" \
+      --max-time "${BEST_EFFORT_TIMEOUT}" \
+      -X POST \
+      "${@}" \
+      "${ENDPOINT_URL:-}" || true
+    return 0
+  fi
+
   local -a curl_args=(
     -X POST
+    --connect-timeout "${CALLBACK_CONNECT_TIMEOUT}"
     -m "${CALLBACK_TIMEOUT}"
-    --retry 100
-    --retry-all-errors
     "${@}"
     "${ENDPOINT_URL:-}"
   )
-
-  if [[ "${mode}" == "best-effort" ]]; then
-    curl -s -o /dev/null "${curl_args[@]}" || true
-    return 0
-  fi
 
   local retry=0
   while (( retry < max_attempts )); do

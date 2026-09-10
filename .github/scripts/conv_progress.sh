@@ -18,7 +18,8 @@ readonly RETRY_CURL="${SCRIPT_DIR}/retry_curl.sh"
 readonly MAX_RETRIES=1000
 readonly CALLBACK_RETRIES=15
 readonly CALLBACK_DELAY=2
-readonly CALLBACK_TIMEOUT=18000
+readonly CALLBACK_TIMEOUT=60
+readonly CALLBACK_CONNECT_TIMEOUT=10
 
 progress_file="${1}"
 file_index="${2}"
@@ -28,6 +29,10 @@ run_number="${RUN_NUMBER}"
 start_time="${START_TIME}"
 command_type="${COMMAND_TYPE:-}"
 shard_index="${SHARD_INDEX:-}"
+is_thread=false
+case "${command_type}" in
+  threaddl|threaddl-spoiler) is_thread=true ;;
+esac
 channel="${CHANNEL}"
 message="${MESSAGE}"
 token="${TOKEN}"
@@ -47,9 +52,10 @@ progress_payload() {
     --arg content "${content}" \
     --arg commandType "${command_type}" \
     --arg shardIndex "${shard_index}" \
+    --argjson isThread "${is_thread}" \
     '{status: "progress", number: $number, startTime: $startTime, channel: $channel, message: $message, token: $token, link: $link, content: $content}
-     + (if $commandType != "" then {commandType: $commandType} else {} end)
-     + (if ($commandType != "" and $shardIndex != "") then {shardIndex: $shardIndex} else {} end)'
+     + (if $isThread then {commandType: $commandType} else {} end)
+     + (if ($isThread and $shardIndex != "") then {shardIndex: $shardIndex} else {} end)'
 }
 
 post_progress() {
@@ -58,11 +64,10 @@ post_progress() {
   bash "${RETRY_CURL}" "${CALLBACK_RETRIES}" "${CALLBACK_DELAY}" -- \
     -X POST \
     "${ENDPOINT_URL}" \
+    --connect-timeout "${CALLBACK_CONNECT_TIMEOUT}" \
     -H "Accept: application/json" \
     -H "Content-type: application/json" \
     -m "${CALLBACK_TIMEOUT}" \
-    --retry 100 \
-    --retry-all-errors \
     -d "${payload}"
 }
 

@@ -124,6 +124,7 @@ Deno.test("run.sh", async (t) => {
           eventPath,
           JSON.stringify({
             client_payload: {
+              commandType: "dl",
               startTime: "1700000000000",
               channel: "channel-1",
               message: 'message with "quotes"',
@@ -154,6 +155,7 @@ Deno.test("run.sh", async (t) => {
           link: "https://example.test/a?x=1&y=2",
           content: "⏳Starting...",
         });
+        assertEquals("commandType" in payload, false);
       } finally {
         await Deno.remove(tempDirectory, { recursive: true });
       }
@@ -243,7 +245,7 @@ Deno.test("run.sh", async (t) => {
           "::add-mask::threaddl\n" +
             "::add-mask::https://example.test/second\n" +
             "::add-mask::thread-1\n" +
-            "::add-mask::message with \"quotes\"\n" +
+            '::add-mask::message with "quotes"\n' +
             "::add-mask::token-1\n",
         );
         const result = await runScript(["start"], {

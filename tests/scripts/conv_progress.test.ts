@@ -121,16 +121,20 @@ async function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
 // ---------------------------------------------------------------------------
 
 Deno.test("conv_progress.sh", async (t) => {
-  // ── Case 1: without COMMAND_TYPE → no commandType field in payload ──
+  // ── Case 1: non-thread COMMAND_TYPE → no commandType field in payload ──
   await t.step(
-    "without COMMAND_TYPE → JSON payload omits commandType field",
+    "with COMMAND_TYPE=dl → JSON payload omits commandType field",
     async () => {
       const tmpDir = await Deno.makeTempDir();
       const progressFile = `${tmpDir}/progress.log`;
       await Deno.writeTextFile(progressFile, "initial");
 
       const srv = await makeCaptureSrv();
-      const proc = startScript({ url: srv.url, progressFile });
+      const proc = startScript({
+        url: srv.url,
+        progressFile,
+        commandType: "dl",
+      });
 
       try {
         // Trigger file change
