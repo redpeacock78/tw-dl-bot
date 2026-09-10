@@ -12,6 +12,12 @@ import { interactionCreate } from "@bot/interactionCreate.ts";
 import { threadInteractionCreate } from "@bot/threadInteractionCreate.ts";
 import { threadModalSubmit } from "@bot/threadModalSubmit.ts";
 
+const redactDiscordToken = (message: string): string =>
+  message.replace(
+    /https:\/\/discord\.com\/api\/v\d+\/+(?:interactions\/\d+|webhooks\/\d+)\/[^/\s)]+/g,
+    "https://discord.com/api/v*/<redacted>",
+  );
+
 const bot: Bot = createBot({
   token: Secrets.DISCORD_TOKEN,
   intents: Intents.Guilds,
@@ -48,51 +54,62 @@ bot.events.interactionCreate = async (
   b: Bot,
   interaction: Interaction,
 ): Promise<void> => {
-  if (!interaction.data) return;
+  // Discordeno does not await event handlers, so isolate transient REST
+  // failures here instead of turning one failed interaction into a process exit.
+  try {
+    if (!interaction.data) return;
 
-  if (interaction.type === InteractionTypes.ModalSubmit) {
-    await threadModalSubmit({ b, data: interaction.data, interaction });
-    return;
+    if (interaction.type === InteractionTypes.ModalSubmit) {
+      await threadModalSubmit({ b, data: interaction.data, interaction });
+      return;
+    }
+
+    if (interaction.type !== InteractionTypes.ApplicationCommand) return;
+
+    const props = {
+      b,
+      data: interaction.data,
+      interaction,
+      commandType: "",
+    };
+    await Match(props.data.name)
+      .with(
+        Commands.dlCommand.name,
+        async (commandType: string): Promise<void> => {
+          props.commandType = commandType;
+          await interactionCreate(props);
+        },
+      )
+      .with(
+        Commands.dlSpoilerCommand.name,
+        async (commandType: string): Promise<void> => {
+          props.commandType = commandType;
+          await interactionCreate(props);
+        },
+      )
+      .with(
+        Commands.threadDlCommand.name,
+        async (commandType: string): Promise<void> => {
+          props.commandType = commandType;
+          await threadInteractionCreate(props);
+        },
+      )
+      .with(
+        Commands.threadDlSpoilerCommand.name,
+        async (commandType: string): Promise<void> => {
+          props.commandType = commandType;
+          await threadInteractionCreate(props);
+        },
+      )
+      .otherwise((): void => {});
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(
+      `Discord interaction ${interaction.id} failed: ${
+        redactDiscordToken(message)
+      }`,
+    );
   }
-
-  if (interaction.type !== InteractionTypes.ApplicationCommand) return;
-
-  const props = {
-    b,
-    data: interaction.data,
-    interaction,
-    commandType: "",
-  };
-  await Match(props.data.name)
-    .with(
-      Commands.dlCommand.name,
-      async (commandType: string): Promise<void> => {
-        props.commandType = commandType;
-        await interactionCreate(props);
-      },
-    )
-    .with(
-      Commands.dlSpoilerCommand.name,
-      async (commandType: string): Promise<void> => {
-        props.commandType = commandType;
-        await interactionCreate(props);
-      },
-    )
-    .with(
-      Commands.threadDlCommand.name,
-      async (commandType: string): Promise<void> => {
-        props.commandType = commandType;
-        await threadInteractionCreate(props);
-      },
-    )
-    .with(
-      Commands.threadDlSpoilerCommand.name,
-      async (commandType: string): Promise<void> => {
-        props.commandType = commandType;
-        await threadInteractionCreate(props);
-      },
-    )
-    .otherwise((): void => {});
 };
 
 export default bot;
