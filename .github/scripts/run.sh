@@ -14,19 +14,39 @@ event_payload_value() {
   jq -r --arg key "${key}" '.client_payload[$key] // empty' "${GITHUB_EVENT_PATH}"
 }
 
+shard_payload_value() {
+  local key="${1}"
+  jq -r \
+    --arg key "${key}" \
+    --arg index "${SHARD_INDEX}" \
+    '.client_payload.links[(($index | tonumber) - 1)][$key] // empty' \
+    "${GITHUB_EVENT_PATH}"
+}
+
 load_event_payload() {
   local event_path="${GITHUB_EVENT_PATH:-}"
-  if [[ -z "${event_path}" || ! -f "${event_path}" ]]; then
-    return 0
+  RUN_NUMBER="${RUN_NUMBER:-${GITHUB_RUN_NUMBER:-0}}"
+
+  if [[ -n "${event_path}" && -f "${event_path}" ]]; then
+    COMMAND_TYPE="$(event_payload_value commandType)"
+    START_TIME="$(event_payload_value startTime)"
+    CHANNEL="$(event_payload_value channel)"
+    MESSAGE="$(event_payload_value message)"
+    TOKEN="$(event_payload_value token)"
+    LINK="$(event_payload_value link)"
+
+    if [[ "${SHARD_INDEX:-}" =~ ^[0-9]+$ ]]; then
+      LINK="$(shard_payload_value link)"
+      MESSAGE="$(shard_payload_value message)"
+    fi
   fi
 
-  RUN_NUMBER="${RUN_NUMBER:-${GITHUB_RUN_NUMBER:-0}}"
-  COMMAND_TYPE="$(event_payload_value commandType)"
-  START_TIME="$(event_payload_value startTime)"
-  CHANNEL="$(event_payload_value channel)"
-  MESSAGE="$(event_payload_value message)"
-  TOKEN="$(event_payload_value token)"
-  LINK="$(event_payload_value link)"
+  if [[ -n "${MATRIX_LINK:-}" ]]; then
+    LINK="${MATRIX_LINK}"
+  fi
+  if [[ -n "${MATRIX_MESSAGE:-}" ]]; then
+    MESSAGE="${MATRIX_MESSAGE}"
+  fi
 }
 
 load_event_payload
@@ -51,8 +71,12 @@ callback_json() {
     --arg message "${MESSAGE:-}" \
     --arg token "${TOKEN:-}" \
     --arg link "${LINK:-}" \
+    --arg commandType "${COMMAND_TYPE:-}" \
+    --arg shardIndex "${SHARD_INDEX:-}" \
     --arg content "${content}" \
-    '{status: $status, number: $number, startTime: $startTime, channel: $channel, message: $message, token: $token, link: $link, content: $content}'
+    '{status: $status, number: $number, startTime: $startTime, channel: $channel, message: $message, token: $token, link: $link, content: $content}
+     + (if $commandType != "" then {commandType: $commandType} else {} end)
+     + (if ($commandType != "" and $shardIndex != "") then {shardIndex: $shardIndex} else {} end)'
 }
 
 post_callback() {
@@ -106,9 +130,17 @@ post_failure() {
 }
 
 mask_secrets() {
-  jq -r \
-    '.client_payload | [.commandType, .link, .channel, .message, .token][] | "::add-mask::\(. // "null")"' \
-    "${GITHUB_EVENT_PATH}"
+  local value
+  for value in \
+    "${COMMAND_TYPE:-}" \
+    "${LINK:-}" \
+    "${CHANNEL:-}" \
+    "${MESSAGE:-}" \
+    "${TOKEN:-}"; do
+    if [[ -n "${value}" ]]; then
+      printf '::add-mask::%s\n' "${value}"
+    fi
+  done
 }
 
 setup_ytdlp() {
@@ -306,6 +338,12 @@ callback_form_options() {
     -F "token=${TOKEN:-}"
     -F "link=${LINK:-}"
   )
+
+  if [[ "${COMMAND_TYPE:-}" != "" && "${SHARD_INDEX:-}" != "" ]]; then
+    options_ref+=(
+      -F "shardIndex=${SHARD_INDEX}"
+    )
+  fi
 }
 
 upload_single() {
@@ -314,7 +352,11 @@ upload_single() {
   local converted="${3}"
   local size="${4}"
   local -a options=()
-  callback_form_options single "${converted}" false "${size}" options
+  local action_type="single"
+  if [[ "${COMMAND_TYPE:-}" != "" && "${SHARD_INDEX:-}" != "" ]]; then
+    action_type="thread-single"
+  fi
+  callback_form_options "${action_type}" "${converted}" false "${size}" options
   options+=(
     -F "name1=${file_name}"
     -F "file1=@${file_path}"
@@ -417,7 +459,11 @@ upload_files() {
   echo "Total size: ${selected_total}"
 
   local -a options=()
-  callback_form_options multi "${converted_used}" "${oversize}" "${selected_total}" options
+  local action_type="multi"
+  if [[ "${COMMAND_TYPE:-}" != "" && "${SHARD_INDEX:-}" != "" ]]; then
+    action_type="thread-multi"
+  fi
+  callback_form_options "${action_type}" "${converted_used}" "${oversize}" "${selected_total}" options
   local index=0
   while (( index < files_num )); do
     options+=(

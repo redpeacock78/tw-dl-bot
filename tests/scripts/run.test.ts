@@ -204,4 +204,130 @@ Deno.test("run.sh", async (t) => {
       }
     },
   );
+
+  await t.step(
+    "thread start loads the link and message for its shard",
+    async () => {
+      const tempDirectory = await Deno.makeTempDir();
+      try {
+        const fakeCurl = await makeFakeCurl(tempDirectory);
+        const eventPath = `${tempDirectory}/event.json`;
+        await Deno.writeTextFile(
+          eventPath,
+          JSON.stringify({
+            client_payload: {
+              commandType: "threaddl",
+              startTime: "1700000000000",
+              channel: "thread-1",
+              token: "token-1",
+              links: [
+                { link: "https://example.test/first", message: "message-1" },
+                {
+                  link: "https://example.test/second",
+                  message: 'message with "quotes"',
+                },
+              ],
+            },
+          }),
+        );
+        const maskResult = await runScript(["mask"], {
+          GITHUB_EVENT_PATH: eventPath,
+          SHARD_INDEX: "02",
+        });
+        assertEquals(maskResult.code, 0);
+        assertEquals(
+          maskResult.stdout,
+          "::add-mask::threaddl\n" +
+            "::add-mask::https://example.test/second\n" +
+            "::add-mask::thread-1\n" +
+            "::add-mask::message with \"quotes\"\n" +
+            "::add-mask::token-1\n",
+        );
+        const result = await runScript(["start"], {
+          PATH: fakeCurl.path,
+          CAPTURE_FILE: fakeCurl.capturePath,
+          ENDPOINT_URL: "http://callback.test",
+          GITHUB_EVENT_PATH: eventPath,
+          GITHUB_RUN_NUMBER: "42",
+          SHARD_INDEX: "02",
+        });
+
+        assertEquals(result.code, 0);
+        const payload = JSON.parse(
+          await Deno.readTextFile(fakeCurl.capturePath),
+        );
+        assertEquals(payload.commandType, "threaddl");
+        assertEquals(payload.shardIndex, "02");
+        assertEquals(payload.link, "https://example.test/second");
+        assertEquals(payload.message, 'message with "quotes"');
+      } finally {
+        await Deno.remove(tempDirectory, { recursive: true });
+      }
+    },
+  );
+
+  await t.step(
+    "thread upload uses thread action type and shard index",
+    async () => {
+      const tempDirectory = await Deno.makeTempDir();
+      try {
+        const workspace = `${tempDirectory}/workspace`;
+        const scriptDirectory = `${workspace}/.github/scripts`;
+        const downloadDirectory = `${workspace}/download`;
+        await Deno.mkdir(scriptDirectory, { recursive: true });
+        await Deno.mkdir(downloadDirectory, { recursive: true });
+        await Deno.copyFile(
+          new URL("../../.github/scripts/retry_curl.sh", import.meta.url)
+            .pathname,
+          `${scriptDirectory}/retry_curl.sh`,
+        );
+        await Deno.writeTextFile(`${downloadDirectory}/clip.mp4`, "abc");
+
+        const fakeCurl = await makeFakeCurl(tempDirectory);
+        const result = await runScript(["upload"], {
+          PATH: fakeCurl.path,
+          CAPTURE_FILE: fakeCurl.capturePath,
+          CAPTURE_FORM: "true",
+          GITHUB_WORKSPACE: workspace,
+          ENDPOINT_URL: "http://callback.test",
+          RUN_NUMBER: "42",
+          START_TIME: "1700000000000",
+          CHANNEL: "thread-1",
+          MESSAGE: "message-1",
+          TOKEN: "token-1",
+          LINK: "https://example.test/video",
+          COMMAND_TYPE: "threaddl",
+          SHARD_INDEX: "02",
+        });
+
+        assertEquals(result.code, 0);
+        const requestLog = await Deno.readTextFile(fakeCurl.capturePath);
+        assertStringIncludes(requestLog, "actionType=thread-single");
+        assertStringIncludes(requestLog, "shardIndex=02");
+      } finally {
+        await Deno.remove(tempDirectory, { recursive: true });
+      }
+    },
+  );
+
+  await t.step(
+    "thread workflow delegates runtime shell logic to run.sh",
+    async () => {
+      const workflow = await Deno.readTextFile(
+        new URL("../../.github/workflows/run-thread.yml", import.meta.url),
+      );
+
+      assertEquals(workflow.includes("curl"), false);
+      assertEquals(workflow.includes("MATRIX_LINK"), false);
+      assertEquals(workflow.includes("MATRIX_MESSAGE"), false);
+      assertStringIncludes(
+        workflow,
+        "run: bash .github/scripts/run.sh mask",
+      );
+      assertStringIncludes(
+        workflow,
+        "run: bash .github/scripts/run.sh upload",
+      );
+    },
+  );
 });

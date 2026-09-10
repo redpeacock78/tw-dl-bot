@@ -9,7 +9,7 @@ Botはすべての `yt-dlp` 作業をGitHub Actionsにオフロードします�
 | Build runner image | `.github/workflows/build.yml` | `ghcr.io/<owner>/tw-dl-runner:latest` をビルドしてプッシュ。`master` への `push` 時および daily schedule。 |
 | Run download | `.github/workflows/run.yml` | `repository_dispatch` event of type `download` によってトリガー。runner container を単一 URL に対して実行し、progress / success / failure callbacks を投稿。`/dl` と `/dl-spoiler` で使用。 |
 | Run thread download | `.github/workflows/run-thread.yml` | `repository_dispatch` event of type `thread-download` によってトリガー。`prepare` job が `links` payload から `strategy.matrix` を構築し、`run-with-container` が URL ごとに 1 つの shard をファンアウト（`max-parallel: 16`、`fail-fast: false`）。`/threaddl` と `/threaddl-spoiler` で共有 — workflow は `commandType` で分岐しません。値を callback に echo back し、Bot の router が spoiler vs. non-spoiler success handler をピック。 |
-| Test | `.github/workflows/test.yml` | `pull_request` および `master` への `push` のたびに `deno lint`、`deno task test`、`deno task test:coverage` を実行。coverage report は GitHub Step Summary に追加。 |
+| Test | `.github/workflows/test.yml` | `pull_request` および `master` への `push` のたびに runner scripts の `bash -n`、`deno lint`、`deno task test`、`deno task test:coverage` を実行。coverage report は GitHub Step Summary に追加。 |
 
 ## Workflow comparison: `run.yml` vs `run-thread.yml`
 
@@ -162,6 +162,7 @@ Runner workflows（`run.yml` と `run-thread.yml`）はDocker container内で実
 | `post_process.sh` | Bash script。Video ファイルを validate し、必要に応じて libx264 single-pass encoding を使用して H.264/MP4 format に変換。FFprobe を使用して format/codec/pixel format をチェックし、まだ H.264 + yuv420p でない場合は FFmpeg 経由で re-encode。Discord と downstream processing との互換性を ensure。 |
 | `conv_progress.sh` | Bash script。Progress log file の変更を監視し、Bot へ real-time progress callbacks を送信。Environment variables（`ENDPOINT_URL`、`COMMAND_TYPE`、`SHARD_INDEX` など）を読み込み、ffmpeg/awk pipeline によって生成された log file を watch。JSON payloads を callback endpoint に POST。`SHARD_INDEX` が設定されている場合（thread mode）、それは callback payload に含まれるため、Bot が run numbers を `#N-XX` にレンダリングできます。non-thread runs では省略。Encoding 中に background process として実行。 |
 | `run.sh` | `run.yml` の Bash entry point。masking、callback、yt-dlp setup、link check、download/upload、failure notification、cleanup を subcommand で処理。Workflow の値は environment variables 経由で受け取り、callback JSON は `jq` で生成。 |
+| `check_and_convert_files.sh` | Composite Action から呼び出される Bash script。download directory の合計サイズを検査し、10 MB を超えるファイルを two-pass HEVC + Opus で変換。各 encoding phase の progress は `conv_progress.sh` 経由で送信。 |
 
 ### Composite Action（`.github/actions/check-and-convert-files/`）
 
@@ -257,10 +258,11 @@ outputはJSON objectです。形式の例は以下のとおりです。
 
 1. `actions/checkout@v6`
 2. `denoland/setup-deno@v2`（Deno `v2.x`）
-3. `deno lint`
-4. `deno task test`（env varsの `DISCORD_TOKEN` / `DISPATCH_URL` / `GITHUB_TOKEN` は事前設定されたplaceholdersです）
-5. `deno task test:coverage | tee coverage.txt`
-6. Always：`coverage.txt` のcontentsをGitHub Step Summaryにappendします。reviewersがworkflow run pageでcoverage reportを直接見るためです。
+3. `bash -n .github/scripts/*.sh`
+4. `deno lint`
+5. `deno task test`（env varsの `DISCORD_TOKEN` / `DISPATCH_URL` / `GITHUB_TOKEN` は事前設定されたplaceholdersです）
+6. `deno task test:coverage | tee coverage.txt`
+7. Always：`coverage.txt` のcontentsをGitHub Step Summaryにappendします。reviewersがworkflow run pageでcoverage reportを直接見るためです。
 
 ## When you change the schema
 
