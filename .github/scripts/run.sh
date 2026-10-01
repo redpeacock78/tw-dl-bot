@@ -36,6 +36,7 @@ load_event_payload() {
     MESSAGE="$(event_payload_value message)"
     TOKEN="$(event_payload_value token)"
     LINK="$(event_payload_value link)"
+    COOKIE_STRING="$(event_payload_value cookie)"
 
     if [[ "${SHARD_INDEX:-}" =~ ^[0-9]+$ ]]; then
       LINK="$(shard_payload_value link)"
@@ -147,7 +148,8 @@ mask_secrets() {
     "${LINK:-}" \
     "${CHANNEL:-}" \
     "${MESSAGE:-}" \
-    "${TOKEN:-}"; do
+    "${TOKEN:-}" \
+    "${COOKIE_STRING:-}"; do
     if [[ -n "${value}" ]]; then
       printf '::add-mask::%s\n' "${value}"
     fi
@@ -213,6 +215,36 @@ has_video_files() {
   return 1
 }
 
+cookie_header_to_netscape() {
+  local cookie_string="${1}"
+  local output="${2}"
+  local domain=".twitter.com"
+  local cookie
+  local name
+  local value
+
+  {
+    printf '# Netscape HTTP Cookie File\n'
+    IFS=';' read -ra cookies <<< "${cookie_string}"
+    for cookie in "${cookies[@]}"; do
+      cookie="${cookie#"${cookie%%[![:space:]]*}"}"
+      cookie="${cookie%"${cookie##*[![:space:]]}"}"
+
+      [[ -z "${cookie}" ]] && continue
+      [[ "${cookie}" != *=* ]] && continue
+
+      name="${cookie%%=*}"
+      value="${cookie#*=}"
+      name="${name#"${name%%[![:space:]]*}"}"
+      name="${name%"${name##*[![:space:]]}"}"
+      [[ -z "${name}" ]] && continue
+
+      printf '%s\tTRUE\t/\tTRUE\t0\t%s\t%s\n' \
+        "${domain}" "${name}" "${value}"
+    done
+  } > "${output}"
+}
+
 check_link() {
   if [[ ! "${LINK:-}" =~ ^http.*$ ]]; then
     return 0
@@ -228,7 +260,11 @@ check_link() {
     fi
 
     echo "Retry count: ${retry}"
-    status="$(curl -sL -m "${CALLBACK_TIMEOUT}" --retry 100 --retry-all-errors "${LINK}" -o /dev/null -w '%{http_code}\n' || true)"
+    local -a curl_options=()
+    if [[ -n "${COOKIE_STRING:-}" ]]; then
+      curl_options+=(--cookie "${COOKIE_STRING}")
+    fi
+    status="$(curl -sL -m "${CALLBACK_TIMEOUT}" --retry 100 --retry-all-errors "${curl_options[@]}" "${LINK}" -o /dev/null -w '%{http_code}\n' || true)"
     case "${status}" in
       200|302|307)
         return 0
@@ -270,10 +306,15 @@ download_files() {
     yt_result="$(mktemp)"
 
     if [[ "${url}" == */twitter.com/* ]]; then
-      if [[ ! -f "${cookie_path}" ]]; then
-        printf '%s\n' "${TWITTER_COOKIES:-}" > "${cookie_path}"
+      if [[ -n "${COOKIE_STRING:-}" ]]; then
+        cookie_header_to_netscape "${COOKIE_STRING}" "${cookie_path}"
+        options+=(--cookies "${cookie_path}")
+      elif [[ -n "${TWITTER_COOKIES:-}" ]]; then
+        if [[ ! -f "${cookie_path}" ]]; then
+          printf '%s\n' "${TWITTER_COOKIES}" > "${cookie_path}"
+        fi
+        options+=(--cookies "${cookie_path}")
       fi
-      options+=(--cookies "${cookie_path}")
     fi
 
     if ! yt-dlp \
