@@ -13,6 +13,7 @@ export const webhook = async (message: {
   channelId: bigint;
   id: bigint;
   token: string;
+  cookie?: string;
 }): Promise<KyResponse> =>
   await ky.post(Secrets.DISPATCH_URL, {
     json: {
@@ -24,6 +25,7 @@ export const webhook = async (message: {
         message: `${message.id}`,
         token: message.token,
         startTime: new Date().getTime().toString(),
+        ...(message.cookie ? { cookie: message.cookie } : {}),
       },
     },
     headers: {
