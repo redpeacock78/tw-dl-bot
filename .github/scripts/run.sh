@@ -215,14 +215,51 @@ has_video_files() {
   return 1
 }
 
+url_host() {
+  local url="${1}"
+  local authority="${url#*://}"
+  local host
+
+  authority="${authority%%/*}"
+  authority="${authority##*@}"
+
+  if [[ "${authority}" == \[*\]* ]]; then
+    host="${authority#\[}"
+    host="${host%%\]*}"
+  else
+    host="${authority%%:*}"
+  fi
+
+  host="${host%.}"
+  printf '%s\n' "${host,,}"
+}
+
 cookie_header_to_netscape() {
   local cookie_string="${1}"
   local output="${2}"
-  local domain=".twitter.com"
+  local url="${3}"
+  local host
+  local domain
+  local include_subdomains=true
+  local secure=false
   local cookie
   local name
   local value
   local -a cookies=()
+
+  host="$(url_host "${url}")"
+  [[ -n "${host}" ]] || return 1
+
+  if [[ "${host}" == "localhost" || "${host}" == *:* || "${host}" =~ ^[0-9]+(\.[0-9]+){3}$ ]]; then
+    domain="${host}"
+    include_subdomains=false
+  else
+    domain=".${host#.}"
+  fi
+
+  if [[ "${url}" == https://* ]]; then
+    secure=true
+  fi
 
   {
     printf '# Netscape HTTP Cookie File\n'
@@ -240,8 +277,11 @@ cookie_header_to_netscape() {
       name="${name%"${name##*[![:space:]]}"}"
       [[ -z "${name}" ]] && continue
 
-      printf '%s\tTRUE\t/\tTRUE\t0\t%s\t%s\n' \
-        "${domain}" "${name}" "${value}"
+      printf '%s\t%s\t/\t%s\t0\t%s\t%s\n' \
+        "${domain}" \
+        "$([[ "${include_subdomains}" == true ]] && printf TRUE || printf FALSE)" \
+        "$([[ "${secure}" == true ]] && printf TRUE || printf FALSE)" \
+        "${name}" "${value}"
     done
   } > "${output}"
 }
@@ -284,8 +324,9 @@ download_files() {
 
   local download_dir="${WORKSPACE}/download"
   local cookie_path="${WORKSPACE}/cookie.txt"
-  local url
-  url="$(printf '%s\n' "${LINK}" | awk -F '/' '{OFS="/";sub(/^x.com$/,"twitter.com",$3);print $0}')"
+  local url="${LINK}"
+  local host
+  host="$(url_host "${url}")"
   mkdir -p "${download_dir}"
   cd "${download_dir}"
 
@@ -306,16 +347,18 @@ download_files() {
     local options=()
     yt_result="$(mktemp)"
 
-    if [[ "${url}" == */twitter.com/* ]]; then
-      if [[ -n "${COOKIE_STRING:-}" ]]; then
-        cookie_header_to_netscape "${COOKIE_STRING}" "${cookie_path}"
-        options+=(--cookies "${cookie_path}")
-      elif [[ -n "${TWITTER_COOKIES:-}" ]]; then
-        if [[ ! -f "${cookie_path}" ]]; then
-          printf '%s\n' "${TWITTER_COOKIES}" > "${cookie_path}"
-        fi
-        options+=(--cookies "${cookie_path}")
-      fi
+    if [[ -n "${COOKIE_STRING:-}" ]]; then
+      cookie_header_to_netscape "${COOKIE_STRING}" "${cookie_path}" "${url}"
+      options+=(--cookies "${cookie_path}")
+    elif [[ -n "${TWITTER_COOKIES:-}" ]]; then
+      case "${host}" in
+        x.com|*.x.com|twitter.com|*.twitter.com)
+          if [[ ! -f "${cookie_path}" ]]; then
+            printf '%s\n' "${TWITTER_COOKIES}" > "${cookie_path}"
+          fi
+          options+=(--cookies "${cookie_path}")
+          ;;
+      esac
     fi
 
     if ! yt-dlp \
