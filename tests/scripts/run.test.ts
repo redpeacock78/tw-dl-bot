@@ -143,6 +143,7 @@ Deno.test("run.sh", async (t) => {
     "download converts request cookies to Netscape format with or without a trailing semicolon",
     async () => {
       const outputs: string[] = [];
+      const ytArgsOutputs: string[] = [];
 
       for (
         const cookie of [
@@ -177,7 +178,7 @@ printf '200'
           await Deno.writeTextFile(
             `${binDirectory}/yt-dlp`,
             `#!/usr/bin/env bash
-printf '%s\\n' "$@" > "${YT_ARGS_CAPTURE}"
+printf '%s\\n' "$@" > "\${YT_ARGS_CAPTURE}"
 cookie_file=""
 while (( $# > 0 )); do
   if [[ "$1" == "--cookies" ]]; then
@@ -226,12 +227,18 @@ printf 'downloaded\\n'
 
           assertEquals(result.code, 0);
           outputs.push(await Deno.readTextFile(cookieCapturePath));
+          ytArgsOutputs.push(await Deno.readTextFile(ytArgsCapturePath));
         } finally {
           await Deno.remove(tempDirectory, { recursive: true });
         }
       }
 
       assertEquals(outputs[0], outputs[1]);
+      assertStringIncludes(ytArgsOutputs[0], "https://x.com/user/status/1");
+      assertEquals(
+        ytArgsOutputs[0].includes("https://twitter.com/user/status/1"),
+        false,
+      );
       assertEquals(
         outputs[0],
         "# Netscape HTTP Cookie File\n" +
