@@ -1,0 +1,100 @@
+name: Dependency health
+
+on:
+  schedule:
+    - cron: "37 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Build temporary dependency lock
+        shell: bash
+        run: |
+          rm -f "${RUNNER_TEMP}/tw-dl-bot-health.lock"
+          deno cache \
+            --lock="${RUNNER_TEMP}/tw-dl-bot-health.lock" \
+            --import-map import_map.json \
+            src/main.ts
+
+      - name: Audit dependencies
+        id: audit
+        shell: bash
+        run: |
+          set +e
+          deno audit \
+            --lock="${RUNNER_TEMP}/tw-dl-bot-health.lock" \
+            --ignore-registry-errors \
+            > dependency-audit.txt 2>&1
+          status=$?
+          set -e
+
+          echo "status=${status}" >> "${GITHUB_OUTPUT}"
+          cat dependency-audit.txt
+
+          deno outdated --import-map import_map.json > dependency-outdated.txt 2>&1 || true
+
+      - name: Sync dependency-health issue
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AUDIT_STATUS: ${{ steps.audit.outputs.status }}
+          ISSUE_TITLE: "[dependency-health] unresolved Deno advisories"
+        run: |
+          set -euo pipefail
+
+          issues_json="$(gh issue list --state all --limit 100 --json number,title,state)"
+          issue_number="$(jq -r --arg title "${ISSUE_TITLE}" '.[] | select(.title == $title) | .number' <<<"${issues_json}" | head -n1)"
+          issue_state="$(jq -r --arg title "${ISSUE_TITLE}" '.[] | select(.title == $title) | .state' <<<"${issues_json}" | head -n1)"
+
+          if [[ "${AUDIT_STATUS}" == "0" ]]; then
+            if [[ -n "${issue_number}" && "${issue_state}" == "OPEN" ]]; then
+              gh issue close "${issue_number}"
+            fi
+            exit 0
+          fi
+
+          {
+            echo '<!-- dependency-health:unresolved -->'
+            echo '# Dependency health'
+            echo
+            echo 'This issue is maintained automatically by the `Dependency health` workflow.'
+            echo
+            echo '## Deno audit'
+            echo
+            echo '~~~text'
+            cat dependency-audit.txt
+            echo '~~~'
+            echo
+            echo '## Dependency update overview'
+            echo
+            echo '~~~text'
+            cat dependency-outdated.txt
+            echo '~~~'
+            echo
+            echo 'Patch/minor GitHub Actions updates continue through the guarded Dependabot auto-merge path. Major changes and dependency blockers remain here for manual review.'
+          } > dependency-health.md
+
+          if [[ -z "${issue_number}" ]]; then
+            gh issue create --title "${ISSUE_TITLE}" --body-file dependency-health.md
+            exit 0
+          fi
+
+          if [[ "${issue_state}" == "CLOSED" ]]; then
+            gh issue reopen "${issue_number}"
+          fi
+
+          gh issue edit "${issue_number}" --body-file dependency-health.md
