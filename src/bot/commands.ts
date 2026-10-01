@@ -20,6 +20,18 @@ export const Commands: CommandsType = {
         required: true,
         description: "Tweet URL",
       },
+      {
+        name: "cookie",
+        type: 3,
+        required: false,
+        description: "Optional HTTP Cookie header value",
+      },
+      {
+        name: "cookie",
+        type: 3,
+        required: false,
+        description: "Optional HTTP Cookie header value",
+      },
     ],
   },
   dlSpoilerCommand: {
