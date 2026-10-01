@@ -184,8 +184,8 @@ while (( $# > 0 )); do
   fi
   shift
 done
-cp "${cookie_file}" "${COOKIE_CAPTURE}"
-touch "${PWD}/fake.mp4"
+cp "\${cookie_file}" "\${COOKIE_CAPTURE}"
+touch "\${PWD}/fake.mp4"
 printf 'downloaded\\n'
 `,
           );
