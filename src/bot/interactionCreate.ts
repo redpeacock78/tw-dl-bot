@@ -23,10 +23,13 @@ export const interactionCreate = async (props: {
   interaction: Interaction;
   commandType: string;
 }): Promise<void> => {
-  const contents: string[] = props.data.options
-    ?.map((i) => i.value as string)
-    .join("")
-    .split(" ") as string[];
+  const options = props.data.options ?? [];
+  const urlValue =
+    (options.find((i) => i.name === "url")?.value as string | undefined) ?? "";
+  const cookie =
+    (options.find((i) => i.name === "cookie")?.value as string | undefined)
+      ?.trim() || undefined;
+  const contents: string[] = urlValue.split(" ");
   await props.b.helpers.sendInteractionResponse(
     props.interaction.id,
     props.interaction.token,
@@ -68,6 +71,7 @@ export const interactionCreate = async (props: {
                   channelId: i.channelId,
                   id: i.id,
                   token: props.interaction.token,
+                  cookie,
                 }).catch(
                   async (e: Error): Promise<Message> =>
                     await props.b.helpers.editFollowupMessage(
