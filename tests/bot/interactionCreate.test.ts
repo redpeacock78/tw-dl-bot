@@ -45,13 +45,18 @@ const makeFakeBot = (): FakeBot => {
   };
 };
 
-const makeInteraction = (rawValue: string): Interaction =>
+const makeInteraction = (rawValue: string, cookie?: string): Interaction =>
   ({
     id: 100n,
     token: "fake-interaction-token",
     data: {
       name: "dl",
-      options: [{ name: "url", value: rawValue, type: 3 }],
+      options: [
+        { name: "url", value: rawValue, type: 3 },
+        ...(cookie === undefined
+          ? []
+          : [{ name: "cookie", value: cookie, type: 3 }]),
+      ],
     },
   }) as unknown as Interaction;
 
@@ -283,6 +288,49 @@ Deno.test("interactionCreate", async (t) => {
           f.value.includes("https://twitter.com/user/status/9"),
         );
         assertEquals(typeof sourceField?.value, "string");
+      } finally {
+        fetchStub.restore();
+      }
+    },
+  );
+
+  await t.step(
+    "optional cookie is forwarded without being treated as a URL",
+    async () => {
+      const bot = makeFakeBot();
+      const cookie = "auth_token=aaa; ct0=bbb;";
+      const interaction = makeInteraction(
+        "https://twitter.com/u/status/1",
+        cookie,
+      );
+      const fetchStub = stubFetchOk();
+
+      try {
+        await interactionCreate({
+          b: bot as unknown as Bot,
+          data: interaction.data!,
+          interaction,
+          commandType: "dl",
+        });
+
+        assertSpyCalls(bot.helpers.sendFollowupMessage, 1);
+        assertSpyCalls(fetchStub, 1);
+
+        const fetchArg0 = fetchStub.calls[0].args[0];
+        const req =
+          fetchArg0 instanceof Request
+            ? fetchArg0
+            : new Request(fetchArg0 as string, fetchStub.calls[0]
+                .args[1] as RequestInit | undefined);
+        const bodyText = await req.text();
+        const body = JSON.parse(bodyText) as {
+          client_payload: { link: string; cookie?: string };
+        };
+        assertEquals(
+          body.client_payload.link,
+          "https://twitter.com/u/status/1",
+        );
+        assertEquals(body.client_payload.cookie, cookie);
       } finally {
         fetchStub.restore();
       }
