@@ -22,14 +22,14 @@
 | Option | Type | Required | Discord description (literal) | Purpose |
 | --- | --- | --- | --- | --- |
 | `url` | `STRING` (3) | yes | `Tweet URL` | ツイート URL。複数の URL はスペースで区切って渡すことができます（Bot が space で分割し、各 token をクライアント側で検証）。 |
-| `cookie` | `STRING` (3) | no | `Optional HTTP Cookie header value` | 任意のHTTP Cookieヘッダ文字列。指定時はlink生存確認にも使用し、yt-dlp実行時には一時的なNetscape cookie fileへ変換します。`TWITTER_COOKIES` より優先されます。 |
+| `cookie` | `STRING` (3) | no | `Optional HTTP Cookie header value` | 任意のHTTP Cookieヘッダ文字列。指定時はlink生存確認にも使用し、yt-dlp実行時には入力URLのhostをcookie domainとして一時的なNetscape cookie fileへ変換します。`TWITTER_COOKIES` より優先されます。 |
 
 ### Behaviour
 
 1. Botはinteractionをdeferします（`DeferredChannelMessageWithSource`）。
 2. `url` 値はspaceで分割されます。各tokenは `isUrl` で検証されます。
 3. いずれかのtokenがURL検証に失敗した場合、Botは単一のerror embedで応答し、その説明に**すべての**供給されたtoken（改行区切り）をリストします。無効なtokenだけではなく、そのあと停止します。
-4. `cookie` が指定された場合、dispatch payloadへ転送されます。Runnerは値をmaskし、link生存確認の `curl` に付与し、yt-dlp用にはHTTP Cookie文字列から一時的なNetscape cookie fileへ変換します。指定されたcookieはrepositoryの `TWITTER_COOKIES` secretより優先され、未指定時は従来の挙動のままです。
+4. `cookie` が指定された場合、dispatch payloadへ転送されます。Runnerは値をmaskし、link生存確認の `curl` に付与し、yt-dlp用にはHTTP Cookie文字列から一時的なNetscape cookie fileへ変換し、cookie domainは入力URLのhostから導出します。指定されたcookieはrepositoryの `TWITTER_COOKIES` secretより優先され、未指定時は従来の挙動のままです。
 5. 各URLについて、Botは：
    - `🕑Queuing...` follow-upを投稿、
    - `commandType: "dl"` を付けた `download` typeの `repository_dispatch` eventを火します、
