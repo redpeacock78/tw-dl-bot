@@ -222,6 +222,7 @@ cookie_header_to_netscape() {
   local cookie
   local name
   local value
+  local -a cookies=()
 
   {
     printf '# Netscape HTTP Cookie File\n'
