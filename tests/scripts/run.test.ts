@@ -143,6 +143,7 @@ Deno.test("run.sh", async (t) => {
     "download converts request cookies to Netscape format with or without a trailing semicolon",
     async () => {
       const outputs: string[] = [];
+      const ytArgsOutputs: string[] = [];
 
       for (
         const cookie of [
@@ -157,6 +158,7 @@ Deno.test("run.sh", async (t) => {
           const binDirectory = `${tempDirectory}/bin`;
           const capturePath = `${tempDirectory}/curl.log`;
           const cookieCapturePath = `${tempDirectory}/cookie.txt`;
+          const ytArgsCapturePath = `${tempDirectory}/yt-args.txt`;
           await Deno.mkdir(scriptDirectory, { recursive: true });
           await Deno.mkdir(binDirectory, { recursive: true });
           await Deno.copyFile(
@@ -176,6 +178,7 @@ printf '200'
           await Deno.writeTextFile(
             `${binDirectory}/yt-dlp`,
             `#!/usr/bin/env bash
+printf '%s\\n' "$@" > "\${YT_ARGS_CAPTURE}"
 cookie_file=""
 while (( $# > 0 )); do
   if [[ "$1" == "--cookies" ]]; then
@@ -203,7 +206,7 @@ printf 'downloaded\\n'
             JSON.stringify({
               client_payload: {
                 commandType: "dl",
-                link: "https://twitter.com/user/status/1",
+                link: "https://x.com/user/status/1",
                 channel: "channel-1",
                 message: "message-1",
                 token: "token-1",
@@ -216,6 +219,7 @@ printf 'downloaded\\n'
             PATH: `${binDirectory}:${Deno.env.get("PATH") ?? "/usr/bin:/bin"}`,
             CAPTURE_FILE: capturePath,
             COOKIE_CAPTURE: cookieCapturePath,
+            YT_ARGS_CAPTURE: ytArgsCapturePath,
             GITHUB_WORKSPACE: workspace,
             ENDPOINT_URL: "http://callback.test",
             GITHUB_EVENT_PATH: eventPath,
@@ -223,18 +227,106 @@ printf 'downloaded\\n'
 
           assertEquals(result.code, 0);
           outputs.push(await Deno.readTextFile(cookieCapturePath));
+          ytArgsOutputs.push(await Deno.readTextFile(ytArgsCapturePath));
         } finally {
           await Deno.remove(tempDirectory, { recursive: true });
         }
       }
 
       assertEquals(outputs[0], outputs[1]);
+      assertStringIncludes(ytArgsOutputs[0], "https://x.com/user/status/1");
+      assertEquals(
+        ytArgsOutputs[0].includes("https://twitter.com/user/status/1"),
+        false,
+      );
       assertEquals(
         outputs[0],
         "# Netscape HTTP Cookie File\n" +
-          ".twitter.com\tTRUE\t/\tTRUE\t0\tauth_token\taaa\n" +
-          ".twitter.com\tTRUE\t/\tTRUE\t0\tct0\tb=b\n",
+          ".x.com\tTRUE\t/\tTRUE\t0\tauth_token\taaa\n" +
+          ".x.com\tTRUE\t/\tTRUE\t0\tct0\tb=b\n",
       );
+    },
+  );
+
+  await t.step(
+    "download derives request cookie domain from a non-Twitter URL",
+    async () => {
+      const tempDirectory = await Deno.makeTempDir();
+      try {
+        const workspace = `${tempDirectory}/workspace`;
+        const scriptDirectory = `${workspace}/.github/scripts`;
+        const binDirectory = `${tempDirectory}/bin`;
+        const cookieCapturePath = `${tempDirectory}/cookie.txt`;
+        await Deno.mkdir(scriptDirectory, { recursive: true });
+        await Deno.mkdir(binDirectory, { recursive: true });
+        await Deno.copyFile(
+          new URL("../../.github/scripts/retry_curl.sh", import.meta.url)
+            .pathname,
+          `${scriptDirectory}/retry_curl.sh`,
+        );
+
+        await Deno.writeTextFile(
+          `${binDirectory}/curl`,
+          "#!/usr/bin/env bash\nprintf '200'\n",
+        );
+        await Deno.chmod(`${binDirectory}/curl`, 0o755);
+
+        await Deno.writeTextFile(
+          `${binDirectory}/yt-dlp`,
+          `#!/usr/bin/env bash
+cookie_file=""
+while (( $# > 0 )); do
+  if [[ "$1" == "--cookies" ]]; then
+    shift
+    cookie_file="$1"
+  fi
+  shift
+done
+cp "\${cookie_file}" "\${COOKIE_CAPTURE}"
+touch "\${PWD}/fake.mp4"
+printf 'downloaded\\n'
+`,
+        );
+        await Deno.chmod(`${binDirectory}/yt-dlp`, 0o755);
+
+        await Deno.writeTextFile(
+          `${binDirectory}/ffprobe`,
+          "#!/usr/bin/env bash\nexit 0\n",
+        );
+        await Deno.chmod(`${binDirectory}/ffprobe`, 0o755);
+
+        const eventPath = `${tempDirectory}/event.json`;
+        await Deno.writeTextFile(
+          eventPath,
+          JSON.stringify({
+            client_payload: {
+              commandType: "dl",
+              link: "https://media.example.test/watch/1",
+              channel: "channel-1",
+              message: "message-1",
+              token: "token-1",
+              cookie: "session=abc",
+            },
+          }),
+        );
+
+        const result = await runScript(["download"], {
+          PATH: `${binDirectory}:${Deno.env.get("PATH") ?? "/usr/bin:/bin"}`,
+          COOKIE_CAPTURE: cookieCapturePath,
+          GITHUB_WORKSPACE: workspace,
+          ENDPOINT_URL: "http://callback.test",
+          GITHUB_EVENT_PATH: eventPath,
+        });
+
+        assertEquals(result.code, 0);
+        assertEquals(
+          await Deno.readTextFile(cookieCapturePath),
+          "# Netscape HTTP Cookie File\n" +
+            ".media.example.test\tTRUE\t/\tTRUE\t0\tsession\tabc\n",
+        );
+      } finally {
+        await Deno.remove(tempDirectory, { recursive: true });
+      }
     },
   );
 

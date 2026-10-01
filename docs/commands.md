@@ -22,14 +22,14 @@ Download one or more Tweet videos and post them to the channel.
 | Option | Type | Required | Discord description (literal) | Purpose |
 | --- | --- | --- | --- | --- |
 | `url` | `STRING` (3) | yes | `Tweet URL` | Tweet URL. Multiple URLs may be passed by separating them with a single space (the bot splits on space and validates each token client-side). |
-| `cookie` | `STRING` (3) | no | `Optional HTTP Cookie header value` | Optional HTTP Cookie header string. When supplied, it is used for the link-survival check and converted to a temporary Netscape cookie file for yt-dlp, taking precedence over `TWITTER_COOKIES`. |
+| `cookie` | `STRING` (3) | no | `Optional HTTP Cookie header value` | Optional HTTP Cookie header string. When supplied, it is used for the link-survival check and converted to a temporary Netscape cookie file for yt-dlp using the input URL host as the cookie domain, taking precedence over `TWITTER_COOKIES`. |
 
 ### Behaviour
 
 1. The bot defers the interaction (`DeferredChannelMessageWithSource`).
 2. The `url` value is split on spaces. Each token is validated with `isUrl`.
 3. If any token fails URL validation, the bot replies with a single error embed whose description lists **all** supplied tokens (newline-separated), not only the invalid ones, and then stops.
-4. If `cookie` is supplied, it is forwarded in the dispatch payload. The runner masks it, passes it to the link-survival `curl` request, and converts the header string to a temporary Netscape cookie file for yt-dlp. A supplied cookie takes precedence over the repository's `TWITTER_COOKIES` secret; when omitted, existing behaviour is unchanged.
+4. If `cookie` is supplied, it is forwarded in the dispatch payload. The runner masks it, passes it to the link-survival `curl` request, and converts the header string to a temporary Netscape cookie file for yt-dlp, deriving the cookie domain from the input URL host. A supplied cookie takes precedence over the repository's `TWITTER_COOKIES` secret; when omitted, existing behaviour is unchanged.
 5. For each URL, the bot:
    - posts a `🕑Queuing...` follow-up,
    - fires a `repository_dispatch` event of type `download` with `commandType: "dl"`,
