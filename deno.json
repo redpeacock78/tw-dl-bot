@@ -1,11 +1,13 @@
 {
   "lock": false,
   "lint": {
-    "exclude": ["tools/"]
+    "exclude": [
+      "tools/"
+    ]
   },
   "tasks": {
     "dev": "denon dev",
-    "cache": "deno cache --import-map import_map.json src/main.ts",
+    "cache": "deno cache --allow-import=deno.land:443,jsr.io:443,cdn.skypack.dev:443,esm.sh:443,unpkg.com:443 --import-map import_map.json src/main.ts",
     "lint": "deno lint && deno run --allow-env --allow-read --allow-sys tools/textlint.ts docs/jp/",
     "lint:fix": "deno run --allow-env --allow-read --allow-sys --allow-write tools/textlint.ts --fix docs/jp/",
     "lint:watch": "denon lint",

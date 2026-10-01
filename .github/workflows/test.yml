@@ -13,13 +13,28 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Setup Deno
         uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
       - name: Validate runner scripts
         run: bash -n .github/scripts/*.sh
+      - name: Cache dependencies with retry
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            if deno task cache; then
+              exit 0
+            fi
+            if [[ "${attempt}" -lt 3 ]]; then
+              echo "Dependency fetch failed; retrying (${attempt}/3)..."
+              sleep "$((attempt * 5))"
+            fi
+          done
+          echo "Dependency fetch failed after 3 attempts."
+          exit 1
       - name: Lint
         run: deno lint
       - name: Run tests
