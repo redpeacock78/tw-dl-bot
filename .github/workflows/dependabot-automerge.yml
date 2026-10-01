@@ -17,10 +17,9 @@ jobs:
     if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.actor.login == 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
-      - name: Merge validated patch and minor updates
+      - name: Resolve validated PR
         shell: bash
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           set -euo pipefail
@@ -31,41 +30,61 @@ jobs:
             exit 0
           fi
 
-          pr_json="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${pr_number}")"
+          {
+            echo "PR_NUMBER=${pr_number}"
+            echo "EXPECTED_HEAD_SHA=${RUN_HEAD_SHA}"
+          } >> "${GITHUB_ENV}"
+
+      - name: Checkout trusted gate code
+        if: env.PR_NUMBER != ''
+        uses: actions/checkout@v7
+        with:
+          ref: master
+          persist-credentials: false
+
+      - name: Route PR with Jev
+        if: env.PR_NUMBER != ''
+        id: jev
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AI_GATEWAY_API_KEY: ${{ secrets.AI_GATEWAY_API_KEY }}
+          JEV_MODEL: ${{ vars.JEV_MODEL || 'typesafe-ai/jev' }}
+          JEV_MIN_CONFIDENCE: ${{ vars.JEV_MIN_CONFIDENCE || '0.40' }}
+          JEV_MIN_AUTO_PROBABILITY: ${{ vars.JEV_MIN_AUTO_PROBABILITY || '0.60' }}
+          JEV_MIN_AUTO_MARGIN: ${{ vars.JEV_MIN_AUTO_MARGIN || '0.20' }}
+        run: node .github/scripts/jev-pr-gate.mjs
+
+      - name: Leave PR for deeper review
+        if: env.PR_NUMBER != '' && steps.jev.outputs.route != 'AUTO_MERGE'
+        run: |
+          echo "Jev routed PR #${PR_NUMBER} to ${{ steps.jev.outputs.route }}."
+          echo "Automatic merge is intentionally skipped."
+
+      - name: Merge Jev-approved update
+        if: env.PR_NUMBER != '' && steps.jev.outputs.route == 'AUTO_MERGE'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          pr_json="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}")"
           author="$(jq -r '.user.login' <<<"${pr_json}")"
           state="$(jq -r '.state' <<<"${pr_json}")"
           draft="$(jq -r '.draft' <<<"${pr_json}")"
           base="$(jq -r '.base.ref' <<<"${pr_json}")"
           current_sha="$(jq -r '.head.sha' <<<"${pr_json}")"
-          body="$(jq -r '.body // ""' <<<"${pr_json}")"
 
           if [[ "${author}" != "dependabot[bot]" || "${state}" != "open" || "${draft}" != "false" || "${base}" != "master" ]]; then
             echo "PR is no longer an eligible Dependabot PR; skipping."
             exit 0
           fi
 
-          if [[ "${current_sha}" != "${RUN_HEAD_SHA}" ]]; then
-            echo "PR head changed after the successful test run; waiting for the newer run."
+          if [[ "${current_sha}" != "${EXPECTED_HEAD_SHA}" ]]; then
+            echo "PR head changed after Jev review; waiting for the newer Test run."
             exit 0
           fi
 
-          update_types="$(grep -oE 'update-type: version-update:semver-(patch|minor|major)' <<<"${body}" | sed 's/^update-type: //' | sort -u || true)"
-
-          if [[ -z "${update_types}" ]]; then
-            echo "Could not determine Dependabot update type; leaving for manual review."
-            exit 0
-          fi
-
-          if grep -q 'version-update:semver-major' <<<"${update_types}"; then
-            echo "Major update detected; leaving for manual review."
-            exit 0
-          fi
-
-          if grep -Evq '^version-update:semver-(patch|minor)$' <<<"${update_types}"; then
-            echo "Unknown update type detected; leaving for manual review."
-            exit 0
-          fi
-
-          gh api --method PUT "repos/${GITHUB_REPOSITORY}/pulls/${pr_number}/merge" \
+          gh api --method PUT "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/merge" \
             -f merge_method=squash \
-            -f sha="${current_sha}"
+            -f sha="${EXPECTED_HEAD_SHA}"
