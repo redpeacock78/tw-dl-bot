@@ -76,6 +76,7 @@ Deno.test("run.sh", async (t) => {
             channel: "channel-1",
             message: "message-1",
             token: "token-1",
+            cookie: "auth_token=aaa; ct0=bbb",
           },
         }),
       );
@@ -91,12 +92,151 @@ Deno.test("run.sh", async (t) => {
           "::add-mask::https://example.test/a?x=1&y=2\n" +
           "::add-mask::channel-1\n" +
           "::add-mask::message-1\n" +
-          "::add-mask::token-1\n",
+          "::add-mask::token-1\n" +
+          "::add-mask::auth_token=aaa; ct0=bbb\n",
       );
     } finally {
       await Deno.remove(tempDirectory, { recursive: true });
     }
   });
+
+  await t.step(
+    "check-link sends the request cookie when one is present",
+    async () => {
+      const tempDirectory = await Deno.makeTempDir();
+      try {
+        const fakeCurl = await makeFakeCurl(tempDirectory);
+        const eventPath = `${tempDirectory}/event.json`;
+        await Deno.writeTextFile(
+          eventPath,
+          JSON.stringify({
+            client_payload: {
+              commandType: "dl",
+              link: "https://twitter.com/user/status/1",
+              channel: "channel-1",
+              message: "message-1",
+              token: "token-1",
+              cookie: "auth_token=aaa; ct0=bbb",
+            },
+          }),
+        );
+
+        const result = await runScript(["check-link"], {
+          PATH: fakeCurl.path,
+          CAPTURE_FILE: fakeCurl.capturePath,
+          CAPTURE_FORM: "true",
+          ENDPOINT_URL: "http://callback.test",
+          GITHUB_EVENT_PATH: eventPath,
+        });
+
+        assertEquals(result.code, 0);
+        const requestLog = await Deno.readTextFile(fakeCurl.capturePath);
+        assertStringIncludes(requestLog, "--cookie");
+        assertStringIncludes(requestLog, "auth_token=aaa; ct0=bbb");
+      } finally {
+        await Deno.remove(tempDirectory, { recursive: true });
+      }
+    },
+  );
+
+  await t.step(
+    "download converts request cookies to Netscape format with or without a trailing semicolon",
+    async () => {
+      const outputs: string[] = [];
+
+      for (
+        const cookie of [
+          "auth_token=aaa; ct0=b=b",
+          "auth_token=aaa; ct0=b=b;",
+        ]
+      ) {
+        const tempDirectory = await Deno.makeTempDir();
+        try {
+          const workspace = `${tempDirectory}/workspace`;
+          const scriptDirectory = `${workspace}/.github/scripts`;
+          const binDirectory = `${tempDirectory}/bin`;
+          const capturePath = `${tempDirectory}/curl.log`;
+          const cookieCapturePath = `${tempDirectory}/cookie.txt`;
+          await Deno.mkdir(scriptDirectory, { recursive: true });
+          await Deno.mkdir(binDirectory, { recursive: true });
+          await Deno.copyFile(
+            new URL("../../.github/scripts/retry_curl.sh", import.meta.url)
+              .pathname,
+            `${scriptDirectory}/retry_curl.sh`,
+          );
+
+          await Deno.writeTextFile(
+            `${binDirectory}/curl`,
+            `#!/usr/bin/env bash
+printf '200'
+`,
+          );
+          await Deno.chmod(`${binDirectory}/curl`, 0o755);
+
+          await Deno.writeTextFile(
+            `${binDirectory}/yt-dlp`,
+            `#!/usr/bin/env bash
+cookie_file=""
+while (( $# > 0 )); do
+  if [[ "$1" == "--cookies" ]]; then
+    shift
+    cookie_file="$1"
+  fi
+  shift
+done
+cp "${cookie_file}" "${COOKIE_CAPTURE}"
+touch "${PWD}/fake.mp4"
+printf 'downloaded\\n'
+`,
+          );
+          await Deno.chmod(`${binDirectory}/yt-dlp`, 0o755);
+
+          await Deno.writeTextFile(
+            `${binDirectory}/ffprobe`,
+            "#!/usr/bin/env bash\nexit 0\n",
+          );
+          await Deno.chmod(`${binDirectory}/ffprobe`, 0o755);
+
+          const eventPath = `${tempDirectory}/event.json`;
+          await Deno.writeTextFile(
+            eventPath,
+            JSON.stringify({
+              client_payload: {
+                commandType: "dl",
+                link: "https://twitter.com/user/status/1",
+                channel: "channel-1",
+                message: "message-1",
+                token: "token-1",
+                cookie,
+              },
+            }),
+          );
+
+          const result = await runScript(["download"], {
+            PATH: `${binDirectory}:${Deno.env.get("PATH") ?? "/usr/bin:/bin"}`,
+            CAPTURE_FILE: capturePath,
+            COOKIE_CAPTURE: cookieCapturePath,
+            GITHUB_WORKSPACE: workspace,
+            ENDPOINT_URL: "http://callback.test",
+            GITHUB_EVENT_PATH: eventPath,
+          });
+
+          assertEquals(result.code, 0);
+          outputs.push(await Deno.readTextFile(cookieCapturePath));
+        } finally {
+          await Deno.remove(tempDirectory, { recursive: true });
+        }
+      }
+
+      assertEquals(outputs[0], outputs[1]);
+      assertEquals(
+        outputs[0],
+        "# Netscape HTTP Cookie File\n" +
+          ".twitter.com\tTRUE\t/\tTRUE\t0\tauth_token\taaa\n" +
+          ".twitter.com\tTRUE\t/\tTRUE\t0\tct0\tb=b\n",
+      );
+    },
+  );
 
   await t.step(
     "run.yml does not initialize a job-wide secret environment",
