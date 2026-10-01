@@ -41,6 +41,19 @@ Deno.test("registerCommands", async (t) => {
   );
 
   await t.step(
+    "dl commands expose cookie as an optional string option",
+    () => {
+      for (
+        const command of [Commands.dlCommand, Commands.dlSpoilerCommand]
+      ) {
+        const option = command.options?.find((i) => i.name === "cookie");
+        assertEquals(option?.type, 3);
+        assertEquals(option?.required, false);
+      }
+    },
+  );
+
+  await t.step(
     "awaits each call sequentially (second call observes first call settled)",
     async () => {
       const order: string[] = [];

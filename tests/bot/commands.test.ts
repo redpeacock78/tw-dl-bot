@@ -3,22 +3,28 @@ import { Commands } from "../../src/bot/commands.ts";
 import { Constants } from "../../src/libs/constants.ts";
 
 Deno.test("Commands", async (t) => {
-  await t.step("dlCommand: name maps to DOWNLOAD constant + required url option", () => {
+  await t.step("dlCommand: required url + optional cookie options", () => {
     assertEquals(
       Commands.dlCommand.name,
       Constants.Webhook.Json.ClientPayload.CommandType.DOWNLOAD,
     );
     assertEquals(Commands.dlCommand.type, 1);
     assertEquals(Commands.dlCommand.description, "Download tweet video");
-    assertEquals(Commands.dlCommand.options?.length, 1);
-    const url = Commands.dlCommand.options?.[0];
-    assertEquals(url?.name, "url");
-    assertEquals(url?.type, 3); // ApplicationCommandOptionTypes.String
-    assertEquals(url?.required, true);
-    assertEquals(url?.description, "Tweet URL");
+    assertEquals(Commands.dlCommand.options?.length, 2);
+    const opts = Commands.dlCommand.options ?? [];
+    const optByName = Object.fromEntries(opts.map((o) => [o.name, o]));
+    assertEquals(optByName.url?.type, 3); // ApplicationCommandOptionTypes.String
+    assertEquals(optByName.url?.required, true);
+    assertEquals(optByName.url?.description, "Tweet URL");
+    assertEquals(optByName.cookie?.type, 3);
+    assertEquals(optByName.cookie?.required, false);
+    assertEquals(
+      optByName.cookie?.description,
+      "Optional HTTP Cookie header value",
+    );
   });
 
-  await t.step("dlSpoilerCommand: maps to DOWNLOAD_SPOILER + required url option", () => {
+  await t.step("dlSpoilerCommand: required url + optional cookie options", () => {
     assertEquals(
       Commands.dlSpoilerCommand.name,
       Constants.Webhook.Json.ClientPayload.CommandType.DOWNLOAD_SPOILER,
@@ -28,11 +34,17 @@ Deno.test("Commands", async (t) => {
       Commands.dlSpoilerCommand.description,
       "Download tweet video with spoiler",
     );
-    assertEquals(Commands.dlSpoilerCommand.options?.length, 1);
-    const url = Commands.dlSpoilerCommand.options?.[0];
-    assertEquals(url?.name, "url");
-    assertEquals(url?.type, 3);
-    assertEquals(url?.required, true);
+    assertEquals(Commands.dlSpoilerCommand.options?.length, 2);
+    const opts = Commands.dlSpoilerCommand.options ?? [];
+    const optByName = Object.fromEntries(opts.map((o) => [o.name, o]));
+    assertEquals(optByName.url?.type, 3);
+    assertEquals(optByName.url?.required, true);
+    assertEquals(optByName.cookie?.type, 3);
+    assertEquals(optByName.cookie?.required, false);
+    assertEquals(
+      optByName.cookie?.description,
+      "Optional HTTP Cookie header value",
+    );
   });
 
   await t.step(
