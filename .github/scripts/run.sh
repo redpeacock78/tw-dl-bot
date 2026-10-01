@@ -220,7 +220,7 @@ url_host() {
   local authority="${url#*://}"
   local host
 
-  authority="${authority%%/*}"
+  authority="${authority%%[/?#]*}"
   authority="${authority##*@}"
 
   if [[ "${authority}" == \[*\]* ]]; then
@@ -240,8 +240,8 @@ cookie_header_to_netscape() {
   local url="${3}"
   local host
   local domain
-  local include_subdomains=true
-  local secure=false
+  local include_subdomains="TRUE"
+  local secure="FALSE"
   local cookie
   local name
   local value
@@ -252,13 +252,13 @@ cookie_header_to_netscape() {
 
   if [[ "${host}" == "localhost" || "${host}" == *:* || "${host}" =~ ^[0-9]+(\.[0-9]+){3}$ ]]; then
     domain="${host}"
-    include_subdomains=false
+    include_subdomains="FALSE"
   else
     domain=".${host#.}"
   fi
 
   if [[ "${url}" == https://* ]]; then
-    secure=true
+    secure="TRUE"
   fi
 
   {
@@ -278,10 +278,7 @@ cookie_header_to_netscape() {
       [[ -z "${name}" ]] && continue
 
       printf '%s\t%s\t/\t%s\t0\t%s\t%s\n' \
-        "${domain}" \
-        "$([[ "${include_subdomains}" == true ]] && printf TRUE || printf FALSE)" \
-        "$([[ "${secure}" == true ]] && printf TRUE || printf FALSE)" \
-        "${name}" "${value}"
+        "${domain}" "${include_subdomains}" "${secure}" "${name}" "${value}"
     done
   } > "${output}"
 }
