@@ -45,6 +45,7 @@ jobs:
       - name: Route PR with Jev
         if: steps.resolve.outputs.pr_number != ''
         id: jev
+        continue-on-error: true
         env:
           PR_NUMBER: ${{ steps.resolve.outputs.pr_number }}
           EXPECTED_HEAD_SHA: ${{ steps.resolve.outputs.expected_head_sha }}
@@ -57,15 +58,23 @@ jobs:
         run: node .github/scripts/jev-pr-gate.mjs
 
       - name: Leave PR for deeper review
-        if: steps.resolve.outputs.pr_number != '' && steps.jev.outputs.route != 'AUTO_MERGE'
+        if: steps.resolve.outputs.pr_number != '' && (steps.jev.outcome != 'success' || steps.jev.outputs.route != 'AUTO_MERGE')
+        shell: bash
         env:
           PR_NUMBER: ${{ steps.resolve.outputs.pr_number }}
+          JEV_OUTCOME: ${{ steps.jev.outcome }}
+          JEV_ROUTE: ${{ steps.jev.outputs.route }}
         run: |
-          echo "Jev routed PR #${PR_NUMBER} to ${{ steps.jev.outputs.route }}."
+          set -euo pipefail
+          route="${JEV_ROUTE:-CODEX_REVIEW}"
+          if [[ "${JEV_OUTCOME}" != "success" ]]; then
+            route="CODEX_REVIEW"
+          fi
+          echo "Jev routed PR #${PR_NUMBER} to ${route}."
           echo "Automatic merge is intentionally skipped."
 
       - name: Merge Jev-approved update
-        if: steps.resolve.outputs.pr_number != '' && steps.jev.outputs.route == 'AUTO_MERGE'
+        if: steps.resolve.outputs.pr_number != '' && steps.jev.outcome == 'success' && steps.jev.outputs.route == 'AUTO_MERGE'
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
